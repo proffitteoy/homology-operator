@@ -10,7 +10,9 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
-2026-10-01 规划时另行核实远端 `main` 为 `c0299c3b7750c8a12ced00bf479753236a7dbc85`，已含原始 README、接口和三阶段验证文档；初始化前的本地跟踪引用落后于远端。开发任务由私有 [GitHub Project #3](https://github.com/users/proffitteoy/projects/3) 管理，三阶段与详细路线的对应见 [验证说明](docs/VALIDATION.md)。
+本次合并接入远端 `c0299c3b7750c8a12ced00bf479753236a7dbc85` 的原始接口与验证契约。开发任务由私有 [GitHub Project #3](https://github.com/users/proffitteoy/projects/3) 管理，依据 ARCHITECTURE、RESULT_MODEL、SOLVER_CONTRACT 拆为单尺度算子、过滤算子族、求解器与认证。
+
+代数系数为 F2，几何权重为正实代价；高维权重可取有明确来源的实际面积或体积。普通投影谱只有 0、1，额外几何来自带权作用。研究定理不等于本仓库可运行实现；软件许可证尚未选择，发布或再分发前需明确授权。
 
 ## 开始使用
 

@@ -2,10 +2,10 @@
 
 > 适用仓库：`proffitteoy/homology-operator`  
 > 冷启动前本地基线：`main @ 6ddce1b4e4d55c0aaff399c001e684d908026830`（2026-10-01 核实）  
-> 任务规划时远端基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）  
+> 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 当前状态：契约准备阶段。本文的源码树、对象和版本里程碑都是开发目标，尚无数学实现。实际入口与冷启动结论见 [README](README.md) 和 [文档索引](docs/README.md)。原草案的 `c0299c3b7750c8a12ced00bf479753236a7dbc85` 已在线确认为远端当前基线；本地旧跟踪引用未同步。三阶段管理沿用远端原始验证文档，Phase 0–7 为细化路线；对应关系见 [验证说明](docs/VALIDATION.md)，执行任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)。
+> 当前状态：契约准备阶段。本文的源码树、对象和版本里程碑都是开发目标，尚无数学实现。实际入口与冷启动结论见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
 
 ## 1. 文档目的
 

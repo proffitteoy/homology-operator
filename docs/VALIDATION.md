@@ -1,16 +1,8 @@
 # Homology Operator：验证说明
 
-## 三阶段开发管理
+## 固定理论与研究仓库验证记录
 
-阶段名称沿用远端 `main @ c0299c3b7750c8a12ced00bf479753236a7dbc85` 的 [原始三阶段文档](https://github.com/proffitteoy/homology-operator/blob/c0299c3b7750c8a12ced00bf479753236a7dbc85/docs/VALIDATION.md)，详细路线将每一阶段展开为多个数学与工程步骤。
-
-| 原始阶段 | 详细路线对应 | 核心退出条件 |
-| --- | --- | --- |
-| S1：可复现参考实现 | Phase 0–2 与最小 feasible/stretch 能力 | 边界数据构造算子，完整 PH 与几何联合读取，H0–H3、过滤与独立 oracle 验证 |
-| S2：同输出优化 | Phase 3–4 | solver 认证、reference/optimized 同输出、分项成本与 peak RSS 可复现 |
-| S3：独立研究门槛 | Phase 5–7 | 网格/采样/几何恢复与应用分别建立证据，授权、包/API/schema、CI 和发行候选明确 |
-
-私有 [GitHub Project #3](https://github.com/users/proffitteoy/projects/3) 管理三个阶段总任务与详细子任务。准备状态、优先级和原生 blocked-by 关系用于排定工作；创建 issue 不代表实现完成。研究任务允许保留条件限制或形成有证据的 no-go。
+理论来源为 `proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`。远端 [原始验证契约](https://github.com/proffitteoy/homology-operator/blob/c0299c3b7750c8a12ced00bf479753236a7dbc85/docs/VALIDATION.md) 记录：其父提交 `cc6f9b637552d3eda4b948121b932576ae5eeec9` 的 `run_tests.py` 通过 32 组检查（16 exact、16 auxiliary），后续提交仅修正 README 清单 hash。这里保留该来源记录，本轮未复跑研究检查；exact 组内仍需按具体报告区分符号、区间及附带数值检查，不能作为本仓库测试通过声明。
 
 ## 当前可执行验证
 
@@ -62,3 +54,13 @@ git diff --check
 当前冷启动完成项目规则、接口/验证文档与文档检查入口。Phase 0 的逻辑契约已经齐备；fixture corpus、运行时结果模型和具体语言 API 的落地尚待 reference 实现验证，公开版本号尚未冻结。
 
 Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
+
+## 原始契约的总体工程门槛
+
+远端原始验证契约的三个总体阶段采用较粗粒度，保留其要求；本轮 Project 根据三份核心契约管理详细路线 Phase 1–3。
+
+1. **可复现参考实现**：从边界构造投影并后验证；同一 P 提供 PH 与几何，独立列约化仅作事后对拍；迁移 H0–H3，覆盖死亡、合并、末端存活、空链、零同调与重复尺度；核对距离、共享/总支撑与继承权重终点控制。实际欧氏体积实例与人为悬挂权重实例分别记录。
+2. **同输出优化**：冻结输入/输出及正确性口径，分别比较构造、优化、查询、序列化时间与峰值内存，绑定版本、机器、编译选项与数据。小实例穷举只作 reference；可行、认证最优与近似结果须同等级比较。
+3. **独立研究门槛**：网格细化和采样稳定性须指定网格族、权重、拓扑对应与恢复条件，不能由有限测试或形状正则推出。真实任务同预算比较 PH-only 与其他几何基线。包发行、CI/部署、许可证与生态集成另行确定，当前初始化尚未配置。
+
+这些门槛尚待下游实现后运行，不能预先标为通过。
