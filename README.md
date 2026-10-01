@@ -1,2 +1,23 @@
-# homology-operator
-Boundary-native F2 homology operators with joint persistence and geometric outputs
+# Homology Operator
+
+统一二元同调算子的下游工程仓库。
+
+当前状态：仓库与接口/验证契约初始化；尚未提供可安装实现、发布版本或性能承诺。
+
+## 研究依据
+
+[homology-operator-lab 的规范证明](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/docs/proof/PROOF.md) 是理论来源。固定来源提交为 `6143729669902ee875b211b58085e954c76cdf88`；这里不另建一套算子定义。
+
+输入边界矩阵、过滤包含映射与正链权，从同一批投影读取：
+
+- 拓扑：各次数同调核、跨尺度映射、完整单参数 PH 条形码
+- 几何：选定代表的质量、类间距离、共享支撑、总支撑，以及明确认证等级的伸长信息
+
+代数系数为 F₂，几何权重为正实代价；高维几何权重可取实际面积/体积。算子的普通谱仅有 0、1，额外几何不来自非零谱。
+
+## 文档
+
+- [输入与联合输出契约](docs/INTERFACE.md)
+- [验证与工程阶段](docs/VALIDATION.md)
+
+研究库已验证的定理不等于本仓库已有可运行实现。首先建立可复现的参考实现和同输出对拍，再做规模优化、网格稳定性与真实应用验证。底层语言和发行形式尚未锁定。未选择软件许可证，发布/再分发前需明确授权。
