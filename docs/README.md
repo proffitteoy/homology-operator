@@ -12,9 +12,11 @@
 6. [SOLVER_CONTRACT](SOLVER_CONTRACT.md)：合法投影、认证等级与资源约束。
 7. [VALIDATION](VALIDATION.md)：当前检查入口及后续数学验证。
 
-单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。两阶段均已合入 main。Phase 3 当前129项测试包含五种solver、独立证书、算术/资源/身份、冻结对照/no-go与联合同调/PH/几何验收；支持域及证据见 [solver 契约](SOLVER_CONTRACT.md) 与 [Phase 3报告](PHASE3_REPORT.md)。阶段汇总仍待全部PR进入main并核验；高性能、稳定性、应用与发行属于后续阶段。
+单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。Phase 1–3 全部 PR 已合入 main `54ce78b`，该提交 CI 通过。Phase 3 的129项测试包含五种solver、独立证书、算术/资源/身份、冻结对照/no-go与联合同调/PH/几何验收；支持域及历史证据见 [solver 契约](SOLVER_CONTRACT.md) 与 [Phase 3报告](PHASE3_REPORT.md)。[S4/S5 项目计划](S4_S5_PROJECT.md) 管理下一轮高性能实现与 GUDHI/真实测量，仍属待实现任务；稳定性、应用与发行另行验收。
 
 ## 参考材料
+
+- [S4/S5 项目与研究材料](S4_S5_PROJECT.md)：9 个同语义性能任务、6 个 GUDHI/测量任务、Project #3 依赖与验收、上传原始材料及独立原型复现。
 
 - [Phase 3 求解与认证联合验收](PHASE3_REPORT.md)：当前支持域、跨solver同调/PH与几何、证书边界、固定源码/hash及剩余门槛。
 

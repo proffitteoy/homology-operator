@@ -7,7 +7,9 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。Phase 3 统一认证、完整搜索、贪心、rank-2、限定循环族、对照协议、算术/资源边界与一般搜索no-go已由 #49–#56 合入 main `6ab2232`，该main CI通过。本分支完成跨solver联合验收与阶段汇总，129项本地数学测试、两个示例、隔离wheel、静态/文档检查通过，证据见 [Phase 3报告](docs/PHASE3_REPORT.md)。#57/#58仍待用户审核合并；这些准确head全部进入main并通过main数学测试/CI后才进入Phase 4。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41、Phase 2 的 #42–#48 和 Phase 3 的 #49–#58 已全部合入 main。当前 reference 基线为 `54ce78bccdcba619ffa2a4d76aeb450bfd24270e`，该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788) 通过。129项数学测试、五种限定solver与证书、冻结对照/no-go、73次窗口支持运行和44个过滤配置的历史证据见 [Phase 3报告](docs/PHASE3_REPORT.md)；历史报告保留当时状态。
+
+下一轮由同一私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理：[S4/S5 项目计划](docs/S4_S5_PROJECT.md) 将 S4 定为同语义高性能开发、S5 定为 GUDHI 对拍与真实性能报告，细化原 Phase 4。新 S4 性能任务与 S5 对拍任务保留原有 S3 solver 阶段。上传研究计划、barcode 原型与原始记录已整合；Rust、GUDHI 正式对拍和性能报告尚待各工作包实现。
 
 Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局部搜索支持、失败、中断与完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。联合验收覆盖73次冻结窗口支持运行、44个过滤配置和五solver混合表示族。高性能、采样稳定性、应用收益、许可证与发行仍待后续阶段。
 
@@ -20,7 +22,7 @@ Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局
 
 ## 开始使用
 
-先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。reference 使用 Python 3.10+ 标准库与 uv 0.11.5：显式 F2 代数与 Fraction 有理数便于独立审查，不锁定 Phase 4 高性能核心语言。运行时没有第三方依赖，开发依赖由 uv.lock 锁定；PowerShell 7 用于文档检查。开发快照版本 0.0.2.dev0 不是发行。
+先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。reference 使用 Python 3.10+ 标准库与 uv 0.11.5：显式 F2 代数与 Fraction 有理数便于独立审查。S4 计划采用 Rust 与批量 Python 绑定，工具链将在原型中锁定，当前尚未实现。reference 运行时没有第三方依赖，开发依赖由 uv.lock 锁定；PowerShell 7 用于文档检查。开发快照版本 0.0.2.dev0 不是发行。
 
 在仓库根目录运行：
 
@@ -63,6 +65,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | [AGENTS.md](AGENTS.md) | 项目操作规则、数学红线、命令与 skills 使用范围 |
 | [HOMOLOGY_OPERATOR_ROADMAP.md](HOMOLOGY_OPERATOR_ROADMAP.md) | Phase 0–7 的开发目标和退出条件 |
 | [docs/](docs/README.md) | 架构、接口、结果、solver、验证契约及冷启动入口 |
+| [S4/S5 项目计划](docs/S4_S5_PROJECT.md) | 9 个性能工作包、6 个 GUDHI/测量工作包、依赖、验收与原始研究材料 |
 | [docs/development/](docs/development/) | 通用架构模板、约束、代码组织与审计参考材料 |
 | [scripts/check_docs.ps1](scripts/check_docs.ps1) | 文档一致性检查工具 |
 

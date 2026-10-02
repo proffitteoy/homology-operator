@@ -2,6 +2,8 @@
 
 本协议回答同一ProjectionProblem下各solver支持什么、保留什么认证、付出了哪些成本，供#24的一般搜索go/no-go使用。不把单次reference耗时当作性能排名，也不宣称PH加速。
 
+下一轮正式性能协议与工作包见 [S4/S5 项目计划](S4_S5_PROJECT.md)。本文件及冻结记录保留历史口径；后续无 profiler 的重复计时、操作系统峰值 RSS、GUDHI 同输入基线与联合信息成本另行报告。
+
 运行：
 
 ```powershell

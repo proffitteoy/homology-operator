@@ -5,7 +5,7 @@
 > 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 当前状态：Phase 1、Phase 2 已合入 main 并验收；Phase 3 五种限定reference solver、认证、冻结对照/no-go和129项联合数学测试已实现并逐issue提交，全部合并/main验证门槛仍待完成。Phase 4–7、未出现的源码树与版本里程碑仍是目标，不能当作已实现能力。实际入口与验收证据见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
+> 当前状态：Phase 1–3 全部 PR 已合入 main `54ce78b`，该提交 CI 通过；129项 reference 数学测试与支持域历史证据见 [README](README.md) 和 [文档索引](docs/README.md)。Phase 4–7、未出现的源码树与版本里程碑仍是目标。私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 继续管理 [S4/S5](docs/S4_S5_PROJECT.md)：S4 同语义高性能开发、S5 GUDHI 对拍与真实性能报告，细化本路线的 Phase 4；不覆盖历史 Phase 3 的 solver/certification 或旧 S3 编号。
 
 ## 1. 文档目的
 
