@@ -14,6 +14,7 @@ from .solver import (
     ProjectionProblem,
     ProjectionSolution,
     ResourceLimits,
+    CancellationToken,
     solve_projection,
 )
 from .validation import ValidationError, validate_projection, validate_solution
@@ -36,6 +37,7 @@ __all__ = [
     "ProjectionProblem",
     "ProjectionSolution",
     "ResourceLimits",
+    "CancellationToken",
     "solve_projection",
     "ValidationError",
     "validate_projection",

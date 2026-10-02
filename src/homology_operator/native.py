@@ -20,13 +20,40 @@ from .solver import (
     check_solver_request,
     _Budget,
     _Exhausted,
+    CancellationToken,
+    ResourceLimits,
 )
 
 
 def _extension():
     import _homology_native
 
+    if getattr(_homology_native, "__semantics_version__", None) != 1:
+        raise ImportError("incompatible native extension; rebuild the S4-08 wheel")
     return _homology_native
+
+
+def backend_info():
+    """Report the actually loaded extension; importing reference never loads Rust."""
+    import platform
+
+    try:
+        extension = _extension()
+    except ImportError as error:
+        return {
+            "reference": "Available",
+            "native": "Unavailable",
+            "reason": str(error),
+            "platform": platform.platform(),
+        }
+    return {
+        "reference": "Available",
+        "native": "Available",
+        "semantics_version": extension.__semantics_version__,
+        "extension_path": extension.__file__,
+        "platform": platform.platform(),
+        "threads": 1,
+    }
 
 
 def _pack(vector):
@@ -52,17 +79,34 @@ class PreparedMatrix:
     """One immutable native RREF reused for canonical algebra, without weights."""
 
     matrix: Matrix
+    cancellation: CancellationToken | None = field(
+        default=None, repr=False, compare=False
+    )
     _handle: object = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         if not isinstance(self.matrix, Matrix):
             raise ValueError("prepare requires a validated Matrix")
+        if self.cancellation is not None and not isinstance(
+            self.cancellation, CancellationToken
+        ):
+            raise ValueError("cancellation must be a CancellationToken")
+        try:
+            handle = _extension().PreparedMatrix(
+                tuple(map(_words, self.matrix.rows)),
+                self.matrix.ncols,
+                None
+                if self.cancellation is None
+                else self.cancellation._native_handle(),
+            )
+        except ValueError as error:
+            if str(error).startswith("resource_exhausted:cancelled:"):
+                raise _Exhausted("cancelled") from error
+            raise
         object.__setattr__(
             self,
             "_handle",
-            _extension().PreparedMatrix(
-                tuple(map(_words, self.matrix.rows)), self.matrix.ncols
-            ),
+            handle,
         )
 
     def rank(self):
@@ -192,6 +236,9 @@ class NativeFeasibleSolver:
             limits.state_limit,
             max(0.0, limits.wall_time_limit - (converted - started)),
             limits.matrix_entry_limit,
+            None
+            if problem.cancellation is None
+            else problem.cancellation._native_handle(),
         )
         returned = perf_counter()
         usage = {
@@ -296,7 +343,7 @@ class NativeFactorizedSolver:
                 diagnostics=("optional native extension is not installed",),
                 **common,
             )
-        budget = _Budget(problem.resource_limits)
+        budget = _Budget(problem.resource_limits, cancellation=problem.cancellation)
         try:
             budget.step()
             # Keep reference's logical entry guard; not a claim about packed RSS.
@@ -305,7 +352,7 @@ class NativeFactorizedSolver:
             for matrix in (w.A, w.D):
                 budget.step()
                 budget.entries(matrix.nrows * (matrix.ncols + matrix.nrows))
-                prepared = PreparedMatrix(matrix)
+                prepared = PreparedMatrix(matrix, cancellation=problem.cancellation)
                 rows = prepared._handle.inverse_rows()
                 parts.append(
                     Matrix.from_rows(
@@ -331,7 +378,7 @@ class NativeFactorizedSolver:
                 # Stream columns of P to construct its image. Never store all P.
                 H = Matrix.from_columns(action.image_basis(), nrows=w.n)
                 budget.step(w.n)
-                prepared_h = PreparedMatrix(H)
+                prepared_h = PreparedMatrix(H, cancellation=problem.cancellation)
                 coordinates = []
                 for j in range(w.n):
                     budget.step()
@@ -519,7 +566,9 @@ class GeometryWorkspace:
         }
 
 
-def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
+def geometry_batch(
+    operator, cycles, pairs=(), *, workspace=None, limits=None, cancellation=None
+):
     """Project each cycle once; derive all geometry from that same packed Pz.
 
     Native integers use checked u64 sums. Nonintegral rationals, large weights,
@@ -528,6 +577,10 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
     """
     if not isinstance(operator, HomologyOperator):
         raise ValueError("geometry batch requires a validated operator")
+    if limits is not None and not isinstance(limits, ResourceLimits):
+        raise ValueError("limits must be ResourceLimits")
+    if cancellation is not None and not isinstance(cancellation, CancellationToken):
+        raise ValueError("cancellation must be a CancellationToken")
     if workspace is not None:
         if not isinstance(workspace, GeometryWorkspace):
             raise ValueError("workspace must be a GeometryWorkspace")
@@ -562,6 +615,47 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
         )
     packed = tuple(map(_words, cycles))
     converted = perf_counter()
+    if (
+        limits is not None
+        and operator.window.n * (2 * len(cycles) + len(pairs))
+        > limits.matrix_entry_limit
+    ):
+        return QueryResult(
+            "ResourceExhausted",
+            identity=operator.identity,
+            details={
+                "reason": "matrix_entry_limit",
+                "resource_usage": {"states": 0, "limits": asdict(limits)},
+            },
+        )
+    try:
+        raw = workspace._handle.query(
+            packed,
+            pairs,
+            None if cancellation is None else cancellation._native_handle(),
+            None if limits is None else limits.state_limit,
+            None
+            if limits is None
+            else max(0.0, limits.wall_time_limit - (converted - started)),
+        )
+    except ValueError as error:
+        parts = str(error).split(":")
+        if len(parts) != 3 or parts[0] != "resource_exhausted":
+            raise
+        return QueryResult(
+            "ResourceExhausted",
+            identity=operator.identity,
+            details={
+                "reason": parts[1],
+                "resource_usage": {
+                    "states": int(parts[2]),
+                    "limits": None if limits is None else asdict(limits),
+                    "wall_time": perf_counter() - started,
+                },
+                "arguments": cycles,
+                "pairs": pairs,
+            },
+        )
     (
         representatives,
         supports,
@@ -571,7 +665,7 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
         shared,
         union,
         native_wall,
-    ) = workspace._handle.query(packed, pairs)
+    ) = raw
     returned = perf_counter()
     fallback_seconds, fallback_count, overflow_count = 0.0, 0, 0
 
@@ -614,6 +708,26 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
         "union_support": tuple(tuple(indices) for indices in union),
     }
     decoded = perf_counter()
+    reason = (
+        "cancelled"
+        if cancellation is not None and cancellation.is_cancelled()
+        else "wall_time_limit"
+        if limits is not None and decoded - started >= limits.wall_time_limit
+        else None
+    )
+    if reason is not None:
+        return QueryResult(
+            "ResourceExhausted",
+            identity=operator.identity,
+            details={
+                "reason": reason,
+                "resource_usage": {
+                    "states": len(cycles) + len(pairs),
+                    "wall_time": decoded - started,
+                    "limits": None if limits is None else asdict(limits),
+                },
+            },
+        )
     exact = operator.window.arithmetic != "FloatingPoint"
     return QueryResult(
         "Computed",
@@ -648,6 +762,17 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
             "threads": 1,
             "arithmetic_policy": operator.window.arithmetic,
             "rounding_policy": None if exact else "binary64 fsum; nearest-even",
+            **(
+                {
+                    "resource_usage": {
+                        "states": len(cycles) + len(pairs),
+                        "limits": None if limits is None else asdict(limits),
+                        "wall_time": decoded - started,
+                    }
+                }
+                if limits is not None or cancellation is not None
+                else {}
+            ),
         },
     )
 
@@ -707,7 +832,14 @@ def _span_objective(window, projection, basis, budget=None, detail=None):
         else min(100_000, budget.limits.state_limit - budget.states)
     )
     a, b, witness, used, reason = _extension().span_objective(
-        tuple(map(_words, basis)), tuple(map(_words, images)), weights, quota, remaining
+        tuple(map(_words, basis)),
+        tuple(map(_words, images)),
+        weights,
+        quota,
+        remaining,
+        None
+        if budget is None or budget.cancellation is None
+        else budget.cancellation._native_handle(),
     )
     detail["span_objective_calls"] = detail.get("span_objective_calls", 0) + 1
     detail["native_kernel_seconds"] = (
@@ -743,7 +875,13 @@ def _span_table(window, basis, budget=None, detail=None):
         else min(100_000, budget.limits.state_limit - budget.states)
     )
     vectors, masses, used, reason = _extension().span_table(
-        tuple(map(_words, basis)), weights, quota, remaining
+        tuple(map(_words, basis)),
+        weights,
+        quota,
+        remaining,
+        None
+        if budget is None or budget.cancellation is None
+        else budget.cancellation._native_handle(),
     )
     detail["span_table_calls"] = detail.get("span_table_calls", 0) + 1
     detail["native_kernel_seconds"] = (

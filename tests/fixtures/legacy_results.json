@@ -1,0 +1,3942 @@
+{
+  "fixture_version": 1,
+  "metadata_policy": "synthetic UUID/time only; not a timing/RSS sample",
+  "records": {
+    "cyclic_trace": {
+      "kind": "operator",
+      "record_sha256": "9c9a3835c27d61acb0a4636962ba12ad674039f14eebca53125964673e5c6a91",
+      "wire": {
+        "certificate": {
+          "a_p_zero": true,
+          "bounds_verified": true,
+          "cycle_homology_preservation": true,
+          "exact_arithmetic": true,
+          "l_idempotent": true,
+          "objective_replayed": true,
+          "optimality_verified": true,
+          "optimization": {
+            "kernel_distance": 3,
+            "kind": "CyclicTrace",
+            "m": 2
+          },
+          "p_d_zero": true,
+          "p_idempotent": true,
+          "solver_evidence": {
+            "optimization": {
+              "kernel_distance": 3,
+              "kind": "CyclicTrace",
+              "m": 2
+            }
+          },
+          "verification_method": "ExactF2ActionGeneratorsAndCycleBasis"
+        },
+        "identity": {
+          "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+          "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+          "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+          "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+          "solver_run_id": "legacy-cyclic-trace",
+          "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+        },
+        "input_data": {
+          "A": {
+            "ncols": 3,
+            "nrows": 0,
+            "rows": []
+          },
+          "D": {
+            "ncols": 1,
+            "nrows": 3,
+            "rows": [
+              [
+                1
+              ],
+              [
+                1
+              ],
+              [
+                1
+              ]
+            ]
+          },
+          "arithmetic": "ExactRational",
+          "basis_current": [
+            "x",
+            "y",
+            "z"
+          ],
+          "basis_next": [
+            "b"
+          ],
+          "basis_previous": [],
+          "k": 1,
+          "source_metadata": {
+            "source": "T-B1 m=2, fixture defined in generator"
+          },
+          "unit": null,
+          "weight_semantics": "abstract_positive_cost",
+          "weights": [
+            {
+              "denominator": 1,
+              "numerator": 1,
+              "type": "rational"
+            },
+            {
+              "denominator": 1,
+              "numerator": 1,
+              "type": "rational"
+            },
+            {
+              "denominator": 1,
+              "numerator": 1,
+              "type": "rational"
+            }
+          ]
+        },
+        "projection": {
+          "complement": false,
+          "kind": "CyclicTrace",
+          "m": 2,
+          "version": 1
+        },
+        "provenance": {
+          "arithmetic_mode": "ExactRational",
+          "backend": "python-structured-reference",
+          "backend_version": "0.0.2.dev0",
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+          "solver": "StructuredFamilySolver",
+          "solver_config_id": "solver-config:ab4077364cc6e20ed26fa20c188524f5fcd06e8aeb5a5d4e0c152c741c028704",
+          "solver_version": "0.0.2.dev0",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+          "tie_break_policy": "StableBasisOrder"
+        },
+        "query_results": {
+          "betti": {
+            "details": {},
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "Computed",
+            "value": 2
+          },
+          "kernel_basis": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "minimum_class_mass": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "selected_mass:9995179b267ee1c40c900fe8212f5f64cf8a8daf9c69732ddb20826a56ff25ca": {
+            "details": {
+              "arguments": [
+                [
+                  1,
+                  0,
+                  0
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "query": "selected_mass"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "Computed",
+            "value": {
+              "$fraction": [
+                2,
+                1
+              ]
+            }
+          },
+          "stretch": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "NotComputed",
+            "value": null
+          }
+        },
+        "schema_version": 1,
+        "solver": {
+          "arithmetic_policy": "ExactRational",
+          "certificate_level": "ExactOptimal",
+          "diagnostics": [],
+          "lower_bound": {
+            "$fraction": [
+              2,
+              1
+            ]
+          },
+          "method": "StructuredFamilySolver",
+          "objective": {
+            "details": {
+              "witness": [
+                1,
+                0,
+                0
+              ]
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:7cd0967ad798e74cdabc7685a5bf04ae5224dcddc884524e0718b46ae98f87f6",
+              "input_id": "input:fb0a0fcb2efa99add10572068f7229805b7ffa1591445a933d2c9dfb82b06040",
+              "operator_id": "operator:3b604f5f67e54cefb5d118a6e3ccb18386c45e72b57fcaa9ed17c1fc5ee7e78e",
+              "projection_id": "projection:87665574f509644cbae327c854cc82f8d0c7f429c5241bca5ca479f1d05828ff",
+              "solver_run_id": "legacy-cyclic-trace",
+              "weight_id": "weight:783c0ad55ed054d42b3f32360ca02a43f8413833d8c3b64ea2bcefb5a1dcea64"
+            },
+            "state": "Computed",
+            "value": {
+              "$mapping": {
+                "$fraction": [
+                  2,
+                  1
+                ]
+              }
+            }
+          },
+          "optimality_gap": {
+            "absolute": {
+              "$fraction": [
+                0,
+                1
+              ]
+            },
+            "relative": {
+              "$fraction": [
+                0,
+                1
+              ]
+            }
+          },
+          "resource_usage": {
+            "limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "states": 3,
+            "wall_time": 0.0
+          },
+          "solver_config": {
+            "arithmetic_policy": "ExactRational",
+            "deterministic": true,
+            "input_structure": "CyclicTrace",
+            "matrix_free_output": true,
+            "method": "StructuredFamilySolver",
+            "objective": "MinimumStretch",
+            "requested_certificate_level": "ExactOptimal",
+            "resource_limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "solver_options": {},
+            "tie_break_policy": "StableBasisOrder"
+          },
+          "solver_config_id": "solver-config:ab4077364cc6e20ed26fa20c188524f5fcd06e8aeb5a5d4e0c152c741c028704",
+          "solver_run_id": "legacy-cyclic-trace",
+          "status": "Solved",
+          "tie_break_policy": "StableBasisOrder",
+          "upper_bound": {
+            "$fraction": [
+              2,
+              1
+            ]
+          }
+        },
+        "status": "Ready"
+      }
+    },
+    "empty_domain": {
+      "kind": "operator",
+      "record_sha256": "9490c8862a6458dc7fa396932014bdd7f4e2756cdad4f2e08f8b32ffcac54740",
+      "wire": {
+        "certificate": {
+          "a_p_zero": true,
+          "bounds_verified": false,
+          "cycle_homology_preservation": true,
+          "exact_arithmetic": true,
+          "l_idempotent": true,
+          "objective_replayed": false,
+          "optimality_verified": false,
+          "p_d_zero": true,
+          "p_idempotent": true,
+          "solver_evidence": {
+            "a_g_a": true,
+            "d_u_d": true,
+            "exact_arithmetic": true,
+            "verification_method": "GeneralizedInverseConstruction"
+          },
+          "verification_method": "ExactF2MatrixAndCycleBasis"
+        },
+        "identity": {
+          "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+          "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+          "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+          "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+          "solver_run_id": "legacy-empty",
+          "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+        },
+        "input_data": {
+          "A": {
+            "ncols": 0,
+            "nrows": 0,
+            "rows": []
+          },
+          "D": {
+            "ncols": 0,
+            "nrows": 0,
+            "rows": []
+          },
+          "arithmetic": "ExactRational",
+          "basis_current": [],
+          "basis_next": [],
+          "basis_previous": [],
+          "k": 1,
+          "source_metadata": {},
+          "unit": null,
+          "weight_semantics": "abstract_positive_cost",
+          "weights": []
+        },
+        "projection": {
+          "ncols": 0,
+          "nrows": 0,
+          "rows": []
+        },
+        "provenance": {
+          "arithmetic_mode": "ExactRational",
+          "backend": "python-dense-reference",
+          "backend_version": "0.0.2.dev0",
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+          "solver": "FeasibleSolver",
+          "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+          "solver_version": "0.0.2.dev0",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+          "tie_break_policy": "StableBasisOrder"
+        },
+        "query_results": {
+          "betti": {
+            "details": {},
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "Computed",
+            "value": 0
+          },
+          "betti:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945": {
+            "details": {
+              "arguments": [],
+              "arithmetic_policy": "ExactRational",
+              "query": "betti"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "Computed",
+            "value": 0
+          },
+          "kernel_basis": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "minimum_class_mass": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "stretch": {
+            "details": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "CertifiedUpperBound",
+              "current_objective_lower_bound": {
+                "$fraction": [
+                  0,
+                  1
+                ]
+              },
+              "domain_empty": true,
+              "lower_bound_on_optimum": null,
+              "method": "NonzeroCycleEnumeration",
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 0,
+                "wall_time": 0.0
+              },
+              "total_states": 0,
+              "upper_bound_on_optimum": {
+                "$fraction": [
+                  0,
+                  1
+                ]
+              },
+              "witness": null
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "EmptyDomain",
+            "value": {
+              "$fraction": [
+                0,
+                1
+              ]
+            }
+          }
+        },
+        "schema_version": 1,
+        "solver": {
+          "arithmetic_policy": "ExactRational",
+          "certificate_level": "Feasible",
+          "diagnostics": [],
+          "lower_bound": null,
+          "method": "FeasibleSolver",
+          "objective": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:e2cb7b5009fd870e2be586b8581dd575acd22c7dc24ad16565a472f7ba082a47",
+              "input_id": "input:94b31b83a26bbec2d96ba4e89927121c12c0627d9edac8bf65162864defe6e25",
+              "operator_id": "operator:b87df383c25caf8ef740e6e59abea6299c1b4ac30088c203eaeabc726d55e243",
+              "projection_id": "projection:e002a3b0ee2c4ed2e3ea4721020b9a4dee42a777b203dad3d49595138781c46f",
+              "solver_run_id": "legacy-empty",
+              "weight_id": "weight:34f4ed7e5bb00c3f4f42878e16e36d50fe18fc1ee0f7f2643ca80f533b5a1d8f"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "optimality_gap": null,
+          "resource_usage": {
+            "limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "states": 5,
+            "wall_time": 0.0
+          },
+          "solver_config": {
+            "arithmetic_policy": "ExactRational",
+            "deterministic": true,
+            "input_structure": "GeneralChainWindow",
+            "matrix_free_output": false,
+            "method": "FeasibleSolver",
+            "objective": "MinimumStretch",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "solver_options": {},
+            "tie_break_policy": "StableBasisOrder"
+          },
+          "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+          "solver_run_id": "legacy-empty",
+          "status": "FeasibleOnly",
+          "tie_break_policy": "StableBasisOrder",
+          "upper_bound": null
+        },
+        "status": "Ready"
+      }
+    },
+    "family_partial": {
+      "kind": "family",
+      "record_sha256": "1e422416d957214f2261d09b2425962d17766eef43e1cb0890813ee8046c5944",
+      "wire": {
+        "barcode_readout": {
+          "details": {
+            "failed_interval": [
+              0,
+              1
+            ],
+            "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+            "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e",
+            "oracle_used_for_result": false,
+            "rank_invariant_source": "operator_family",
+            "source_identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "source_scale": 0,
+            "source_stage": 0,
+            "target_identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "target_scale": 1,
+            "target_stage": 2
+          },
+          "exact": null,
+          "identity": {
+            "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+            "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+            "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+            "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+            "solver_run_id": "legacy-family-stage-2",
+            "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+          },
+          "state": "ResourceExhausted",
+          "value": null
+        },
+        "duplicate_policy": "OrderedStages",
+        "identity": {
+          "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+          "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e"
+        },
+        "provenance": {
+          "oracle_used_for_result": false,
+          "rank_invariant_source": "operator_family",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88"
+        },
+        "rank_readout": {
+          "0:0": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 0,
+              "target_stage": 0
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 2
+          },
+          "0:1": {
+            "details": {
+              "failed_stages": [
+                [
+                  1,
+                  "ResourceExhausted"
+                ]
+              ],
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": null,
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": null,
+            "identity": null,
+            "state": "ResourceExhausted",
+            "value": null
+          }
+        },
+        "scales": [
+          0,
+          1,
+          1
+        ],
+        "schema_version": 1,
+        "stage_results": [
+          {
+            "certificate": {
+              "a_p_zero": true,
+              "bounds_verified": false,
+              "cycle_homology_preservation": true,
+              "exact_arithmetic": true,
+              "l_idempotent": true,
+              "objective_replayed": false,
+              "optimality_verified": false,
+              "p_d_zero": true,
+              "p_idempotent": true,
+              "solver_evidence": {
+                "a_g_a": true,
+                "d_u_d": true,
+                "exact_arithmetic": true,
+                "verification_method": "GeneralizedInverseConstruction"
+              },
+              "verification_method": "ExactF2MatrixAndCycleBasis"
+            },
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 0,
+                "nrows": 2,
+                "rows": [
+                  [],
+                  []
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": {
+              "ncols": 2,
+              "nrows": 2,
+              "rows": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ]
+            },
+            "provenance": {
+              "arithmetic_mode": "ExactRational",
+              "backend": "python-dense-reference",
+              "backend_version": "0.0.2.dev0",
+              "created_at": "2026-10-02T00:00:00+00:00",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+              "solver": "FeasibleSolver",
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_version": "0.0.2.dev0",
+              "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+              "tie_break_policy": "StableBasisOrder"
+            },
+            "query_results": {
+              "betti": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": 2
+              },
+              "kernel_basis": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "minimum_class_mass": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "stretch": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              }
+            },
+            "schema_version": 1,
+            "solver": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "Feasible",
+              "diagnostics": [],
+              "lower_bound": null,
+              "method": "FeasibleSolver",
+              "objective": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 7,
+                "wall_time": 0.0
+              },
+              "solver_config": {
+                "arithmetic_policy": "ExactRational",
+                "deterministic": true,
+                "input_structure": "GeneralChainWindow",
+                "matrix_free_output": false,
+                "method": "FeasibleSolver",
+                "objective": "MinimumStretch",
+                "requested_certificate_level": "Feasible",
+                "resource_limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "solver_options": {},
+                "tie_break_policy": "StableBasisOrder"
+              },
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_run_id": "legacy-family-stage-0",
+              "status": "FeasibleOnly",
+              "tie_break_policy": "StableBasisOrder",
+              "upper_bound": null
+            },
+            "status": "Ready"
+          },
+          {
+            "certificate": {},
+            "identity": null,
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    1
+                  ]
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [
+                "e"
+              ],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": null,
+            "provenance": {
+              "diagnostic": "synthetic state budget",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746"
+            },
+            "query_results": {},
+            "schema_version": 1,
+            "solver": {
+              "certificate_level": null,
+              "status": "ResourceExhausted"
+            },
+            "status": "ResourceExhausted"
+          },
+          {
+            "certificate": {
+              "a_p_zero": true,
+              "bounds_verified": false,
+              "cycle_homology_preservation": true,
+              "exact_arithmetic": true,
+              "l_idempotent": true,
+              "objective_replayed": false,
+              "optimality_verified": false,
+              "p_d_zero": true,
+              "p_idempotent": true,
+              "solver_evidence": {
+                "a_g_a": true,
+                "d_u_d": true,
+                "exact_arithmetic": true,
+                "verification_method": "GeneralizedInverseConstruction"
+              },
+              "verification_method": "ExactF2MatrixAndCycleBasis"
+            },
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    1
+                  ]
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [
+                "e"
+              ],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": {
+              "ncols": 2,
+              "nrows": 2,
+              "rows": [
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            },
+            "provenance": {
+              "arithmetic_mode": "ExactRational",
+              "backend": "python-dense-reference",
+              "backend_version": "0.0.2.dev0",
+              "created_at": "2026-10-02T00:00:00+00:00",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+              "solver": "FeasibleSolver",
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_version": "0.0.2.dev0",
+              "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+              "tie_break_policy": "StableBasisOrder"
+            },
+            "query_results": {
+              "betti": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": 1
+              },
+              "kernel_basis": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": [
+                  [
+                    1,
+                    0
+                  ]
+                ]
+              },
+              "minimum_class_mass": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "stretch": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              }
+            },
+            "schema_version": 1,
+            "solver": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "Feasible",
+              "diagnostics": [],
+              "lower_bound": null,
+              "method": "FeasibleSolver",
+              "objective": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 7,
+                "wall_time": 0.0
+              },
+              "solver_config": {
+                "arithmetic_policy": "ExactRational",
+                "deterministic": true,
+                "input_structure": "GeneralChainWindow",
+                "matrix_free_output": false,
+                "method": "FeasibleSolver",
+                "objective": "MinimumStretch",
+                "requested_certificate_level": "Feasible",
+                "resource_limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "solver_options": {},
+                "tie_break_policy": "StableBasisOrder"
+              },
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_run_id": "legacy-family-stage-2",
+              "status": "FeasibleOnly",
+              "tie_break_policy": "StableBasisOrder",
+              "upper_bound": null
+            },
+            "status": "Ready"
+          }
+        ],
+        "status": "Partial",
+        "terminal_extension": "Constant",
+        "tracking_readout": {},
+        "transports": {
+          "0:0": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 0,
+              "target_stage": 0
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "rank": 2,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ]
+            }
+          },
+          "0:1": {
+            "details": {
+              "failed_stages": [
+                [
+                  1,
+                  "ResourceExhausted"
+                ]
+              ],
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:158d84e45dca6ba34ce4b82c0e725e6946c34c5597002dc22c3f3ca6da1cd08e",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": null,
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": null,
+            "identity": null,
+            "state": "ResourceExhausted",
+            "value": null
+          }
+        },
+        "weight_policy": "Inherited",
+        "windows": [
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 0,
+              "nrows": 2,
+              "rows": [
+                [],
+                []
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          },
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 1,
+              "nrows": 2,
+              "rows": [
+                [
+                  1
+                ],
+                [
+                  1
+                ]
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [
+              "e"
+            ],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          },
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 1,
+              "nrows": 2,
+              "rows": [
+                [
+                  1
+                ],
+                [
+                  1
+                ]
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [
+              "e"
+            ],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "family_repeated_scale": {
+      "kind": "family",
+      "record_sha256": "54756a54b40147a2a5c3396c12ac3a2f94634179be31d5e330f2285cd5be81c6",
+      "wire": {
+        "barcode_readout": {
+          "details": {
+            "duplicate_policy": "OrderedStages",
+            "endpoint_convention": "half-open stage indices",
+            "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+            "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+            "oracle_used_for_result": false,
+            "rank_invariant_source": "operator_family",
+            "source_identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "source_scale": 0,
+            "source_stage": 0,
+            "target_identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "target_scale": 1,
+            "target_stage": 2,
+            "terminal_extension": "Constant"
+          },
+          "exact": true,
+          "identity": {
+            "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+            "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+            "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+            "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+            "solver_run_id": "legacy-family-stage-2",
+            "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+          },
+          "state": "Computed",
+          "value": [
+            {
+              "birth_scale": 0,
+              "birth_stage": 0,
+              "death_scale": 1,
+              "death_stage": 1,
+              "essential": false,
+              "multiplicity": 1,
+              "zero_scale_length": false
+            },
+            {
+              "birth_scale": 0,
+              "birth_stage": 0,
+              "death_scale": null,
+              "death_stage": null,
+              "essential": true,
+              "multiplicity": 1,
+              "zero_scale_length": false
+            }
+          ]
+        },
+        "duplicate_policy": "OrderedStages",
+        "identity": {
+          "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+          "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6"
+        },
+        "provenance": {
+          "oracle_used_for_result": false,
+          "rank_invariant_source": "operator_family",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88"
+        },
+        "rank_readout": {
+          "0:0": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 0,
+              "target_stage": 0
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 2
+          },
+          "0:1": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-1",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "0:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "1:1": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 1,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-1",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "1:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 1,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "2:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 2,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": 1
+          }
+        },
+        "scales": [
+          0,
+          1,
+          1
+        ],
+        "schema_version": 1,
+        "stage_results": [
+          {
+            "certificate": {
+              "a_p_zero": true,
+              "bounds_verified": false,
+              "cycle_homology_preservation": true,
+              "exact_arithmetic": true,
+              "l_idempotent": true,
+              "objective_replayed": false,
+              "optimality_verified": false,
+              "p_d_zero": true,
+              "p_idempotent": true,
+              "solver_evidence": {
+                "a_g_a": true,
+                "d_u_d": true,
+                "exact_arithmetic": true,
+                "verification_method": "GeneralizedInverseConstruction"
+              },
+              "verification_method": "ExactF2MatrixAndCycleBasis"
+            },
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 0,
+                "nrows": 2,
+                "rows": [
+                  [],
+                  []
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": {
+              "ncols": 2,
+              "nrows": 2,
+              "rows": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ]
+            },
+            "provenance": {
+              "arithmetic_mode": "ExactRational",
+              "backend": "python-dense-reference",
+              "backend_version": "0.0.2.dev0",
+              "created_at": "2026-10-02T00:00:00+00:00",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+              "solver": "FeasibleSolver",
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_version": "0.0.2.dev0",
+              "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+              "tie_break_policy": "StableBasisOrder"
+            },
+            "query_results": {
+              "betti": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": 2
+              },
+              "kernel_basis": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "minimum_class_mass": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "stretch": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              }
+            },
+            "schema_version": 1,
+            "solver": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "Feasible",
+              "diagnostics": [],
+              "lower_bound": null,
+              "method": "FeasibleSolver",
+              "objective": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                  "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                  "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                  "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                  "solver_run_id": "legacy-family-stage-0",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 7,
+                "wall_time": 0.0
+              },
+              "solver_config": {
+                "arithmetic_policy": "ExactRational",
+                "deterministic": true,
+                "input_structure": "GeneralChainWindow",
+                "matrix_free_output": false,
+                "method": "FeasibleSolver",
+                "objective": "MinimumStretch",
+                "requested_certificate_level": "Feasible",
+                "resource_limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "solver_options": {},
+                "tie_break_policy": "StableBasisOrder"
+              },
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_run_id": "legacy-family-stage-0",
+              "status": "FeasibleOnly",
+              "tie_break_policy": "StableBasisOrder",
+              "upper_bound": null
+            },
+            "status": "Ready"
+          },
+          {
+            "certificate": {
+              "a_p_zero": true,
+              "bounds_verified": false,
+              "cycle_homology_preservation": true,
+              "exact_arithmetic": true,
+              "l_idempotent": true,
+              "objective_replayed": false,
+              "optimality_verified": false,
+              "p_d_zero": true,
+              "p_idempotent": true,
+              "solver_evidence": {
+                "a_g_a": true,
+                "d_u_d": true,
+                "exact_arithmetic": true,
+                "verification_method": "GeneralizedInverseConstruction"
+              },
+              "verification_method": "ExactF2MatrixAndCycleBasis"
+            },
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-1",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    1
+                  ]
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [
+                "e"
+              ],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": {
+              "ncols": 2,
+              "nrows": 2,
+              "rows": [
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            },
+            "provenance": {
+              "arithmetic_mode": "ExactRational",
+              "backend": "python-dense-reference",
+              "backend_version": "0.0.2.dev0",
+              "created_at": "2026-10-02T00:00:00+00:00",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+              "solver": "FeasibleSolver",
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_version": "0.0.2.dev0",
+              "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+              "tie_break_policy": "StableBasisOrder"
+            },
+            "query_results": {
+              "betti": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-1",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": 1
+              },
+              "kernel_basis": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-1",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": [
+                  [
+                    1,
+                    0
+                  ]
+                ]
+              },
+              "minimum_class_mass": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-1",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "stretch": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-1",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              }
+            },
+            "schema_version": 1,
+            "solver": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "Feasible",
+              "diagnostics": [],
+              "lower_bound": null,
+              "method": "FeasibleSolver",
+              "objective": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-1",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 7,
+                "wall_time": 0.0
+              },
+              "solver_config": {
+                "arithmetic_policy": "ExactRational",
+                "deterministic": true,
+                "input_structure": "GeneralChainWindow",
+                "matrix_free_output": false,
+                "method": "FeasibleSolver",
+                "objective": "MinimumStretch",
+                "requested_certificate_level": "Feasible",
+                "resource_limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "solver_options": {},
+                "tie_break_policy": "StableBasisOrder"
+              },
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_run_id": "legacy-family-stage-1",
+              "status": "FeasibleOnly",
+              "tie_break_policy": "StableBasisOrder",
+              "upper_bound": null
+            },
+            "status": "Ready"
+          },
+          {
+            "certificate": {
+              "a_p_zero": true,
+              "bounds_verified": false,
+              "cycle_homology_preservation": true,
+              "exact_arithmetic": true,
+              "l_idempotent": true,
+              "objective_replayed": false,
+              "optimality_verified": false,
+              "p_d_zero": true,
+              "p_idempotent": true,
+              "solver_evidence": {
+                "a_g_a": true,
+                "d_u_d": true,
+                "exact_arithmetic": true,
+                "verification_method": "GeneralizedInverseConstruction"
+              },
+              "verification_method": "ExactF2MatrixAndCycleBasis"
+            },
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "input_data": {
+              "A": {
+                "ncols": 2,
+                "nrows": 0,
+                "rows": []
+              },
+              "D": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    1
+                  ]
+                ]
+              },
+              "arithmetic": "ExactRational",
+              "basis_current": [
+                "a",
+                "b"
+              ],
+              "basis_next": [
+                "e"
+              ],
+              "basis_previous": [],
+              "k": 0,
+              "source_metadata": {},
+              "unit": null,
+              "weight_semantics": "abstract_positive_cost",
+              "weights": [
+                {
+                  "denominator": 1,
+                  "numerator": 10,
+                  "type": "rational"
+                },
+                {
+                  "denominator": 1,
+                  "numerator": 1,
+                  "type": "rational"
+                }
+              ]
+            },
+            "projection": {
+              "ncols": 2,
+              "nrows": 2,
+              "rows": [
+                [
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  0
+                ]
+              ]
+            },
+            "provenance": {
+              "arithmetic_mode": "ExactRational",
+              "backend": "python-dense-reference",
+              "backend_version": "0.0.2.dev0",
+              "created_at": "2026-10-02T00:00:00+00:00",
+              "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+              "solver": "FeasibleSolver",
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_version": "0.0.2.dev0",
+              "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+              "tie_break_policy": "StableBasisOrder"
+            },
+            "query_results": {
+              "betti": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": 1
+              },
+              "kernel_basis": {
+                "details": {},
+                "exact": true,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "Computed",
+                "value": [
+                  [
+                    1,
+                    0
+                  ]
+                ]
+              },
+              "minimum_class_mass": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "stretch": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              }
+            },
+            "schema_version": 1,
+            "solver": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "Feasible",
+              "diagnostics": [],
+              "lower_bound": null,
+              "method": "FeasibleSolver",
+              "objective": {
+                "details": {},
+                "exact": null,
+                "identity": {
+                  "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                  "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                  "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                  "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                  "solver_run_id": "legacy-family-stage-2",
+                  "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+                },
+                "state": "NotComputed",
+                "value": null
+              },
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 7,
+                "wall_time": 0.0
+              },
+              "solver_config": {
+                "arithmetic_policy": "ExactRational",
+                "deterministic": true,
+                "input_structure": "GeneralChainWindow",
+                "matrix_free_output": false,
+                "method": "FeasibleSolver",
+                "objective": "MinimumStretch",
+                "requested_certificate_level": "Feasible",
+                "resource_limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "solver_options": {},
+                "tie_break_policy": "StableBasisOrder"
+              },
+              "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+              "solver_run_id": "legacy-family-stage-2",
+              "status": "FeasibleOnly",
+              "tie_break_policy": "StableBasisOrder",
+              "upper_bound": null
+            },
+            "status": "Ready"
+          }
+        ],
+        "status": "Ready",
+        "terminal_extension": "Constant",
+        "tracking_readout": {
+          "track_class:4d5f6eb3cc416ece1ff0a12b4315572f046e9c0874346b9a5ac085d10b265147": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  1
+                ]
+              ],
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "query": "track_class",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": [
+              1,
+              0
+            ]
+          },
+          "track_mass:4d5f6eb3cc416ece1ff0a12b4315572f046e9c0874346b9a5ac085d10b265147": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  1
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "coordinate_labels": [
+                "a",
+                "b"
+              ],
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "query": "track_mass",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2,
+              "weight_policy": "Inherited"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "$fraction": [
+                10,
+                1
+              ]
+            }
+          },
+          "track_support:4d5f6eb3cc416ece1ff0a12b4315572f046e9c0874346b9a5ac085d10b265147": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  1
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "coordinate_labels": [
+                "a",
+                "b"
+              ],
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "query": "track_support",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2,
+              "weight_policy": "Inherited"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": [
+              0
+            ]
+          }
+        },
+        "transports": {
+          "0:0": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 0,
+              "target_stage": 0
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+              "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+              "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+              "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+              "solver_run_id": "legacy-family-stage-0",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "rank": 2,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ]
+            }
+          },
+          "0:1": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-1",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 2,
+                "nrows": 1,
+                "rows": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              "rank": 1,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          },
+          "0:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:5ce239716f48194987e2913a23a13a1791f23122f32e8ae5d0b397c5979cc7b9",
+                "input_id": "input:ae3a86f9654f7fbba3ce3f6e88dac2634347e29ba1bc31221cc333a1a2db4f85",
+                "operator_id": "operator:7f6159ed1db718960c567ad94615a64a14616a26b0a3b8c4146a3ec2e4e8d262",
+                "projection_id": "projection:38ef4681d29e01e9f0eadb836ebab09f727a20dcd76e0312a2e044a4a5740033",
+                "solver_run_id": "legacy-family-stage-0",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 0,
+              "source_stage": 0,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 2,
+                "nrows": 1,
+                "rows": [
+                  [
+                    1,
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 2,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1,
+                    1
+                  ],
+                  [
+                    0,
+                    0
+                  ]
+                ]
+              },
+              "rank": 1,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          },
+          "1:1": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 1,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 1
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-1",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 1,
+                "nrows": 1,
+                "rows": [
+                  [
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    0
+                  ]
+                ]
+              },
+              "rank": 1,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          },
+          "1:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-1",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 1,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 1,
+                "nrows": 1,
+                "rows": [
+                  [
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    0
+                  ]
+                ]
+              },
+              "rank": 1,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          },
+          "2:2": {
+            "details": {
+              "filtration_id": "filtration:3d94df52f69e7a3b8d52464e552b2d1f98694520c848a44f9fe6cee9ef985fe8",
+              "operator_family_id": "family:f4d492e5323dcd0d2613cd2c29d2787735a82e95132c10ef33e13e8e9d0d0db6",
+              "source_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "source_scale": 1,
+              "source_stage": 2,
+              "target_identity": {
+                "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+                "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+                "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+                "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+                "solver_run_id": "legacy-family-stage-2",
+                "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+              },
+              "target_scale": 1,
+              "target_stage": 2
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:0360fc68dd3e34e25dd63e87117e33ca3cea7f21af372243b8b65ac92a8c1f49",
+              "input_id": "input:8dfab3e89ac565e3f2302ce9b2c0e660b2468061aac2485b25460b45c1740619",
+              "operator_id": "operator:14eaa82c9a804d36de28dd1363e36e772ea6672699b45b05c9217332b6498e55",
+              "projection_id": "projection:4be9c3361e86c5f05d78762722e812754166749bf6c2d10b4b8d397c654818b0",
+              "solver_run_id": "legacy-family-stage-2",
+              "weight_id": "weight:5b48403d932f16fc12230a1f568780f5efcac64fa8c5eef35c7ee8089fb1c4f8"
+            },
+            "state": "Computed",
+            "value": {
+              "action": {
+                "ncols": 1,
+                "nrows": 1,
+                "rows": [
+                  [
+                    1
+                  ]
+                ]
+              },
+              "chain_action": {
+                "ncols": 1,
+                "nrows": 2,
+                "rows": [
+                  [
+                    1
+                  ],
+                  [
+                    0
+                  ]
+                ]
+              },
+              "rank": 1,
+              "source_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ],
+              "target_kernel_basis": [
+                [
+                  1,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        "weight_policy": "Inherited",
+        "windows": [
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 0,
+              "nrows": 2,
+              "rows": [
+                [],
+                []
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          },
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 1,
+              "nrows": 2,
+              "rows": [
+                [
+                  1
+                ],
+                [
+                  1
+                ]
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [
+              "e"
+            ],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          },
+          {
+            "A": {
+              "ncols": 2,
+              "nrows": 0,
+              "rows": []
+            },
+            "D": {
+              "ncols": 1,
+              "nrows": 2,
+              "rows": [
+                [
+                  1
+                ],
+                [
+                  1
+                ]
+              ]
+            },
+            "arithmetic": "ExactRational",
+            "basis_current": [
+              "a",
+              "b"
+            ],
+            "basis_next": [
+              "e"
+            ],
+            "basis_previous": [],
+            "k": 0,
+            "source_metadata": {},
+            "unit": null,
+            "weight_semantics": "abstract_positive_cost",
+            "weights": [
+              {
+                "denominator": 1,
+                "numerator": 10,
+                "type": "rational"
+              },
+              {
+                "denominator": 1,
+                "numerator": 1,
+                "type": "rational"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "matrix_certified_queried": {
+      "kind": "operator",
+      "record_sha256": "a70f2421758be4180c0a66b4fd62ae7eddc484a7092a6ae4397149158d1fe011",
+      "wire": {
+        "certificate": {
+          "a_p_zero": true,
+          "bounds_verified": true,
+          "cycle_homology_preservation": true,
+          "exact_arithmetic": true,
+          "l_idempotent": true,
+          "objective_replayed": true,
+          "optimality_verified": true,
+          "optimization": {
+            "candidate_count": 2,
+            "cycle_retraction": {
+              "ncols": 3,
+              "nrows": 3,
+              "rows": [
+                [
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            },
+            "kind": "ExhaustiveSearch",
+            "nonzero_cycles": 3,
+            "tie_break_complete": true
+          },
+          "p_d_zero": true,
+          "p_idempotent": true,
+          "solver_evidence": {
+            "optimization": {
+              "candidate_count": 2,
+              "cycle_retraction": {
+                "ncols": 3,
+                "nrows": 3,
+                "rows": [
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    1
+                  ]
+                ]
+              },
+              "kind": "ExhaustiveSearch",
+              "nonzero_cycles": 3,
+              "tie_break_complete": true
+            }
+          },
+          "verification_method": "ExactF2MatrixAndCycleBasis"
+        },
+        "identity": {
+          "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+          "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+          "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+          "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+          "solver_run_id": "legacy-matrix-certified",
+          "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+        },
+        "input_data": {
+          "A": {
+            "ncols": 3,
+            "nrows": 1,
+            "rows": [
+              [
+                1,
+                1,
+                0
+              ]
+            ]
+          },
+          "D": {
+            "ncols": 1,
+            "nrows": 3,
+            "rows": [
+              [
+                1
+              ],
+              [
+                1
+              ],
+              [
+                0
+              ]
+            ]
+          },
+          "arithmetic": "ExactRational",
+          "basis_current": [
+            "a",
+            "b",
+            "c"
+          ],
+          "basis_next": [
+            "f"
+          ],
+          "basis_previous": [
+            "v"
+          ],
+          "k": 1,
+          "source_metadata": {
+            "source": "hand-derived S4-08 compatibility window"
+          },
+          "unit": null,
+          "weight_semantics": "abstract_positive_cost",
+          "weights": [
+            {
+              "denominator": 3,
+              "numerator": 1,
+              "type": "rational"
+            },
+            {
+              "denominator": 7,
+              "numerator": 2,
+              "type": "rational"
+            },
+            {
+              "denominator": 5,
+              "numerator": 7,
+              "type": "rational"
+            }
+          ]
+        },
+        "projection": {
+          "ncols": 3,
+          "nrows": 3,
+          "rows": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "provenance": {
+          "arithmetic_mode": "ExactRational",
+          "backend": "python-dense-reference",
+          "backend_version": "0.0.2.dev0",
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+          "solver": "ExhaustiveExactSolver",
+          "solver_config_id": "solver-config:c2d1bc76fef452deeed11a26fc7c31362f3102b3fdcf7622a9347e59882342cc",
+          "solver_version": "0.0.2.dev0",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+          "tie_break_policy": "StableBasisOrder"
+        },
+        "query_results": {
+          "betti": {
+            "details": {},
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "betti:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945": {
+            "details": {
+              "arguments": [],
+              "arithmetic_policy": "ExactRational",
+              "query": "betti"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "class_distance:9c74b8193b03987358b83d8bc343daf236d39be75c3a43f4c4c67c3a1682d505": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  1,
+                  1
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "query": "class_distance"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": 0
+          },
+          "kernel_basis": {
+            "details": {},
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": [
+              [
+                0,
+                0,
+                1
+              ]
+            ]
+          },
+          "kernel_basis:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945": {
+            "details": {
+              "arguments": [],
+              "arithmetic_policy": "ExactRational",
+              "query": "kernel_basis"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": [
+              [
+                0,
+                0,
+                1
+              ]
+            ]
+          },
+          "minimum_class_mass": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "selected_mass:7cbf797444cc052926f6dd17990f417a61ee2340377d7e3f89ff1e66c895abb3": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "query": "selected_mass"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": {
+              "$fraction": [
+                7,
+                5
+              ]
+            }
+          },
+          "stretch": {
+            "details": {
+              "arithmetic_policy": "ExactRational",
+              "certificate_level": "CertifiedUpperBound",
+              "current_objective_lower_bound": {
+                "$fraction": [
+                  1,
+                  1
+                ]
+              },
+              "domain_empty": false,
+              "lower_bound_on_optimum": null,
+              "method": "NonzeroCycleEnumeration",
+              "optimality_gap": null,
+              "resource_usage": {
+                "limits": {
+                  "matrix_entry_limit": 1000000,
+                  "state_limit": 100000,
+                  "wall_time_limit": 10.0
+                },
+                "states": 3,
+                "wall_time": 0.0
+              },
+              "total_states": 3,
+              "upper_bound_on_optimum": {
+                "$fraction": [
+                  1,
+                  1
+                ]
+              },
+              "witness": [
+                0,
+                0,
+                1
+              ]
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": {
+              "$fraction": [
+                1,
+                1
+              ]
+            }
+          },
+          "support:7cbf797444cc052926f6dd17990f417a61ee2340377d7e3f89ff1e66c895abb3": {
+            "details": {
+              "arguments": [
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "arithmetic_policy": "ExactRational",
+              "query": "support"
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": [
+              2
+            ]
+          }
+        },
+        "schema_version": 1,
+        "solver": {
+          "arithmetic_policy": "ExactRational",
+          "certificate_level": "ExactOptimal",
+          "diagnostics": [],
+          "lower_bound": {
+            "$fraction": [
+              1,
+              1
+            ]
+          },
+          "method": "ExhaustiveExactSolver",
+          "objective": {
+            "details": {
+              "nonzero_cycles": 3,
+              "witness": [
+                0,
+                0,
+                1
+              ]
+            },
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-certified",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": {
+              "$mapping": {
+                "$fraction": [
+                  1,
+                  1
+                ]
+              }
+            }
+          },
+          "optimality_gap": {
+            "absolute": {
+              "$fraction": [
+                0,
+                1
+              ]
+            },
+            "relative": {
+              "$fraction": [
+                0,
+                1
+              ]
+            }
+          },
+          "resource_usage": {
+            "candidate_count": 2,
+            "candidates_visited": 2,
+            "limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "nonzero_cycle_inputs": 3,
+            "states": 21,
+            "tie_break_complete": true,
+            "wall_time": 0.0
+          },
+          "solver_config": {
+            "arithmetic_policy": "ExactRational",
+            "deterministic": true,
+            "input_structure": "GeneralChainWindow",
+            "matrix_free_output": false,
+            "method": "ExhaustiveExactSolver",
+            "objective": "MinimumStretch",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "solver_options": {},
+            "tie_break_policy": "StableBasisOrder"
+          },
+          "solver_config_id": "solver-config:c2d1bc76fef452deeed11a26fc7c31362f3102b3fdcf7622a9347e59882342cc",
+          "solver_run_id": "legacy-matrix-certified",
+          "status": "Solved",
+          "tie_break_policy": "StableBasisOrder",
+          "upper_bound": {
+            "$fraction": [
+              1,
+              1
+            ]
+          }
+        },
+        "status": "Ready"
+      }
+    },
+    "matrix_unqueried": {
+      "kind": "operator",
+      "record_sha256": "67b13b8347e46644b5ea4be565be1322ccd198d9274068078cbb301797968830",
+      "wire": {
+        "certificate": {
+          "a_p_zero": true,
+          "bounds_verified": false,
+          "cycle_homology_preservation": true,
+          "exact_arithmetic": true,
+          "l_idempotent": true,
+          "objective_replayed": false,
+          "optimality_verified": false,
+          "p_d_zero": true,
+          "p_idempotent": true,
+          "solver_evidence": {
+            "a_g_a": true,
+            "d_u_d": true,
+            "exact_arithmetic": true,
+            "verification_method": "GeneralizedInverseConstruction"
+          },
+          "verification_method": "ExactF2MatrixAndCycleBasis"
+        },
+        "identity": {
+          "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+          "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+          "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+          "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+          "solver_run_id": "legacy-matrix-unqueried",
+          "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+        },
+        "input_data": {
+          "A": {
+            "ncols": 3,
+            "nrows": 1,
+            "rows": [
+              [
+                1,
+                1,
+                0
+              ]
+            ]
+          },
+          "D": {
+            "ncols": 1,
+            "nrows": 3,
+            "rows": [
+              [
+                1
+              ],
+              [
+                1
+              ],
+              [
+                0
+              ]
+            ]
+          },
+          "arithmetic": "ExactRational",
+          "basis_current": [
+            "a",
+            "b",
+            "c"
+          ],
+          "basis_next": [
+            "f"
+          ],
+          "basis_previous": [
+            "v"
+          ],
+          "k": 1,
+          "source_metadata": {
+            "source": "hand-derived S4-08 compatibility window"
+          },
+          "unit": null,
+          "weight_semantics": "abstract_positive_cost",
+          "weights": [
+            {
+              "denominator": 3,
+              "numerator": 1,
+              "type": "rational"
+            },
+            {
+              "denominator": 7,
+              "numerator": 2,
+              "type": "rational"
+            },
+            {
+              "denominator": 5,
+              "numerator": 7,
+              "type": "rational"
+            }
+          ]
+        },
+        "projection": {
+          "ncols": 3,
+          "nrows": 3,
+          "rows": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "provenance": {
+          "arithmetic_mode": "ExactRational",
+          "backend": "python-dense-reference",
+          "backend_version": "0.0.2.dev0",
+          "created_at": "2026-10-02T00:00:00+00:00",
+          "repository_revision": "88f69661859fe7475705fb76589cf30674b63746",
+          "solver": "FeasibleSolver",
+          "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+          "solver_version": "0.0.2.dev0",
+          "theory_revision": "6143729669902ee875b211b58085e954c76cdf88",
+          "tie_break_policy": "StableBasisOrder"
+        },
+        "query_results": {
+          "betti": {
+            "details": {},
+            "exact": true,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-unqueried",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "Computed",
+            "value": 1
+          },
+          "kernel_basis": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-unqueried",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "minimum_class_mass": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-unqueried",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "stretch": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-unqueried",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "NotComputed",
+            "value": null
+          }
+        },
+        "schema_version": 1,
+        "solver": {
+          "arithmetic_policy": "ExactRational",
+          "certificate_level": "Feasible",
+          "diagnostics": [],
+          "lower_bound": null,
+          "method": "FeasibleSolver",
+          "objective": {
+            "details": {},
+            "exact": null,
+            "identity": {
+              "basis_id": "basis:ae29f1c161e004f7bf0094dbddb4c6b2c0ce8980857b4fa31a82e56750f401fd",
+              "input_id": "input:3bf0e67a5b2b3f29c99097edee5fb3c5c63774afdb7ff8aa0e27e2247aee7006",
+              "operator_id": "operator:0726cd279b66aea2cafdafccc4a5cbe4548610f7f39c708903ca00840d6616b3",
+              "projection_id": "projection:764cef028445d0c6e8c5aef3f3fc292857519ee135cd54a1f6ee2eec77654969",
+              "solver_run_id": "legacy-matrix-unqueried",
+              "weight_id": "weight:778b68f043c790fa8725516e82d2a9a1f08bf844837909c3f177601e12091b02"
+            },
+            "state": "NotComputed",
+            "value": null
+          },
+          "optimality_gap": null,
+          "resource_usage": {
+            "limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "states": 9,
+            "wall_time": 0.0
+          },
+          "solver_config": {
+            "arithmetic_policy": "ExactRational",
+            "deterministic": true,
+            "input_structure": "GeneralChainWindow",
+            "matrix_free_output": false,
+            "method": "FeasibleSolver",
+            "objective": "MinimumStretch",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {
+              "matrix_entry_limit": 1000000,
+              "state_limit": 100000,
+              "wall_time_limit": 10.0
+            },
+            "solver_options": {},
+            "tie_break_policy": "StableBasisOrder"
+          },
+          "solver_config_id": "solver-config:a64a2aacf97e4c6b8a16dffd38f141d370450a647f05e378aed32e72d6003617",
+          "solver_run_id": "legacy-matrix-unqueried",
+          "status": "FeasibleOnly",
+          "tie_break_policy": "StableBasisOrder",
+          "upper_bound": null
+        },
+        "status": "Ready"
+      }
+    },
+    "resource_failure": {
+      "kind": "operator",
+      "record_sha256": "e5d794bf58a0b6c639f47031dbc4ac9284cf3d26ba5ab04b5dda183f76f26696",
+      "wire": {
+        "certificate": {},
+        "identity": null,
+        "input_data": {
+          "A": {
+            "ncols": 3,
+            "nrows": 1,
+            "rows": [
+              [
+                1,
+                1,
+                0
+              ]
+            ]
+          },
+          "D": {
+            "ncols": 1,
+            "nrows": 3,
+            "rows": [
+              [
+                1
+              ],
+              [
+                1
+              ],
+              [
+                0
+              ]
+            ]
+          },
+          "arithmetic": "ExactRational",
+          "basis_current": [
+            "a",
+            "b",
+            "c"
+          ],
+          "basis_next": [
+            "f"
+          ],
+          "basis_previous": [
+            "v"
+          ],
+          "k": 1,
+          "source_metadata": {
+            "source": "hand-derived S4-08 compatibility window"
+          },
+          "unit": null,
+          "weight_semantics": "abstract_positive_cost",
+          "weights": [
+            {
+              "denominator": 3,
+              "numerator": 1,
+              "type": "rational"
+            },
+            {
+              "denominator": 7,
+              "numerator": 2,
+              "type": "rational"
+            },
+            {
+              "denominator": 5,
+              "numerator": 7,
+              "type": "rational"
+            }
+          ]
+        },
+        "projection": null,
+        "provenance": {
+          "diagnostic": "synthetic state budget",
+          "repository_revision": "88f69661859fe7475705fb76589cf30674b63746"
+        },
+        "query_results": {},
+        "schema_version": 1,
+        "solver": {
+          "certificate_level": null,
+          "status": "ResourceExhausted"
+        },
+        "status": "ResourceExhausted"
+      }
+    }
+  },
+  "source_files_sha256": {
+    "homology_operator/__init__.py": "5dfe0cffa19bfe96096494d82e0e0601f84a54ef4da269163cdc0fb0da03150e",
+    "homology_operator/algebra.py": "35917767f64e333c14f00e31a0b1443b74a55f797041738b8a2be49059c69fd5",
+    "homology_operator/chain.py": "17f3fe3fbacd958d60e1e1fbfb38a45a418e143720591ed6e69999816e372ea1",
+    "homology_operator/family.py": "442d2d531e919ca1b94e4247d110f3ae9a6a43b0927cea1269487913d55c5742",
+    "homology_operator/native.py": "421ffd10d0cec3621145af1266fc01a2c22e019f619cde8ca4b82b837932eeaa",
+    "homology_operator/operator.py": "01b61b9f739d13a19b55d283c74582f589b064ab64e7469e77930cab14fdfa0d",
+    "homology_operator/result.py": "7092edf277bb68ab64bfc9814aaa4892a7fc73a51e504538ad489dd7157e9b09",
+    "homology_operator/solver.py": "e1698f9b9c9a1067f4fb8b6bf600c71532ccbfd89ae61d4628c3161382dca258",
+    "homology_operator/validation.py": "d040f7636e5e3e7241495ac91823191973c4a8e33600de96ba0465606fa62bfd"
+  },
+  "source_repository": "https://github.com/proffitteoy/homology-operator",
+  "source_revision": "88f69661859fe7475705fb76589cf30674b63746"
+}

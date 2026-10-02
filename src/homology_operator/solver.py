@@ -6,6 +6,7 @@ from fractions import Fraction
 from itertools import product
 from math import isfinite
 from time import perf_counter
+from threading import Event
 from uuid import uuid4
 
 from .algebra import Matrix, CyclicAction, CompactAction
@@ -32,12 +33,38 @@ class ResourceLimits:
             raise ValueError("wall_time_limit must be finite and nonnegative")
 
 
+class CancellationToken:
+    """One-shot cooperative cancellation; runtime state is never serialized."""
+
+    def __init__(self):
+        self._event = Event()
+        self._native = None
+
+    def cancel(self):
+        self._event.set()
+        if self._native is not None:
+            self._native.cancel()
+
+    def is_cancelled(self):
+        return self._event.is_set()
+
+    def _native_handle(self):
+        if self._native is None:
+            from .native import _extension
+
+            self._native = _extension().CancellationFlag()
+            if self.is_cancelled():
+                self._native.cancel()
+        return self._native
+
+
 class _Exhausted(Exception):
     pass
 
 
 class _Budget:
-    def __init__(self, limits, native=False):
+    def __init__(self, limits, native=False, cancellation=None):
+        self.cancellation = cancellation
         self.native = native
         self.native_detail = {}
         self.limits = limits
@@ -45,6 +72,8 @@ class _Budget:
         self.states = 0
 
     def step(self, count=1):
+        if self.cancellation is not None and self.cancellation.is_cancelled():
+            raise _Exhausted("cancelled")
         if self.states + count > self.limits.state_limit:
             raise _Exhausted("state_limit")
         if perf_counter() - self.started >= self.limits.wall_time_limit:
@@ -107,6 +136,9 @@ class ProjectionProblem:
     matrix_free_output: bool = False
     deterministic: bool = True
     solver_options: object = field(default_factory=dict)
+    cancellation: CancellationToken | None = field(
+        default=None, repr=False, compare=False
+    )
 
     def __post_init__(self):
         if isinstance(self.solver_options, Mapping):
@@ -202,6 +234,10 @@ def check_solver_request(problem, capabilities):
         or not isinstance(problem.window, ChainWindow)
         or not isinstance(problem.resource_limits, ResourceLimits)
         or not isinstance(problem.solver_options, Mapping)
+        or (
+            problem.cancellation is not None
+            and not isinstance(problem.cancellation, CancellationToken)
+        )
         or type(problem.matrix_free_output) is not bool
         or type(problem.deterministic) is not bool
         or any(
@@ -221,6 +257,8 @@ def check_solver_request(problem, capabilities):
         return "InvalidProblem", "invalid input or request fields"
     if not isinstance(capabilities, Mapping):
         return "Unavailable", "backend capabilities must be a mapping"
+    if problem.cancellation is not None and not capabilities.get("cancellation", False):
+        return "Unavailable", "cooperative cancellation is unsupported"
     checks = (
         (problem.objective, "objectives"),
         (problem.arithmetic_policy or problem.window.arithmetic, "arithmetic_policies"),
@@ -286,6 +324,7 @@ class FeasibleSolver:
                 "supported_betti_range": None,
                 "matrix_free_output": False,
                 "deterministic": True,
+                "cancellation": True,
                 "resource_limits": (
                     "state_limit",
                     "wall_time_limit",
@@ -301,7 +340,7 @@ class FeasibleSolver:
         if rejection is not None:
             return ProjectionSolution(rejection[0], run_id, diagnostics=(rejection[1],))
         window = problem.window
-        budget = _Budget(problem.resource_limits)
+        budget = _Budget(problem.resource_limits, cancellation=problem.cancellation)
         try:
             budget.step()
             # A conservative entry cap, not an assertion about peak process memory.
@@ -358,12 +397,22 @@ class FeasibleSolver:
             )
 
 
-def solve_projection(problem, backend="FeasibleSolver"):
+def solve_projection(problem, backend="FeasibleSolver", *, fallback=False):
     """Dispatch a declared solver and independently check any returned action."""
     from .validation import validate_solution
 
     method = backend if isinstance(backend, str) else type(backend).__name__
+    if type(fallback) is not bool:
+        return ProjectionSolution(
+            "InvalidProblem",
+            str(uuid4()),
+            diagnostics=("fallback must be boolean",),
+            method=method,
+        )
+    requested_method = method
     if isinstance(backend, str):
+        from .native import NativeFeasibleSolver, NativeFactorizedSolver
+
         constructors = {
             "FeasibleSolver": FeasibleSolver,
             "ExhaustiveExactSolver": ExhaustiveExactSolver,
@@ -374,6 +423,8 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "NativeGreedyCertifiedSolver": lambda: GreedyCertifiedSolver(native=True),
             "NativeRank2ExactSolver": lambda: Rank2ExactSolver(native=True),
             "NativeStructuredFamilySolver": lambda: StructuredFamilySolver(native=True),
+            "NativeFeasibleSolver": NativeFeasibleSolver,
+            "NativeFactorizedSolver": NativeFactorizedSolver,
         }
         if backend not in constructors:
             return ProjectionSolution(
@@ -395,12 +446,41 @@ def solve_projection(problem, backend="FeasibleSolver"):
     try:
         rejection = check_solver_request(problem, backend.capabilities())
         if rejection is not None:
-            return ProjectionSolution(
+            solution = ProjectionSolution(
                 rejection[0], str(uuid4()), diagnostics=(rejection[1],), method=method
             )
-        solution = backend.solve(problem)
+        else:
+            solution = backend.solve(problem)
         if not isinstance(solution, ProjectionSolution):
             raise ValueError("backend did not return ProjectionSolution")
+        fallback_methods = {
+            "NativeFeasibleSolver": "FeasibleSolver",
+            "NativeExhaustiveExactSolver": "ExhaustiveExactSolver",
+            "NativeGreedyCertifiedSolver": "GreedyCertifiedSolver",
+            "NativeRank2ExactSolver": "Rank2ExactSolver",
+            "NativeStructuredFamilySolver": "StructuredFamilySolver",
+        }
+        if (
+            fallback
+            and solution.status == "Unavailable"
+            and requested_method in fallback_methods
+        ):
+            original_reason = solution.diagnostics
+            selected = fallback_methods[requested_method]
+            solution = solve_projection(problem, selected)
+            return replace(
+                solution,
+                resource_usage={
+                    **solution.resource_usage,
+                    "backend_selection": {
+                        "requested": requested_method,
+                        "selected": selected,
+                        "fallback_reason": original_reason,
+                    },
+                },
+            )
+        if rejection is not None:
+            return solution
         # A wrapper may return its inner solver's method and configuration.
         method = solution.method
         expected_config = problem.solver_config(solution.method)
@@ -514,7 +594,7 @@ def _prepare(matrix, budget):
     budget.native_detail["prepared_decompositions"] = (
         budget.native_detail.get("prepared_decompositions", 0) + 1
     )
-    return PreparedMatrix(matrix)
+    return PreparedMatrix(matrix, cancellation=budget.cancellation)
 
 
 def _multiply(left, right, budget):
@@ -591,7 +671,7 @@ class ExhaustiveExactSolver:
             )
         window = problem.window
         config = problem.solver_config(method)
-        budget = _Budget(problem.resource_limits, self.native)
+        budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
         seed = FeasibleSolver().solve(
             replace(
                 problem,
@@ -846,7 +926,7 @@ class Rank2ExactSolver:
             )
         window = problem.window
         config = problem.solver_config(method)
-        budget = _Budget(problem.resource_limits, self.native)
+        budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
         try:
             cut = validate_rank2_structure(
                 window, problem.input_structure, problem.solver_options
@@ -1104,7 +1184,7 @@ class StructuredFamilySolver:
             )
         window = problem.window
         config = problem.solver_config(method)
-        budget = _Budget(problem.resource_limits, self.native)
+        budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
         failure = None
         try:
             budget.step()
@@ -1239,7 +1319,7 @@ class GreedyCertifiedSolver:
             )
         window = problem.window
         config = problem.solver_config(method)
-        budget = _Budget(problem.resource_limits, self.native)
+        budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
         seed = FeasibleSolver().solve(
             replace(problem, requested_certificate_level="Feasible")
         )

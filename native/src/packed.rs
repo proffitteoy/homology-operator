@@ -167,41 +167,54 @@ pub struct PreparedMatrix {
 #[pymethods]
 impl PreparedMatrix {
     #[new]
-    fn new(rows: Vec<Vec<u64>>, ncols: usize) -> PyResult<Self> {
-        let original = Packed::new(rows, ncols)?;
-        let mut reduced = original.clone();
-        let mut transform = Packed::zero(original.m, original.m)?;
-        for i in 0..original.m {
-            transform.set(i, i);
-        }
-        let mut pivots = Vec::new();
-        let mut nnz = reduced.nnz();
-        let mut peak_nnz = nnz;
-        for col in 0..original.n {
-            let pivot_row = pivots.len();
-            if let Some(selected) = (pivot_row..original.m).find(|&row| reduced.bit(row, col)) {
-                reduced.swap(pivot_row, selected);
-                transform.swap(pivot_row, selected);
-                for row in 0..original.m {
-                    if row != pivot_row && reduced.bit(row, col) {
-                        let (before, after) = reduced.xor_row(row, pivot_row);
-                        nnz = nnz - before + after;
-                        peak_nnz = peak_nnz.max(nnz);
-                        transform.xor_row(row, pivot_row);
+    #[pyo3(signature=(rows, ncols, cancellation=None))]
+    fn new(
+        py: Python<'_>,
+        rows: Vec<Vec<u64>>,
+        ncols: usize,
+        cancellation: Option<PyRef<'_, super::CancellationFlag>>,
+    ) -> PyResult<Self> {
+        let cancellation = cancellation.map(|flag| flag.state.clone());
+        py.detach(move || {
+            let original = Packed::new(rows, ncols)?;
+            let started = Instant::now();
+            checkpoint(0, None, started, None, &cancellation)?;
+            let mut reduced = original.clone();
+            let mut transform = Packed::zero(original.m, original.m)?;
+            for i in 0..original.m {
+                transform.set(i, i);
+            }
+            let mut pivots = Vec::new();
+            let mut nnz = reduced.nnz();
+            let mut peak_nnz = nnz;
+            for col in 0..original.n {
+                checkpoint(0, None, started, None, &cancellation)?;
+                let pivot_row = pivots.len();
+                if let Some(selected) = (pivot_row..original.m).find(|&row| reduced.bit(row, col)) {
+                    reduced.swap(pivot_row, selected);
+                    transform.swap(pivot_row, selected);
+                    for row in 0..original.m {
+                        checkpoint(0, None, started, None, &cancellation)?;
+                        if row != pivot_row && reduced.bit(row, col) {
+                            let (before, after) = reduced.xor_row(row, pivot_row);
+                            nnz = nnz - before + after;
+                            peak_nnz = peak_nnz.max(nnz);
+                            transform.xor_row(row, pivot_row);
+                        }
+                    }
+                    pivots.push(col);
+                    if pivots.len() == original.m {
+                        break;
                     }
                 }
-                pivots.push(col);
-                if pivots.len() == original.m {
-                    break;
-                }
             }
-        }
-        Ok(Self {
-            original,
-            reduced,
-            transform,
-            pivots,
-            peak_nnz,
+            Ok(Self {
+                original,
+                reduced,
+                transform,
+                pivots,
+                peak_nnz,
+            })
         })
     }
 
@@ -486,116 +499,134 @@ impl GeometryWorkspace {
         (self.batches, self.buffer_growths, self.projected.capacity())
     }
 
+    #[pyo3(signature=(vectors, pairs, cancellation=None, state_limit=None, wall=None))]
     fn query(
         &mut self,
+        py: Python<'_>,
         vectors: Vec<Vec<u64>>,
         pairs: Vec<(usize, usize)>,
+        cancellation: Option<PyRef<'_, super::CancellationFlag>>,
+        state_limit: Option<usize>,
+        wall: Option<f64>,
     ) -> PyResult<GeometryBatch> {
-        let started = Instant::now();
-        // Reject the entire batch before producing or retaining any new Pz.
-        for x in &vectors {
-            checked_vector(x, self.n)?;
-            self.boundary.apply_into(x, &mut self.cycle_image);
-            if self.cycle_image.iter().any(|&word| word != 0) {
+        check_wall(wall)?;
+        let cancellation = cancellation.map(|flag| flag.state.clone());
+        py.detach(move || {
+            let started = Instant::now();
+            // Reject the entire batch before producing or retaining any new Pz.
+            for x in &vectors {
+                checked_vector(x, self.n)?;
+                self.boundary.apply_into(x, &mut self.cycle_image);
+                if self.cycle_image.iter().any(|&word| word != 0) {
+                    return Err(PyValueError::new_err(
+                        "class queries require a cycle (Az=0)",
+                    ));
+                }
+            }
+            if pairs
+                .iter()
+                .any(|&(i, j)| i >= vectors.len() || j >= vectors.len())
+            {
                 return Err(PyValueError::new_err(
-                    "class queries require a cycle (Az=0)",
+                    "pairs must index two cycles in this batch",
                 ));
             }
-        }
-        if pairs
-            .iter()
-            .any(|&(i, j)| i >= vectors.len() || j >= vectors.len())
-        {
-            return Err(PyValueError::new_err(
-                "pairs must index two cycles in this batch",
-            ));
-        }
-        let words = self.n.div_ceil(64);
-        let size = words
-            .checked_mul(vectors.len())
-            .ok_or_else(|| PyMemoryError::new_err("geometry workspace size overflow"))?;
-        self.projected.clear();
-        if size > self.projected.capacity() {
-            self.projected
-                .try_reserve_exact(size)
-                .map_err(|_| PyMemoryError::new_err("geometry workspace allocation failed"))?;
-            self.buffer_growths += 1;
-        }
-        let mut supports = Vec::with_capacity(vectors.len());
-        let mut masses = Vec::with_capacity(vectors.len());
-        let mut representatives = Vec::with_capacity(vectors.len());
-        for x in &vectors {
-            match self.form.as_str() {
-                "Matrix" => self.factors[0].apply_into(x, &mut self.projected_one),
-                "HC" => {
-                    self.factors[1].apply_into(x, &mut self.coefficients);
-                    self.factors[0].apply_into(&self.coefficients, &mut self.projected_one);
-                }
-                _ => {
-                    self.factors[0].apply_into(x, &mut self.a_image);
-                    self.factors[2].apply_into(&self.a_image, &mut self.coefficients);
-                    self.retracted.copy_from_slice(x);
-                    for (i, &pivot) in self.pivots[0].iter().enumerate() {
-                        self.retracted[pivot / 64] ^=
-                            ((self.coefficients[i / 64] >> (i % 64)) & 1) << (pivot % 64);
+            let words = self.n.div_ceil(64);
+            checkpoint(0, None, started, wall, &cancellation)?;
+            let size = words
+                .checked_mul(vectors.len())
+                .ok_or_else(|| PyMemoryError::new_err("geometry workspace size overflow"))?;
+            self.projected.clear();
+            if size > self.projected.capacity() {
+                self.projected
+                    .try_reserve_exact(size)
+                    .map_err(|_| PyMemoryError::new_err("geometry workspace allocation failed"))?;
+                self.buffer_growths += 1;
+            }
+            let mut supports = Vec::with_capacity(vectors.len());
+            let mut masses = Vec::with_capacity(vectors.len());
+            let mut representatives = Vec::with_capacity(vectors.len());
+            for (used, x) in vectors.iter().enumerate() {
+                checkpoint(used, state_limit, started, wall, &cancellation)?;
+                match self.form.as_str() {
+                    "Matrix" => self.factors[0].apply_into(x, &mut self.projected_one),
+                    "HC" => {
+                        self.factors[1].apply_into(x, &mut self.coefficients);
+                        self.factors[0].apply_into(&self.coefficients, &mut self.projected_one);
                     }
-                    self.factors[3].apply_into(&self.retracted, &mut self.coefficients);
-                    self.boundary_coefficients.fill(0);
-                    for (i, &pivot) in self.pivots[1].iter().enumerate() {
-                        self.boundary_coefficients[pivot / 64] |=
-                            ((self.coefficients[i / 64] >> (i % 64)) & 1) << (pivot % 64);
-                    }
-                    self.factors[1]
-                        .apply_into(&self.boundary_coefficients, &mut self.projected_one);
-                    for (z, r) in self.projected_one.iter_mut().zip(&self.retracted) {
-                        *z ^= r;
+                    _ => {
+                        self.factors[0].apply_into(x, &mut self.a_image);
+                        self.factors[2].apply_into(&self.a_image, &mut self.coefficients);
+                        self.retracted.copy_from_slice(x);
+                        for (i, &pivot) in self.pivots[0].iter().enumerate() {
+                            self.retracted[pivot / 64] ^=
+                                ((self.coefficients[i / 64] >> (i % 64)) & 1) << (pivot % 64);
+                        }
+                        self.factors[3].apply_into(&self.retracted, &mut self.coefficients);
+                        self.boundary_coefficients.fill(0);
+                        for (i, &pivot) in self.pivots[1].iter().enumerate() {
+                            self.boundary_coefficients[pivot / 64] |=
+                                ((self.coefficients[i / 64] >> (i % 64)) & 1) << (pivot % 64);
+                        }
+                        self.factors[1]
+                            .apply_into(&self.boundary_coefficients, &mut self.projected_one);
+                        for (z, r) in self.projected_one.iter_mut().zip(&self.retracted) {
+                            *z ^= r;
+                        }
                     }
                 }
-            }
-            if self.complement {
-                for (z, bit) in self.projected_one.iter_mut().zip(x) {
-                    *z ^= bit;
+                if self.complement {
+                    for (z, bit) in self.projected_one.iter_mut().zip(x) {
+                        *z ^= bit;
+                    }
                 }
+                let indices = support(&self.projected_one);
+                masses.push(checked_mass(&self.weights, &indices));
+                supports.push(indices);
+                self.projected.extend_from_slice(&self.projected_one);
+                representatives.push(self.projected_one.clone());
             }
-            let indices = support(&self.projected_one);
-            masses.push(checked_mass(&self.weights, &indices));
-            supports.push(indices);
-            self.projected.extend_from_slice(&self.projected_one);
-            representatives.push(self.projected_one.clone());
-        }
-        let mut distances = Vec::with_capacity(pairs.len());
-        let mut difference_supports = Vec::with_capacity(pairs.len());
-        let mut shared = Vec::with_capacity(pairs.len());
-        let mut union = Vec::with_capacity(pairs.len());
-        for (i, j) in pairs {
-            let left = &self.projected[i * words..(i + 1) * words];
-            let right = &self.projected[j * words..(j + 1) * words];
-            for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
-                *out = a ^ b;
+            let mut distances = Vec::with_capacity(pairs.len());
+            let mut difference_supports = Vec::with_capacity(pairs.len());
+            let mut shared = Vec::with_capacity(pairs.len());
+            let mut union = Vec::with_capacity(pairs.len());
+            for (used, (i, j)) in pairs.into_iter().enumerate() {
+                checkpoint(
+                    vectors.len() + used,
+                    state_limit,
+                    started,
+                    wall,
+                    &cancellation,
+                )?;
+                let left = &self.projected[i * words..(i + 1) * words];
+                let right = &self.projected[j * words..(j + 1) * words];
+                for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
+                    *out = a ^ b;
+                }
+                let indices = support(&self.retracted);
+                distances.push(checked_mass(&self.weights, &indices));
+                difference_supports.push(indices);
+                for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
+                    *out = a & b;
+                }
+                shared.push(support(&self.retracted));
+                for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
+                    *out = a | b;
+                }
+                union.push(support(&self.retracted));
             }
-            let indices = support(&self.retracted);
-            distances.push(checked_mass(&self.weights, &indices));
-            difference_supports.push(indices);
-            for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
-                *out = a & b;
-            }
-            shared.push(support(&self.retracted));
-            for (out, (&a, &b)) in self.retracted.iter_mut().zip(left.iter().zip(right)) {
-                *out = a | b;
-            }
-            union.push(support(&self.retracted));
-        }
-        self.batches += 1;
-        Ok((
-            representatives,
-            supports,
-            masses,
-            distances,
-            difference_supports,
-            shared,
-            union,
-            started.elapsed().as_secs_f64(),
-        ))
+            self.batches += 1;
+            Ok((
+                representatives,
+                supports,
+                masses,
+                distances,
+                difference_supports,
+                shared,
+                union,
+                started.elapsed().as_secs_f64(),
+            ))
+        })
     }
 }
 
@@ -762,14 +793,41 @@ fn stopped(
     quota: usize,
     started: std::time::Instant,
     wall: Option<f64>,
+    cancellation: &Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
 ) -> Option<String> {
-    if used >= quota {
+    if cancellation
+        .as_ref()
+        .is_some_and(|flag| flag.load(std::sync::atomic::Ordering::Relaxed))
+    {
+        Some("cancelled".to_owned())
+    } else if used >= quota {
         Some("state_limit".to_owned())
     } else if wall.is_some_and(|w| started.elapsed().as_secs_f64() >= w) {
         Some("wall_time_limit".to_owned())
     } else {
         None
     }
+}
+
+pub(super) fn checkpoint(
+    used: usize,
+    quota: Option<usize>,
+    started: std::time::Instant,
+    wall: Option<f64>,
+    cancellation: &Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+) -> PyResult<()> {
+    if let Some(reason) = stopped(
+        used,
+        quota.unwrap_or(usize::MAX),
+        started,
+        wall,
+        cancellation,
+    ) {
+        return Err(PyValueError::new_err(format!(
+            "resource_exhausted:{reason}:{used}"
+        )));
+    }
+    Ok(())
 }
 
 fn check_wall(wall: Option<f64>) -> PyResult<()> {
@@ -784,12 +842,16 @@ fn check_wall(wall: Option<f64>) -> PyResult<()> {
 
 type SpanObjective = (u128, u128, Option<Vec<u64>>, usize, Option<String>);
 #[pyfunction]
+#[pyo3(signature=(basis, images, weights, quota, wall, cancellation=None))]
+#[allow(clippy::too_many_arguments)]
 pub fn span_objective(
+    py: Python<'_>,
     basis: Vec<Vec<u64>>,
     images: Vec<Vec<u64>>,
     weights: Vec<u128>,
     quota: usize,
     wall: Option<f64>,
+    cancellation: Option<PyRef<'_, super::CancellationFlag>>,
 ) -> PyResult<SpanObjective> {
     let n = weights.len();
     let count = span_count(&basis, n, &weights)?;
@@ -800,56 +862,65 @@ pub fn span_objective(
     for y in &images {
         checked_vector(y, n)?;
     }
-    let started = std::time::Instant::now();
-    let mut z = zeros(n.div_ceil(64))?;
-    let mut y = z.clone();
-    let (mut num, mut den, mut witness) = (0, 1, None);
-    for i in 1..=count {
-        if let Some(reason) = stopped(i - 1, quota, started, wall) {
-            return Ok((num, den, witness, i - 1, Some(reason)));
+    let cancellation = cancellation.map(|flag| flag.state.clone());
+    py.detach(move || {
+        let started = std::time::Instant::now();
+        let mut z = zeros(n.div_ceil(64))?;
+        let mut y = z.clone();
+        let (mut num, mut den, mut witness) = (0, 1, None);
+        for i in 1..=count {
+            if let Some(reason) = stopped(i - 1, quota, started, wall, &cancellation) {
+                return Ok((num, den, witness, i - 1, Some(reason)));
+            }
+            span_step(&mut z, &basis, i - 1, i);
+            span_step(&mut y, &images, i - 1, i);
+            let (a, b) = (mass(&y, &weights), mass(&z, &weights));
+            if b == 0 {
+                return Err(PyValueError::new_err("cycle basis must be independent"));
+            }
+            if witness.is_none() || ratio_greater(a, b, num, den) {
+                (num, den, witness) = (a, b, Some(z.clone()));
+            }
         }
-        span_step(&mut z, &basis, i - 1, i);
-        span_step(&mut y, &images, i - 1, i);
-        let (a, b) = (mass(&y, &weights), mass(&z, &weights));
-        if b == 0 {
-            return Err(PyValueError::new_err("cycle basis must be independent"));
-        }
-        if witness.is_none() || ratio_greater(a, b, num, den) {
-            (num, den, witness) = (a, b, Some(z.clone()));
-        }
-    }
-    Ok((num, den, witness, count, None))
+        Ok((num, den, witness, count, None))
+    })
 }
 
 type SpanTable = (Vec<Vec<u64>>, Vec<u128>, usize, Option<String>);
 #[pyfunction]
+#[pyo3(signature=(basis, weights, quota, wall, cancellation=None))]
 pub fn span_table(
+    py: Python<'_>,
     basis: Vec<Vec<u64>>,
     weights: Vec<u128>,
     quota: usize,
     wall: Option<f64>,
+    cancellation: Option<PyRef<'_, super::CancellationFlag>>,
 ) -> PyResult<SpanTable> {
     let n = weights.len();
     let count = span_count(&basis, n, &weights)?;
     check_wall(wall)?;
-    let started = std::time::Instant::now();
-    let mut z = zeros(n.div_ceil(64))?;
-    let (mut vectors, mut masses) = (
-        Vec::with_capacity(count.min(quota)),
-        Vec::with_capacity(count.min(quota)),
-    );
-    for i in 1..=count {
-        if let Some(reason) = stopped(i - 1, quota, started, wall) {
-            return Ok((vectors, masses, i - 1, Some(reason)));
+    let cancellation = cancellation.map(|flag| flag.state.clone());
+    py.detach(move || {
+        let started = std::time::Instant::now();
+        let mut z = zeros(n.div_ceil(64))?;
+        let (mut vectors, mut masses) = (
+            Vec::with_capacity(count.min(quota)),
+            Vec::with_capacity(count.min(quota)),
+        );
+        for i in 1..=count {
+            if let Some(reason) = stopped(i - 1, quota, started, wall, &cancellation) {
+                return Ok((vectors, masses, i - 1, Some(reason)));
+            }
+            span_step(&mut z, &basis, i - 1, i);
+            if !z.iter().any(|&x| x != 0) {
+                return Err(PyValueError::new_err("cycle basis must be independent"));
+            }
+            masses.push(mass(&z, &weights));
+            vectors.push(z.clone());
         }
-        span_step(&mut z, &basis, i - 1, i);
-        if !z.iter().any(|&x| x != 0) {
-            return Err(PyValueError::new_err("cycle basis must be independent"));
-        }
-        masses.push(mass(&z, &weights));
-        vectors.push(z.clone());
-    }
-    Ok((vectors, masses, count, None))
+        Ok((vectors, masses, count, None))
+    })
 }
 
 #[pyfunction]
