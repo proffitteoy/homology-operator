@@ -1,6 +1,7 @@
 """Production readouts against an independent finite-chain/coset oracle."""
 
 from fractions import Fraction
+import json
 from itertools import product
 from pathlib import Path
 import sys
@@ -14,6 +15,7 @@ from homology_operator import (
     OperatorResult,
     ProjectionProblem,
     ResourceLimits,
+    solve_projection,
 )
 from homology_operator.chain import matrix_data
 
@@ -75,6 +77,81 @@ class JointAcceptanceTests(unittest.TestCase):
             self.assertAlmostEqual(left, right, places=12)
         else:
             self.assertEqual(left, right)
+
+    def test_cross_solver_frozen_corpus_joint_readouts_and_bounds(self):
+        truths = {
+            f["fixture_id"]: f
+            for f in json.loads(
+                (Path(__file__).parent / "fixtures/solver_reference.json").read_text(
+                    encoding="utf-8"
+                )
+            )["fixtures"]
+        }
+        supported = 0
+        for fixture in self.fixtures:
+            w = window(fixture)
+            for method in (
+                "FeasibleSolver",
+                "ExhaustiveExactSolver",
+                "GreedyCertifiedSolver",
+                "Rank2ExactSolver",
+            ):
+                with self.subTest(fixture=fixture["id"], method=method):
+                    solution = solve_projection(ProjectionProblem(w), method)
+                    available = method == "FeasibleSolver" or (
+                        w.arithmetic != "FloatingPoint"
+                        and (method != "Rank2ExactSolver" or oracle.betti(fixture) == 2)
+                    )
+                    if not available:
+                        self.assertEqual(solution.status, "Unavailable")
+                        self.assertIsNone(solution.projection)
+                        continue
+                    supported += 1
+                    op = HomologyOperator(w, solution)
+                    P = oracle.columns(matrix_data(op.P))
+                    self.assertTrue(oracle.verify_projection(fixture, P))
+                    self.assertEqual(op.betti(), oracle.betti(fixture))
+                    expected = oracle.objective(fixture, P)
+                    actual = op.stretch()
+                    self.assert_numeric(actual.value, expected, fixture)
+                    if solution.certificate_level == "ExactOptimal":
+                        truth = truths[fixture["id"]]["expected_optimum"]
+                        self.assertEqual(
+                            solution.objective.value,
+                            Fraction(truth["numerator"], truth["denominator"]),
+                        )
+                        self.assertTrue(op.certificate()["optimality_verified"])
+                    elif solution.lower_bound is not None:
+                        truth = truths[fixture["id"]]["expected_optimum"]
+                        optimum = Fraction(truth["numerator"], truth["denominator"])
+                        self.assertLessEqual(solution.lower_bound, optimum)
+                        self.assertLessEqual(optimum, solution.upper_bound)
+                        self.assertEqual(solution.upper_bound, expected)
+                    if method == "FeasibleSolver":
+                        self.assertEqual(solution.objective.state, "NotComputed")
+                        self.assertFalse(op.certificate()["optimality_verified"])
+                    weights = oracle.weights(fixture)
+                    for z in oracle.cycles(fixture):
+                        vector, projected = unpack(z, w.n), oracle.apply(P, z)
+                        self.assertEqual(
+                            pack(op.class_representative(vector)), projected
+                        )
+                        self.assert_numeric(
+                            op.selected_mass(vector),
+                            oracle.mass(projected, weights),
+                            fixture,
+                        )
+                        self.assertEqual(op.support(vector), oracle.support(projected))
+                        self.assertEqual(
+                            projected == 0, z in oracle.boundaries(fixture)
+                        )
+                        op.readout("selected_mass", vector)
+                        op.readout("support", vector)
+                    record = op.to_result()
+                    for _ in range(2):
+                        record = OperatorResult.from_json(record.to_json())
+                    self.assertEqual(record, op.to_result())
+        self.assertEqual(supported, 73)
 
     def test_corpus_sources_hashes_and_coverage(self):
         self.assertEqual(len(self.fixtures), 23)
