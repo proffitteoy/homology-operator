@@ -1,0 +1,46 @@
+name: Native prototype checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.12"
+    runs-on: ${{ matrix.os }}
+    env:
+      RUSTUP_TOOLCHAIN: "1.98.1"
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.5"
+      - run: uv sync --locked --python ${{ matrix.python }}
+      - run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - run: cargo fmt --manifest-path native/Cargo.toml --check
+      - run: cargo clippy --manifest-path native/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Build and install optional release wheel
+        run: |
+          $pythonPath = uv run --locked python -c "import sys; print(sys.executable)"
+          uv tool run --from maturin==1.15.0 maturin build --manifest-path native/Cargo.toml --release --locked --interpreter $pythonPath --out .task-artifacts/native-wheels
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $wheel = Get-ChildItem .task-artifacts/native-wheels/*.whl
+          uv pip install --python $pythonPath $wheel.FullName
+          exit $LASTEXITCODE
+      - name: Require native differential and regression tests
+        env:
+          HOMOLOGY_NATIVE_REQUIRED: "1"
+        run: uv run --locked --no-sync python -m unittest discover -s tests -v

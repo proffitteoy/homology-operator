@@ -1,0 +1,13 @@
+[build-system]
+requires = ["maturin==1.15.0"]
+build-backend = "maturin"
+
+[project]
+name = "homology-operator-native"
+version = "0.0.2.dev0"
+requires-python = ">=3.10"
+dependencies = []
+description = "Optional safe Rust vertical prototype for homology-operator"
+
+[tool.maturin]
+module-name = "_homology_native"

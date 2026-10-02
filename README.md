@@ -22,7 +22,7 @@ Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局
 
 ## 开始使用
 
-先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。reference 使用 Python 3.10+ 标准库与 uv 0.11.5：显式 F2 代数与 Fraction 有理数便于独立审查。S4 计划采用 Rust 与批量 Python 绑定，工具链将在原型中锁定，当前尚未实现。reference 运行时没有第三方依赖，开发依赖由 uv.lock 锁定；PowerShell 7 用于文档检查。开发快照版本 0.0.2.dev0 不是发行。
+先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。reference 使用 Python 3.10+ 标准库与 uv 0.11.5：显式 F2 代数与 Fraction 有理数便于独立审查。S4-02 可选 Rust 原型使用 Rust 1.98.1、PyO3 0.29.3、maturin 1.15.0，依赖锁定在 native/Cargo.lock；安装与支持域见下文。reference 运行时没有第三方依赖，开发依赖由 uv.lock 锁定；PowerShell 7 用于文档检查。开发快照版本 0.0.2.dev0 不是发行。
 
 在仓库根目录运行：
 
@@ -79,6 +79,39 @@ S4-01新增[reference R0入口与复跑协议](docs/BENCHMARKS.md)，固定已�
 
 
 ## 精确 F2 reference 代数
+
+### 可选 Rust 纵向原型（S4-02）
+
+reference 的安装保持独立。额外构建可选原型（Windows x64/MSVC 或 Linux x64，CI 分别验证 Python 3.10/3.12）：
+
+```powershell
+uv sync --locked --python 3.10
+$pythonPath = uv run --locked python -c "import sys; print(sys.executable)"
+$env:RUSTUP_TOOLCHAIN = '1.98.1'
+uv tool run --from maturin==1.15.0 maturin build --manifest-path native/Cargo.toml --release --locked --interpreter $pythonPath --out .task-artifacts/native-wheels
+$wheel = Get-ChildItem .task-artifacts/native-wheels/*.whl
+uv pip install --python $pythonPath $wheel.FullName
+$env:HOMOLOGY_NATIVE_REQUIRED = '1'
+uv run --locked --no-sync python -m unittest discover -s tests -v
+cargo +1.98.1 fmt --manifest-path native/Cargo.toml --check
+cargo +1.98.1 clippy --manifest-path native/Cargo.toml --locked --all-targets -- -D warnings
+```
+
+`native/rust-toolchain.toml` 固定编译器；在 native 目录运行 Cargo 可省略版本选择。Windows 还需要 MSVC C++ 工具链。`--no-sync` 保留另行安装的原型 wheel；重新 `uv sync` 后需要再次安装该 wheel。
+
+```python
+from homology_operator.native import NativeFeasibleSolver, apply_batch, geometry_batch
+
+solution = solve_projection(ProjectionProblem(window), NativeFeasibleSolver())
+op = HomologyOperator(window, solution)
+actions = apply_batch(op, chains)       # 所有链的 P/L；一次绑定调用
+geometry = geometry_batch(op, cycles, pairs=[(0, 1)])
+record = OperatorResult.from_json(op.to_result().to_json())
+```
+
+safe Rust、单线程、每行一个 u64，三个链空间暂限至多64维；超出范围或缺少扩展明确返回 Unavailable。只提供 StableBasisOrder/Feasible 构造，P/G/U 与 reference 完整相同，仍通过独立 Python 广义逆和同调保持验证。现有标量入口使用显式 Matrix，拓扑、stretch、身份和恢复沿用 reference。批量 P/L 与支撑在 Rust 中计算；质量、距离及支撑交并暂由 Python 对同一 Pz 计算，任意精确有理数和浮点 fsum 政策不变，成本后备可见。批查询返回六身份的 QueryResult，默认不改变原算子的查询历史；需要保存时可在 `OperatorResult.query_results` 中显式加入该记录。
+
+资源 states 沿用 feasible 的 checkpoint 单位（成功为5+m+n），matrix_entry_limit 是保守逻辑条目上限，wall_time 在阶段间检查，独立 projection validator/恢复成本在构造预算外。没有抢占、RSS硬上限或优化认证。更大尺寸分解、紧凑action、原生几何和全面集成由后续工作包实现。[最小完整成本协议](docs/BENCHMARKS.md) 保留有限采样与未获收益结果。
 
 `from homology_operator import Matrix` 提供带显式形状的不可变矩阵；`from_rows([], ncols=n)` 保留 0×n，`zero(m,0)` 保留 m×0。外部坐标必须为整数 0/1（bool、float、取模输入均拒绝），消元不交换原列。支持 F2 加乘、`apply`、`rref`、`rank`、`kernel_basis`、`image_basis` 与 `solve`；不可解返回 None，空解是 tuple。自由变量置零，pivot 从左到右，结果可复现。
 
