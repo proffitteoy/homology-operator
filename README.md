@@ -7,9 +7,9 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支含 Rank2ExactSolver 与限定循环族的 StructuredFamilySolver，当前129项本地测试通过。贪心 solver 已经 PR #51 合入 main；阶段联合验收、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。Phase 3 统一认证、完整搜索、贪心、rank-2、限定循环族、对照协议与算术/资源边界已由 #49–#55 合入 main `2f6b2dc`，该main CI通过。本分支完成一般搜索准入实验（no-go）、跨solver联合验收与阶段汇总，129项本地数学测试、两个示例、隔离wheel、静态/文档检查通过，证据见 [Phase 3报告](docs/PHASE3_REPORT.md)。#56/#57及本阶段汇总PR仍待用户审核合并；这些准确head全部进入main并通过main数学测试/CI后才进入Phase 4。
 
-Phase 3的[solver对照协议](docs/BENCHMARKS.md)已保存固定源码/环境下324条支持、失败、中断和完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。当前分支增加3项协议回归，共129项测试。
+Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局部搜索支持、失败、中断与完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。联合验收覆盖73次冻结窗口支持运行、44个过滤配置和五solver混合表示族。高性能、采样稳定性、应用收益、许可证与发行仍待后续阶段。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -171,6 +171,23 @@ CI运行Python 3.10/3.12的实际测试、示例、Ruff、构建和隔离wheel�
 | #17 跨尺度几何与终点界 | [#45](https://github.com/proffitteoy/homology-operator/pull/45) |
 | #27 族身份与序列化 | [#46](https://github.com/proffitteoy/homology-operator/pull/46) |
 | #18 独立联合验收 | [#47](https://github.com/proffitteoy/homology-operator/pull/47) |
-| #2 Phase 2 汇总 | 本阶段汇总 PR，最后合并 |
+| #2 Phase 2 汇总 | [#48](https://github.com/proffitteoy/homology-operator/pull/48)，已合并 |
 
 后继 PR 依赖前置，前置合并后转向 main；监测根据实际 main 的代码与 CI 推进，后续阶段 PR 由用户合并。
+
+## Phase 3 PR 与合并门槛
+
+| Issue | 增量 PR与当前状态 |
+| --- | --- |
+| #19 统一能力/认证 | [#49](https://github.com/proffitteoy/homology-operator/pull/49)，已合并 |
+| #20 完整搜索 | [#50](https://github.com/proffitteoy/homology-operator/pull/50)，已合并 |
+| #21 贪心认证 | [#51](https://github.com/proffitteoy/homology-operator/pull/51)，已合并 |
+| #22 rank-2结构 | [#52](https://github.com/proffitteoy/homology-operator/pull/52)，已合并 |
+| #23 循环结构族 | [#53](https://github.com/proffitteoy/homology-operator/pull/53)，已合并 |
+| #25 同问题对照 | [#54](https://github.com/proffitteoy/homology-operator/pull/54)，已合并 |
+| #28 算术/资源/身份 | [#55](https://github.com/proffitteoy/homology-operator/pull/55)，已合并 |
+| #24 一般搜索准入 | [#56](https://github.com/proffitteoy/homology-operator/pull/56)，no-go实验，待合并 |
+| #29 跨solver联合验收 | [#57](https://github.com/proffitteoy/homology-operator/pull/57)，待合并 |
+| #3 Phase 3汇总 | 本阶段汇总PR，最后合并 |
+
+认证支持域和固定证据见报告与solver契约。Phase 3没有自动合并授权；前置合并后原后继PR转向main并核对准确head，不替换PR或强推。监测是否启用以Codex自动化实际状态为准，不能把已提交PR或本地测试通过写成阶段已合并。

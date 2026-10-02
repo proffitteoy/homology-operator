@@ -4,7 +4,7 @@
 
 ## 项目事实与入口
 
-- 本仓库是边界数据原生的 F2 同调算子库，Phase 1 已合并，Phase 2 有限过滤 reference 已实现并提交逐 issue PR；数学能力以实际源码、测试和合并状态为据。
+- 本仓库是边界数据原生的 F2 同调算子库，Phase 1/2 已合并；Phase 3 五种限定支持域的 reference solver、认证、对照/no-go与联合验收已实现并提交逐 issue PR。当前129项本地测试通过，证据见 docs/PHASE3_REPORT.md；阶段退出仍以全部PR实际合并和main数学测试/CI为据。
 - reference backend 使用 Python 3.10+ 标准库与 uv；文档检查要求 PowerShell 7；高性能核心语言仍在 Phase 4 决定。
 - 开始任务先读 [README](README.md)、[文档索引](docs/README.md) 和相关契约。路线图中的目录、对象和版本号是开发目标，不能作为已实现的证据。
 - 明确的用户要求优先；仓库的数学契约优先于通用模板和 skills。若以后出现更具体的 `AGENT.md` 或目录级 `AGENTS.md`，还需读取其适用规则。
