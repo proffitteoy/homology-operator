@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "input_corpus": "reference.json",
+  "research_revision": "6143729669902ee875b211b58085e954c76cdf88",
+  "ground_truth_method": "Pinned compressed_native_operator; native_operator additionally checked for n<=6; independent quotient-lift replay verifies production certificates",
+  "research_source_sha256": {
+    "upstream-verify.py": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+    "upstream-highdim.py": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13"
+  },
+  "fixtures": [
+    {
+      "fixture_id": "h0_interval_stage_0",
+      "input_hash": "951753b358065fa94d7e8b3015b3a81f0b98186073f6904274bc823305223590",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h0_interval_stage_1",
+      "input_hash": "e2d3582c63cbd99632896ceb7a8ed4e9e11b7b0f367fe4bc1c9d7fa40b3b4a7b",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 2,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h0_interval_duplicate_scale",
+      "input_hash": "e2d3582c63cbd99632896ceb7a8ed4e9e11b7b0f367fe4bc1c9d7fa40b3b4a7b",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 2,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h1_k4_stage_0",
+      "input_hash": "2ec7c5614bb42cc37b7c11ff5ee7d33321a4987a0ec0d35656e24c12fe25132f",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 0
+    },
+    {
+      "fixture_id": "h1_k4_stage_1",
+      "input_hash": "560f97c52adf5edad4151336213b862270d30d65f8e845c09777dab7955891bc",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 1
+    },
+    {
+      "fixture_id": "h1_k4_stage_2",
+      "input_hash": "3d5b98e58652f289924112459baf71e21e72020c4a7be503f038a5ee3c77a390",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h1_k4_stage_3",
+      "input_hash": "ab01d6b77d2a2f0f31974a6401ab51e0fc1f331d3271292976ebec0bc3f6772c",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h1_k4_stage_4",
+      "input_hash": "af621d8a278eafe1822443373ae7bfc9aa338feceb3030a68d9f0f99ee148c4b",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 9,
+        "denominator": 8
+      },
+      "expected_candidates": 4,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h1_k4_stage_5",
+      "input_hash": "53442ab9d0f88100417e908828a2abc6e2bd7a1a385e3351d0347863de773787",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 4,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h1_k4_stage_6",
+      "input_hash": "099fd172d7e9c874e8e870b795da981ee07c67120be447f0a6d193d4fe10447a",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h1_k4_stage_7",
+      "input_hash": "fe180c1da5e30d57f08667b744a23b08d9ecc43f1357d5b05bf9e4debac4c928",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h1_k4_stage_4_permuted",
+      "input_hash": "0ea668ff0c7ecf3dcebb81e099ee8c2c528519743cdf44305e993dea3e51f3eb",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 9,
+        "denominator": 8
+      },
+      "expected_candidates": 4,
+      "expected_nonzero_cycles": 7
+    },
+    {
+      "fixture_id": "h2_euclidean_two_holes",
+      "input_hash": "ce8c6cc53c833f190594312688ac19ac25e165b6df70e539072af27f664fe967",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h2_euclidean_one_hole",
+      "input_hash": "f59085d36a0ed6c201b257c89aaac7ae63b0de35c047eb42fac0c84bc49881d0",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 2,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h2_euclidean_filled",
+      "input_hash": "052090330cb86583221f3d1bf1c61aaaa30aad28efe3edb76a6809eb1cc89a46",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h2_abstract_top_sphere",
+      "input_hash": "f27559b9896439dcc164adfa54f875fb98c5400bc387aa419f0921b8d91182d6",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 1
+    },
+    {
+      "fixture_id": "h3_euclidean_two_holes",
+      "input_hash": "a694899c977f7c7b869edf3374b99032304d1d84d4ba7234f380b2d396923b40",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h3_euclidean_one_hole",
+      "input_hash": "0e90df198bbae7af5f5002055565415a2b5660aa380e9dab6a39ef573880ec7c",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 2,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h3_euclidean_filled",
+      "input_hash": "25e9b020701f3667a40f6988e0ac716e2a2248753c368990c0245ce686cc93bb",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 3
+    },
+    {
+      "fixture_id": "h3_abstract_top_sphere",
+      "input_hash": "fd0b8c0e33bc41e974faba2aae83c9be90d081ce3b8d40553c809c681085b797",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 1
+    },
+    {
+      "fixture_id": "h1_euclidean_length_triangle",
+      "input_hash": "81a4ce898efc064e00dab49b7c938eae704869cfaf9bec041f480f02a04fa8af",
+      "expected_status": "Unavailable",
+      "arithmetic": "FloatingPoint"
+    },
+    {
+      "fixture_id": "empty_h1",
+      "input_hash": "a5d57198cb1b742dc39294e39387ff4bc7ebad1e965e1637df3e5ed33d19efa1",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 0
+    },
+    {
+      "fixture_id": "acyclic_injection_h1",
+      "input_hash": "08972c24ca41bd9869c3a840c65c58ffc7890304881c3438f6b69c576c1bb043",
+      "expected_status": "Solved",
+      "arithmetic": "ExactRational",
+      "expected_optimum": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "expected_candidates": 1,
+      "expected_nonzero_cycles": 0
+    }
+  ]
+}

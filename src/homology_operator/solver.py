@@ -1,13 +1,15 @@
 """Deterministic feasible construction, with explicit reference resource limits."""
 
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
+from fractions import Fraction
+from itertools import product
 from math import isfinite
 from time import perf_counter
 from uuid import uuid4
 
 from .algebra import Matrix
-from .chain import ChainWindow
+from .chain import ChainWindow, matrix_data
 from .result import QueryResult, _freeze, content_id, make_identity
 
 
@@ -339,13 +341,17 @@ def solve_projection(problem, backend="FeasibleSolver"):
     from .validation import validate_solution
 
     if isinstance(backend, str):
-        if backend != "FeasibleSolver":
+        constructors = {
+            "FeasibleSolver": FeasibleSolver,
+            "ExhaustiveExactSolver": ExhaustiveExactSolver,
+        }
+        if backend not in constructors:
             return ProjectionSolution(
                 "Unavailable",
                 str(uuid4()),
                 diagnostics=(f"unknown backend: {backend}",),
             )
-        backend = FeasibleSolver()
+        backend = constructors[backend]()
     if not callable(getattr(backend, "capabilities", None)) or not callable(
         getattr(backend, "solve", None)
     ):
@@ -430,3 +436,219 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "InternalError", str(uuid4()), diagnostics=(str(error),)
         )
     return solution
+
+
+def _cycle_objective(window, projection, cycles, budget):
+    value, witness = Fraction(0), None
+    for coefficients in product((0, 1), repeat=cycles.ncols):
+        if not any(coefficients):
+            continue
+        budget.step()
+        z = cycles.apply(coefficients)
+        numerator = sum(w for w, bit in zip(window.weights, projection.apply(z)) if bit)
+        denominator = sum(w for w, bit in zip(window.weights, z) if bit)
+        ratio = Fraction(numerator) / Fraction(denominator)
+        if witness is None or ratio > value:
+            value, witness = ratio, z
+    return value, witness
+
+
+class ExhaustiveExactSolver:
+    """Search 2^(boundary_rank * beta) cycle retractions, for tiny rational inputs.
+
+    Implements pinned compressed_native_operator's complete parameterization.
+    Non-cycle extensions are fixed by the feasible constructor's cycle retraction.
+    It never uses PH results or shortest-class tables as inputs or intermediates.
+    """
+
+    def capabilities(self):
+        return _freeze(
+            {
+                **FeasibleSolver().capabilities(),
+                "arithmetic_policies": ("ExactInteger", "ExactRational"),
+                "certificate_levels": (
+                    "Feasible",
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                    "ExactOptimal",
+                ),
+                "tie_break_policies": ("StableBasisOrder", "LexicographicProjection"),
+            }
+        )
+
+    def solve(self, problem):
+        run_id = str(uuid4())
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(
+                rejection[0],
+                run_id,
+                method="ExhaustiveExactSolver",
+                diagnostics=(rejection[1],),
+            )
+        window = problem.window
+        config = problem.solver_config("ExhaustiveExactSolver")
+        budget = _Budget(problem.resource_limits)
+        seed = FeasibleSolver().solve(
+            replace(
+                problem,
+                requested_certificate_level="Feasible",
+                tie_break_policy="StableBasisOrder",
+            )
+        )
+        if seed.projection is None:
+            return replace(
+                seed,
+                solver_run_id=run_id,
+                method="ExhaustiveExactSolver",
+                solver_config=config,
+                tie_break_policy=problem.tie_break_policy,
+                arithmetic_policy=window.arithmetic,
+            )
+        budget.states = seed.resource_usage["states"]
+        best = seed.projection
+        best_value, best_witness = None, None
+        count, visited, cycle_count, R = None, 0, None, None
+        exhausted = None
+        try:
+            budget.step()
+            R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
+            N = Matrix.from_columns(window.A.kernel_basis(), nrows=window.n)
+            F = Matrix.from_columns(window.D.image_basis(), nrows=window.n)
+            d, r = N.ncols, F.ncols
+            beta = d - r
+            count, cycle_count = 1 << (r * beta), (1 << d) - 1
+            # Independent certificate replay has the same finite reference support.
+            # Larger requests retain the seed; they cannot claim an unreplayable optimum.
+            budget.entries(4 * window.n**2 + window.n * d + d * r + window.n * r)
+            if cycle_count > 100_000:
+                raise _Exhausted("certificate_replay_state_limit")
+            best_value, best_witness = _cycle_objective(window, best, N, budget)
+            if count * max(1, cycle_count) > 100_000:
+                raise _Exhausted("certificate_replay_state_limit")
+            if count == 1:
+                visited = 1
+            else:
+                M = Matrix.from_columns(
+                    (N.solve(f) for f in F.transpose().rows), nrows=d
+                )
+                constraints = M.transpose()
+                offsets = constraints.kernel_basis()
+                particulars = tuple(
+                    constraints.solve(unit) for unit in Matrix.identity(r).rows
+                )
+                T = Matrix.from_columns(
+                    (N.solve(z) for z in R.transpose().rows), nrows=d
+                )
+                for parameters in product((0, 1), repeat=r * beta):
+                    budget.step()
+                    Y = Matrix.from_rows(
+                        (
+                            tuple(
+                                particular[j]
+                                ^ (
+                                    sum(
+                                        parameters[i * beta + h] * offsets[h][j]
+                                        for h in range(beta)
+                                    )
+                                    % 2
+                                )
+                                for j in range(d)
+                            )
+                            for i, particular in enumerate(particulars)
+                        ),
+                        ncols=d,
+                    )
+                    candidate = R + F @ Y @ T
+                    value, witness = _cycle_objective(window, candidate, N, budget)
+                    visited += 1
+                    key = tuple(
+                        sum(bit << j for j, bit in enumerate(column))
+                        for column in candidate.transpose().rows
+                    )
+                    best_key = tuple(
+                        sum(bit << j for j, bit in enumerate(column))
+                        for column in best.transpose().rows
+                    )
+                    if (value, key) < (best_value, best_key):
+                        best, best_value, best_witness = candidate, value, witness
+        except _Exhausted as error:
+            exhausted = str(error)
+        identity = make_identity(window, best, run_id, problem.tie_break_policy)
+        usage = {
+            **budget.usage(),
+            "candidates_visited": visited,
+            "candidate_count": count,
+            "nonzero_cycle_inputs": cycle_count,
+            "tie_break_complete": exhausted is None,
+        }
+        if best_value is None:
+            return ProjectionSolution(
+                "ResourceExhausted",
+                run_id,
+                best,
+                identity,
+                "Feasible",
+                QueryResult("ResourceExhausted", identity=identity),
+                resource_usage=usage,
+                diagnostics=(exhausted,),
+                tie_break_policy=problem.tie_break_policy,
+                method="ExhaustiveExactSolver",
+                arithmetic_policy=window.arithmetic,
+                solver_config=config,
+            )
+        objective = QueryResult(
+            "EmptyDomain" if cycle_count == 0 else "Computed",
+            best_value,
+            identity,
+            True,
+            {"witness": best_witness, "nonzero_cycles": cycle_count},
+        )
+        if exhausted is not None:
+            # No incomplete search claims ExactOptimal, including a point optimum.
+            # This search tracks the trivial nonnegative lower bound until completion.
+            proof = {
+                "kind": "CycleBounds",
+                "nonzero_cycles": cycle_count,
+                "lower_bound_method": "UniversalHomology",
+            }
+            return ProjectionSolution(
+                "ResourceExhausted",
+                run_id,
+                best,
+                identity,
+                "CertifiedInterval",
+                objective,
+                {"optimization": proof},
+                usage,
+                (exhausted,),
+                problem.tie_break_policy,
+                method="ExhaustiveExactSolver",
+                arithmetic_policy=window.arithmetic,
+                lower_bound=Fraction(0),
+                upper_bound=best_value,
+                solver_config=config,
+            )
+        proof = {
+            "kind": "ExhaustiveSearch",
+            "candidate_count": count,
+            "nonzero_cycles": cycle_count,
+            "cycle_retraction": matrix_data(R),
+            "tie_break_complete": True,
+        }
+        return ProjectionSolution(
+            "Solved",
+            run_id,
+            best,
+            identity,
+            "ExactOptimal",
+            objective,
+            {"optimization": proof},
+            usage,
+            tie_break_policy=problem.tie_break_policy,
+            method="ExhaustiveExactSolver",
+            arithmetic_policy=window.arithmetic,
+            lower_bound=best_value,
+            upper_bound=best_value,
+            solver_config=config,
+        )

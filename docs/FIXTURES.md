@@ -57,3 +57,9 @@ python -c "import sys; sys.path.insert(0, 'tests/oracle'); from reference import
 ```
 
 此命令不联网、不写研究数据，也不调用生产实现。完整 Phase 1 的生产查询对拍由相应数学测试承担。Fixtures 不证明一般规模效率、无限族稳定性、过滤传输正确性或全局最优性。
+
+## Phase 3 最优回归记录
+
+[solver_reference.json](../tests/fixtures/solver_reference.json) 复用原23个冻结输入及其 hash，不修改 reference.json。记录22个精确实例的最优有理数、完整候选数和非零循环数，以及1个浮点实例的 Unavailable 预期。所有精确值实际与上述固定 verify_highdim.py 的 compressed_native_operator 对照，16个 n≤6 精确窗口另与 verify.py 的 native_operator 对照；生产证书还由独立商基提升枚举重放。来源提交与原文件 SHA256 保存在记录中，不引入研究代码运行依赖。
+
+该回归记录 UTF-8/LF 原始文件 SHA256 为 `8523e5588c2a98834dd48a0314ee6d947912d8c6d80decd7d38dc1f8fa285ba7`。单尺度和族快照的证书往返由 test_solver.py 核验，通用下界和完整搜索证书的范围分别见 [solver 契约](SOLVER_CONTRACT.md)。

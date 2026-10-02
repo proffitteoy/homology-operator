@@ -1,6 +1,8 @@
 from itertools import product
 from dataclasses import replace
 from fractions import Fraction
+import json
+from pathlib import Path
 import unittest
 
 from homology_operator.algebra import Matrix
@@ -10,6 +12,7 @@ from homology_operator.family import OperatorFamily, OperatorFamilyResult
 from homology_operator.result import OperatorResult, QueryResult
 from homology_operator.solver import (
     FeasibleSolver,
+    ExhaustiveExactSolver,
     ProjectionProblem,
     ResourceLimits,
     generalized_inverse,
@@ -227,6 +230,18 @@ class SolverTests(unittest.TestCase):
             ).to_family()
             self.assertEqual(restored_family.operators[0].certificate(), certificate)
             self.assertEqual(restored_family.to_result().to_json(), snapshot.to_json())
+
+        window, certified = self.bound_solution(level="CertifiedUpperBound")
+        for extra in ({"optimality_verified": True}, {"lower_bound_method": "Forged"}):
+            proof = dict(certified.certificate["optimization"]) | extra
+            with self.subTest(extra=extra), self.assertRaises(ValidationError):
+                HomologyOperator(
+                    window, replace(certified, certificate={"optimization": proof})
+                )
+            tampered = HomologyOperator(window, certified).to_result().to_dict()
+            tampered["certificate"]["optimization"].update(extra)
+            with self.assertRaises(ValidationError):
+                OperatorResult.from_dict(tampered)
 
     def test_dispatch_binds_returned_configuration_to_request(self):
         problem = ProjectionProblem(self.window())
@@ -479,6 +494,260 @@ class SolverTests(unittest.TestCase):
         failed = solve_projection(problem, CandidateBackend())
         self.assertEqual(failed.status, "InternalError")
         self.assertIsNone(failed.projection)
+
+    def test_exhaustive_matches_all_small_ambient_projections(self):
+        def apply(columns, x):
+            value = 0
+            for j, column in enumerate(columns):
+                if x >> j & 1:
+                    value ^= column
+            return value
+
+        for n in range(1, 4):
+            for a, b in product(range(1 << n), repeat=2):
+                if (a & b).bit_count() % 2:
+                    continue
+                weights = tuple(Fraction(j + 1, 2) for j in range(n))
+
+                def mass(x):
+                    return sum(w for j, w in enumerate(weights) if x >> j & 1)
+
+                cycles = tuple(x for x in range(1 << n) if (a & x).bit_count() % 2 == 0)
+                optimum = None
+                for encoded in range(1 << (n * n)):
+                    columns = tuple(
+                        (encoded >> (n * j)) & ((1 << n) - 1) for j in range(n)
+                    )
+                    if (
+                        any(apply(columns, z) != z for z in columns)
+                        or any((a & z).bit_count() % 2 for z in columns)
+                        or apply(columns, b)
+                    ):
+                        continue
+                    if any(z ^ apply(columns, z) not in {0, b} for z in cycles):
+                        continue
+                    value = max(
+                        (mass(apply(columns, z)) / mass(z) for z in cycles if z),
+                        default=Fraction(0),
+                    )
+                    optimum = value if optimum is None else min(optimum, value)
+                window = ChainWindow(
+                    1,
+                    Matrix.from_rows((tuple((a >> j) & 1 for j in range(n)),)),
+                    Matrix.from_columns(
+                        (tuple((b >> j) & 1 for j in range(n)),), nrows=n
+                    ),
+                    ("v",),
+                    tuple(f"c{j}" for j in range(n)),
+                    ("f",),
+                    weights,
+                )
+                solution = solve_projection(
+                    ProjectionProblem(
+                        window, requested_certificate_level="ExactOptimal"
+                    ),
+                    "ExhaustiveExactSolver",
+                )
+                self.assertEqual(
+                    solution.status, "Solved", (n, a, b, solution.diagnostics)
+                )
+                self.assertEqual(solution.objective.value, optimum)
+                self.assertEqual(solution.lower_bound, optimum)
+                op = HomologyOperator(window, solution)
+                record = op.to_result()
+                self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+
+    def test_exhaustive_weighted_and_higher_rank_ground_truth(self):
+        # Hand-derived simplex boundary quotient: unit weights give optimum beta.
+        for k, n, weights, expected in (
+            (0, 2, (10, 1), 1),
+            (1, 3, (1, 1, 1), 2),
+            (2, 4, (1, 1, 1, 1), 3),
+            (3, 4, (4, 1, 1, 1), 1),
+        ):
+            window = ChainWindow(
+                k,
+                Matrix.zero(0, n),
+                Matrix.from_columns(((1,) * n,), nrows=n),
+                (),
+                tuple(f"c{i}" for i in range(n)),
+                ("b",),
+                weights,
+            )
+            problem = ProjectionProblem(
+                window,
+                requested_certificate_level="ExactOptimal",
+                tie_break_policy="LexicographicProjection",
+            )
+            first, second = (ExhaustiveExactSolver().solve(problem) for _ in range(2))
+            self.assertEqual(first.objective.value, expected)
+            self.assertEqual(first.resource_usage["candidates_visited"], 1 << (n - 1))
+            self.assertEqual(first.projection, second.projection)
+            self.assertEqual(first.solver_config_id, second.solver_config_id)
+            op = HomologyOperator(window, first)
+            record = op.to_result()
+            self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+            bad = record.to_dict()
+            bad["certificate"]["optimization"]["candidate_count"] = 1
+            with self.assertRaises(ValueError):
+                OperatorResult.from_dict(bad)
+            bad = record.to_dict()
+            bad["solver"]["objective"]["details"]["witness"] = [0] * n
+            with self.assertRaises(ValueError):
+                OperatorResult.from_dict(bad)
+            if n == 3:
+                from homology_operator.result import make_identity
+
+                alternate = Matrix.from_columns(
+                    ((0, 1, 1), (0, 1, 0), (0, 0, 1)), nrows=3
+                )
+                identity = make_identity(
+                    window, alternate, first.solver_run_id, first.tie_break_policy
+                )
+                noncanonical = replace(
+                    first,
+                    projection=alternate,
+                    identity=identity,
+                    objective=QueryResult(
+                        "Computed", 2, identity, True, {"witness": (1, 0, 0)}
+                    ),
+                )
+                with self.assertRaises(ValidationError):
+                    HomologyOperator(window, noncanonical)
+
+    def test_frozen_solver_corpus_and_exact_family_roundtrips(self):
+        from test_joint import oracle, window as fixture_window
+
+        regression = json.loads(
+            (Path(__file__).parent / "fixtures" / "solver_reference.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        fixtures = {item["id"]: item for item in oracle.load_fixtures()}
+        self.assertEqual(
+            {item["fixture_id"] for item in regression["fixtures"]}, set(fixtures)
+        )
+        for expected in regression["fixtures"]:
+            fixture = fixtures[expected["fixture_id"]]
+            self.assertEqual(fixture["input_hash"], expected["input_hash"])
+            window = fixture_window(fixture)
+            solution = solve_projection(
+                ProjectionProblem(window, requested_certificate_level="ExactOptimal"),
+                "ExhaustiveExactSolver",
+            )
+            self.assertEqual(
+                solution.status,
+                expected["expected_status"],
+                (fixture["id"], solution.diagnostics),
+            )
+            if solution.status == "Unavailable":
+                self.assertIsNone(solution.projection)
+                continue
+            value = expected["expected_optimum"]
+            self.assertEqual(
+                solution.objective.value,
+                Fraction(value["numerator"], value["denominator"]),
+            )
+            self.assertEqual(
+                solution.resource_usage["candidates_visited"],
+                expected["expected_candidates"],
+            )
+            self.assertEqual(
+                solution.resource_usage["nonzero_cycle_inputs"],
+                expected["expected_nonzero_cycles"],
+            )
+            op = HomologyOperator(window, solution)
+            snapshot = OperatorFamily((0,), (window,), (op,)).to_result()
+            restored = OperatorFamilyResult.from_json(snapshot.to_json()).to_family()
+            self.assertEqual(snapshot.to_json(), restored.to_result().to_json())
+
+    def test_exhaustive_interruption_preserves_only_proven_bounds(self):
+        window, _ = self.bound_solution()
+        constructor = FeasibleSolver().solve(ProjectionProblem(window))
+        limit = constructor.resource_usage["states"] + 4
+        for state_limit in (0, limit - 1, limit):
+            solution = solve_projection(
+                ProjectionProblem(
+                    window,
+                    ResourceLimits(state_limit=state_limit),
+                    requested_certificate_level="ExactOptimal",
+                    tie_break_policy="LexicographicProjection",
+                ),
+                "ExhaustiveExactSolver",
+            )
+            self.assertEqual(solution.status, "ResourceExhausted", solution.diagnostics)
+            self.assertNotEqual(solution.certificate_level, "ExactOptimal")
+            if solution.projection is not None:
+                op = HomologyOperator(window, solution)
+                self.assertEqual(
+                    op.to_result(), OperatorResult.from_json(op.to_result().to_json())
+                )
+            if state_limit == limit:
+                self.assertEqual(solution.certificate_level, "CertifiedInterval")
+                self.assertEqual((solution.lower_bound, solution.upper_bound), (0, 10))
+        floating = replace(window, weights=(10.0, 1.0), arithmetic="FloatingPoint")
+        self.assertEqual(
+            ExhaustiveExactSolver().solve(ProjectionProblem(floating)).status,
+            "Unavailable",
+        )
+        for limits in (
+            ResourceLimits(wall_time_limit=0),
+            ResourceLimits(matrix_entry_limit=0),
+        ):
+            failed = solve_projection(
+                ProjectionProblem(
+                    window,
+                    limits,
+                    requested_certificate_level="ExactOptimal",
+                    tie_break_policy="LexicographicProjection",
+                ),
+                "ExhaustiveExactSolver",
+            )
+            self.assertEqual(failed.status, "ResourceExhausted")
+            self.assertIsNone(failed.projection)
+        for n, boundary_columns in (
+            (9, ((1,) * 4 + (0,) * 5, (0,) * 4 + (1,) * 5)),
+            (17, ()),
+        ):
+            large = ChainWindow(
+                0,
+                Matrix.zero(0, n),
+                Matrix.from_columns(boundary_columns, nrows=n),
+                (),
+                tuple(f"c{i}" for i in range(n)),
+                tuple(f"b{i}" for i in range(len(boundary_columns))),
+                (1,) * n,
+            )
+            failed = solve_projection(
+                ProjectionProblem(large, requested_certificate_level="ExactOptimal"),
+                "ExhaustiveExactSolver",
+            )
+            self.assertEqual(failed.status, "ResourceExhausted", failed.diagnostics)
+            self.assertEqual(failed.diagnostics, ("certificate_replay_state_limit",))
+            self.assertNotEqual(failed.certificate_level, "ExactOptimal")
+            HomologyOperator(large, failed).to_result()
+
+    def test_exhaustive_two_boundary_directions_three_homology_directions(self):
+        # Direct sum of a three-coordinate circuit quotient and a two-coordinate one.
+        for weights, optimum in (((1, 1, 1, 1, 1), 2), ((3, 2, 1, 5, 1), 1)):
+            window = ChainWindow(
+                2,
+                Matrix.zero(0, 5),
+                Matrix.from_columns(((1, 1, 1, 0, 0), (0, 0, 0, 1, 1)), nrows=5),
+                (),
+                ("a", "b", "c", "d", "e"),
+                ("f", "g"),
+                weights,
+            )
+            solution = solve_projection(
+                ProjectionProblem(window, requested_certificate_level="ExactOptimal"),
+                "ExhaustiveExactSolver",
+            )
+            self.assertEqual(solution.status, "Solved", solution.diagnostics)
+            self.assertEqual(solution.objective.value, optimum)
+            self.assertEqual(solution.resource_usage["candidates_visited"], 64)
+            record = HomologyOperator(window, solution).to_result()
+            self.assertEqual(record, OperatorResult.from_json(record.to_json()))
 
 
 if __name__ == "__main__":
