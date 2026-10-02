@@ -8,7 +8,7 @@ import json
 from math import isfinite
 from types import MappingProxyType
 
-from .algebra import Matrix, CyclicAction
+from .algebra import Matrix, CyclicAction, CompactAction
 from .chain import ChainWindow, action_data, action_from_data
 
 
@@ -123,7 +123,7 @@ def input_identity(window):
 def make_identity(
     window, projection, solver_run_id, tie_break_policy="StableBasisOrder"
 ):
-    if not isinstance(projection, (Matrix, CyclicAction)) or (
+    if not isinstance(projection, (Matrix, CyclicAction, CompactAction)) or (
         projection.nrows,
         projection.ncols,
     ) != (
@@ -236,7 +236,7 @@ class OperatorResult:
 
     identity: Mapping | None
     input_data: ChainWindow | Mapping | None
-    projection: Matrix | CyclicAction | Mapping | None
+    projection: Matrix | CyclicAction | CompactAction | Mapping | None
     solver: Mapping
     certificate: Mapping
     provenance: Mapping
@@ -270,7 +270,7 @@ class OperatorResult:
             if self.projection is None
             else (
                 self.projection
-                if isinstance(self.projection, (Matrix, CyclicAction))
+                if isinstance(self.projection, (Matrix, CyclicAction, CompactAction))
                 else action_from_data(self.projection)
             )
         )

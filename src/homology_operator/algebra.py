@@ -253,3 +253,139 @@ class CyclicAction:
                     break
                 packed ^= pivots[pivot]
         return tuple(selected)
+
+
+def _reduced_span(vectors, size):
+    """Canonical span basis, with rightmost pivots in increasing order.
+
+    The canonical kernel of a left-to-right RREF has exactly this form:
+    each free coordinate is the last nonzero bit of its basis vector.
+    Streaming vectors avoids constructing a matrix of all action columns.
+    """
+    pivots = {}
+    for vector in vectors:
+        bits = sum(bit << i for i, bit in enumerate(validate_vector(vector, size)))
+        for pivot in sorted(pivots, reverse=True):
+            if bits >> pivot & 1:
+                bits ^= pivots[pivot]
+        if not bits:
+            continue
+        pivot = bits.bit_length() - 1
+        for other in pivots:
+            if pivots[other] >> pivot & 1:
+                pivots[other] ^= bits
+        pivots[pivot] = bits
+    return tuple(
+        tuple((pivots[p] >> i) & 1 for i in range(size)) for p in sorted(pivots)
+    )
+
+
+@dataclass(frozen=True)
+class CompactAction:
+    """Version-1 linear action, without an explicit G/U/P/L.
+
+    GeneralizedInverse stores A,D and only nonzero inverse rows, indexed by
+    original pivot coordinates. HC stores H,C. Shapes are checked here;
+    projection legality is independently checked at the operator boundary.
+    Kernel uses im(I+P)=ker(P), so this readout requires verified idempotence.
+    """
+
+    form: str
+    factors: tuple[Matrix, ...]
+    pivots: tuple[tuple[int, ...], ...] = ()
+    complement: bool = False
+
+    def __post_init__(self):
+        factors = tuple(self.factors)
+        pivots = tuple(tuple(row) for row in self.pivots)
+        if (
+            any(not isinstance(factor, Matrix) for factor in factors)
+            or type(self.complement) is not bool
+        ):
+            raise ValueError(
+                "compact action requires immutable matrices and boolean complement"
+            )
+        if self.form == "GeneralizedInverse" and len(factors) == 4 and len(pivots) == 2:
+            A, D, g, u = factors
+            if (
+                A.ncols != D.nrows
+                or (g.nrows, g.ncols) != (len(pivots[0]), A.nrows)
+                or (u.nrows, u.ncols) != (len(pivots[1]), D.nrows)
+            ):
+                raise ValueError("compact inverse factor shapes differ")
+            for indices, limit in zip(pivots, (A.ncols, D.ncols)):
+                if (
+                    any(type(i) is not int or not 0 <= i < limit for i in indices)
+                    or tuple(sorted(set(indices))) != indices
+                ):
+                    raise ValueError(
+                        "compact inverse pivots must preserve original coordinates"
+                    )
+        elif self.form == "HC" and len(factors) == 2 and not pivots:
+            H, C = factors
+            if H.ncols != C.nrows or H.nrows != C.ncols:
+                raise ValueError("HC factor shapes differ")
+        else:
+            raise ValueError("unsupported compact action form")
+        object.__setattr__(self, "factors", factors)
+        object.__setattr__(self, "pivots", pivots)
+
+    @property
+    def nrows(self):
+        return (
+            self.factors[0].ncols
+            if self.form == "GeneralizedInverse"
+            else self.factors[0].nrows
+        )
+
+    @property
+    def ncols(self):
+        return self.nrows
+
+    def _inverse(self, index, vector):
+        matrix = self.factors[index + 2]
+        size = self.factors[index].ncols
+        output = [0] * size
+        for pivot, bit in zip(self.pivots[index], matrix.apply(vector)):
+            output[pivot] = bit
+        return tuple(output)
+
+    def apply(self, vector):
+        x = validate_vector(vector, self.ncols)
+        if self.form == "GeneralizedInverse":
+            A, D, _, _ = self.factors
+            ga = self._inverse(0, A.apply(x))
+            r = tuple(a ^ b for a, b in zip(x, ga))
+            du = D.apply(self._inverse(1, r))
+            p = tuple(a ^ b for a, b in zip(r, du))
+        else:
+            H, C = self.factors
+            p = H.apply(C.apply(x))
+        return tuple(a ^ b for a, b in zip(x, p)) if self.complement else p
+
+    def complemented(self):
+        return CompactAction(self.form, self.factors, self.pivots, not self.complement)
+
+    def image_basis(self):
+        return _reduced_span(
+            (
+                self.apply(tuple(int(i == j) for i in range(self.ncols)))
+                for j in range(self.ncols)
+            ),
+            self.nrows,
+        )
+
+    def kernel_basis(self):
+        return self.complemented().image_basis()
+
+    def rank(self):
+        return len(self.image_basis())
+
+    def __matmul__(self, other):
+        if not isinstance(other, Matrix):
+            return NotImplemented
+        if self.ncols != other.nrows:
+            raise ValueError("action product requires matching dimensions")
+        return Matrix.from_columns(
+            (self.apply(x) for x in other.transpose().rows), nrows=self.nrows
+        )

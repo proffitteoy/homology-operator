@@ -27,6 +27,14 @@ Rust 单测本轮只在 Windows 执行；跨平台 release 构建与 Python diff
 现有 native CI，远端成绩仍以该分支精确 SHA 的实际 checks 为据。
 
 
+本分支普通 merge 同步已合并 S4-04 的 main `520ecc9` 后，重新构建 release 扩展，
+完整159项强制 native 回归无跳过地通过（137.268秒）；整合日志追加保存在
+[同一验证日志](../benchmarks/s4_solver_verification.log)，原151项记录保留。
+Rust 单测/fmt/Clippy、Ruff、文档检查、reference sdist/wheel、真实无扩展安装下的
+四 solver 与旧 native 快照重放及两示例也通过。性能样本仍属于 `99adf07`，未重新测量整合源码。
+
+S4-04 新增8项验收（其中2项完全不依赖Rust）：23窗口的Factorized/HC全链/循环/非循环、几何与规范核；11过滤族的全部区间transport/rank/barcode与恢复；完整增广逆与至多3×3穷举、小链窗口；0/1/63/64/65/127/128/129边界；阻断dense P/展开G/U路径；未知版本/非法因子/零投影/身份篡改及资源失败。独立D像分解复用核验所有循环残差，不信任native分解。恢复无扩展可运行；native CI仍强制运行全部native测试。原129项数学与历史数据保持，本项不是S4阶段性能准入。
+
 S4-02 可选原型增加7项测试：23个原始窗口的完整P/L、独立同调保持、循环/非循环批查询、全部至多3×3矩阵的稳定广义逆、空形状与64维边界、资源失败、超大有理权/浮点、六身份与批记录JSON恢复。reference测试允许缺少扩展时显式跳过6项native测试；原型CI设置 `HOMOLOGY_NATIVE_REQUIRED=1`，缺少扩展直接失败。真实release构建及Rust fmt/Clippy命令见根README；独立Python validator仍是进入算子的必要边界。后续大尺寸与紧凑表示验收不由这7项替代。
 
 S4-03 另增加4项实际packed代数验证：全部至多3×3矩阵以独立向量枚举核/像/membership并比较reference canonical RREF/solve；矩形、空形状、秩亏与不可解；63/64/65、127/128/129边界的加乘/action与尾部位；0/1/8/64/1024重复RHS、不变分解数、非法形状/非二元输入/污染padding与只读handle。缺少扩展时明确跳过这4项，native CI强制运行。大尺寸性能不从有限测试推断。

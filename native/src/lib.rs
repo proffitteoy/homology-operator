@@ -229,6 +229,8 @@ fn _homology_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(packed::span_table, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_apply, module)?)?;
     module.add_function(wrap_pyfunction!(packed::cyclic_batch, module)?)?;
+
+    module.add_function(wrap_pyfunction!(packed::compact_actions, module)?)?;
     module.add("__version__", "0.0.2.dev0")?;
     Ok(())
 }

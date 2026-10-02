@@ -5,7 +5,7 @@ from fractions import Fraction
 from itertools import product, combinations
 from math import isfinite
 
-from .algebra import Matrix, CyclicAction, validate_vector
+from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 from .chain import ChainWindow, matrix_from_data
 from .result import QueryResult, content_id, make_identity
 
@@ -20,7 +20,35 @@ class ValidationError(ValueError):
         super().__init__("projection validation failed: " + ", ".join(self.failures))
 
 
-def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
+def _batch_membership(matrix, vectors):
+    """Independent Python image decomposition, reused for all residuals.
+
+    No solver/native decomposition, P factors or reported ranks are trusted.
+    Packed Python integers describe the original columns of D's image basis.
+    """
+    pivots = {}
+    for column in matrix.image_basis():
+        bits = sum(bit << i for i, bit in enumerate(column))
+        while bits:
+            pivot = bits.bit_length() - 1
+            if pivot not in pivots:
+                pivots[pivot] = bits
+                break
+            bits ^= pivots[pivot]
+    output = []
+    for vector in vectors:
+        bits = sum(
+            bit << i for i, bit in enumerate(validate_vector(vector, matrix.nrows))
+        )
+        while bits and bits.bit_length() - 1 in pivots:
+            bits ^= pivots[bits.bit_length() - 1]
+        output.append(bits == 0)
+    return tuple(output)
+
+
+def validate_projection(
+    window: ChainWindow, P: Matrix | CyclicAction | CompactAction
+) -> dict:
     """Verify legality, including homology preservation on a full cycle basis.
 
     Idempotence and AP=PD=0 do not ensure preservation: the zero projection
@@ -30,12 +58,12 @@ def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
     """
     if not isinstance(window, ChainWindow):
         raise ValidationError(("window_type",))
-    if not isinstance(P, (Matrix, CyclicAction)):
+    if not isinstance(P, (Matrix, CyclicAction, CompactAction)):
         raise ValidationError(("projection_type",))
     if (P.nrows, P.ncols) != (window.n, window.n):
         raise ValidationError(("projection_shape",))
 
-    if isinstance(P, CyclicAction):
+    if isinstance(P, (CyclicAction, CompactAction)):
         checks = dict.fromkeys(
             (
                 "p_idempotent",
@@ -46,7 +74,28 @@ def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
             ),
             True,
         )
-        L = CyclicAction(P.m, not P.complement)
+        L = (
+            P.complemented()
+            if isinstance(P, CompactAction)
+            else CyclicAction(P.m, not P.complement)
+        )
+        if isinstance(P, CompactAction):
+            if P.form == "GeneralizedInverse":
+                A, D, _, _ = P.factors
+                checks["factor_window"] = A == window.A and D == window.D
+                checks["a_g_a"] = all(
+                    A.apply(P._inverse(0, column)) == column
+                    for column in A.transpose().rows
+                )
+                checks["d_u_d"] = all(
+                    D.apply(P._inverse(1, column)) == column
+                    for column in D.transpose().rows
+                )
+            else:
+                H, C = P.factors
+                checks["a_h_zero"] = window.A @ H == Matrix.zero(window.m, H.ncols)
+                checks["c_d_zero"] = C @ window.D == Matrix.zero(C.nrows, window.p)
+                checks["c_h_identity"] = C @ H == Matrix.identity(C.nrows)
         for j in range(window.n):
             e = tuple(int(i == j) for i in range(window.n))
             p, image_l = P.apply(e), L.apply(e)
@@ -54,9 +103,11 @@ def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
             checks["l_idempotent"] &= L.apply(image_l) == image_l
             checks["a_p_zero"] &= not any(window.A.apply(p))
         checks["p_d_zero"] = all(not any(P.apply(z)) for z in window.D.transpose().rows)
+        residuals = (
+            tuple(a ^ b for a, b in zip(z, P.apply(z))) for z in window.A.kernel_basis()
+        )
         checks["cycle_homology_preservation"] = all(
-            window.D.solve(tuple(a ^ b for a, b in zip(z, P.apply(z)))) is not None
-            for z in window.A.kernel_basis()
+            _batch_membership(window.D, residuals)
         )
     else:
         L = Matrix.identity(window.n) + P
@@ -80,7 +131,7 @@ def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
         **checks,
         "exact_arithmetic": True,
         "verification_method": "ExactF2ActionGeneratorsAndCycleBasis"
-        if isinstance(P, CyclicAction)
+        if isinstance(P, (CyclicAction, CompactAction))
         else "ExactF2MatrixAndCycleBasis",
     }
 
@@ -249,6 +300,8 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
     if certified:
+        if isinstance(projection, CompactAction) and proof["kind"] != "CycleBounds":
+            raise ValidationError(("unsupported_compact_certificate",))
         if isinstance(projection, CyclicAction) and proof["kind"] != "CyclicTrace":
             raise ValidationError(("unsupported_structured_certificate",))
         allowed_fields = {

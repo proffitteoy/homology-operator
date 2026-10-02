@@ -2,7 +2,7 @@
 
 __version__ = "0.0.2.dev0"
 
-from .algebra import Matrix, CyclicAction
+from .algebra import Matrix, CyclicAction, CompactAction
 from .chain import ChainWindow, InvalidInput
 from .result import OperatorResult, QueryResult
 from .solver import (
@@ -23,6 +23,7 @@ from .family import OperatorFamily, OperatorFamilyResult
 __all__ = [
     "Matrix",
     "CyclicAction",
+    "CompactAction",
     "ChainWindow",
     "InvalidInput",
     "OperatorResult",

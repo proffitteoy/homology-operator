@@ -1,6 +1,7 @@
 //! General multiword F2 rows. Stable pivots never permute original coordinates.
 use pyo3::exceptions::{PyMemoryError, PyValueError};
 use pyo3::prelude::*;
+use std::time::Instant;
 
 #[derive(Clone)]
 struct Packed {
@@ -235,6 +236,30 @@ impl PreparedMatrix {
 
     fn rank(&self) -> usize {
         self.pivots.len()
+    }
+
+    fn inverse_rows(&self) -> PyResult<Vec<Vec<u64>>> {
+        // Continue the reference RREF through the RIGHT side of [M | I].
+        // Its null coefficient rows can change the upper inverse rows.
+        let mut transform = self.transform.clone();
+        let mut pivot_row = self.pivots.len();
+        for col in 0..self.original.m {
+            if let Some(selected) = (pivot_row..self.original.m).find(|&i| transform.bit(i, col)) {
+                transform.swap(pivot_row, selected);
+                for i in 0..self.original.m {
+                    if i != pivot_row && transform.bit(i, col) {
+                        transform.xor_row(i, pivot_row);
+                    }
+                }
+                pivot_row += 1;
+                if pivot_row == self.original.m {
+                    break;
+                }
+            }
+        }
+        Ok((0..self.pivots.len())
+            .map(|i| transform.row(i).to_vec())
+            .collect())
     }
     fn rref(&self) -> Vec<Vec<u64>> {
         self.reduced.rows()
@@ -490,6 +515,103 @@ pub fn cyclic_batch(m: usize, vectors: Vec<Vec<u64>>) -> PyResult<Vec<Vec<u64>>>
             Ok(vec![y])
         })
         .collect()
+}
+
+type CompactBatch = (Vec<Vec<u64>>, Vec<Vec<u64>>, Vec<Vec<usize>>, f64);
+
+fn inverse_action(
+    rows: &Packed,
+    indices: &[usize],
+    size: usize,
+    vector: &[u64],
+) -> PyResult<Vec<u64>> {
+    let coefficients = rows.apply(vector)?;
+    let mut output = zeros(size.div_ceil(64))?;
+    for (i, &pivot) in indices.iter().enumerate() {
+        output[pivot / 64] |= ((coefficients[i / 64] >> (i % 64)) & 1) << (pivot % 64);
+    }
+    Ok(output)
+}
+
+#[pyfunction]
+pub fn compact_actions(
+    form: &str,
+    rows: Vec<Vec<Vec<u64>>>,
+    columns: Vec<usize>,
+    pivots: Vec<Vec<usize>>,
+    complement: bool,
+    vectors: Vec<Vec<u64>>,
+) -> PyResult<CompactBatch> {
+    if rows.len() != columns.len() {
+        return Err(PyValueError::new_err("compact factor shapes differ"));
+    }
+    let factors = rows
+        .into_iter()
+        .zip(columns)
+        .map(|(r, n)| Packed::new(r, n))
+        .collect::<PyResult<Vec<_>>>()?;
+    let n = match form {
+        "GeneralizedInverse" if factors.len() == 4 && pivots.len() == 2 => {
+            let (a, d, g, u) = (&factors[0], &factors[1], &factors[2], &factors[3]);
+            if a.n != d.m
+                || g.m != pivots[0].len()
+                || g.n != a.m
+                || u.m != pivots[1].len()
+                || u.n != d.m
+            {
+                return Err(PyValueError::new_err("compact inverse shapes differ"));
+            }
+            for (indices, limit) in pivots.iter().zip([a.n, d.n]) {
+                if indices.iter().any(|&i| i >= limit)
+                    || indices.windows(2).any(|pair| pair[0] >= pair[1])
+                {
+                    return Err(PyValueError::new_err(
+                        "compact inverse pivot coordinates invalid",
+                    ));
+                }
+            }
+            a.n
+        }
+        "HC" if factors.len() == 2 && pivots.is_empty() => {
+            if factors[0].m != factors[1].n || factors[0].n != factors[1].m {
+                return Err(PyValueError::new_err("HC shapes differ"));
+            }
+            factors[0].m
+        }
+        _ => return Err(PyValueError::new_err("unsupported compact action form")),
+    };
+    let started = Instant::now();
+    let mut projected = Vec::with_capacity(vectors.len());
+    let mut applied = Vec::with_capacity(vectors.len());
+    let mut supports = Vec::with_capacity(vectors.len());
+    for x in vectors {
+        checked_vector(&x, n)?;
+        let mut z = if form == "GeneralizedInverse" {
+            let ga = inverse_action(&factors[2], &pivots[0], n, &factors[0].apply(&x)?)?;
+            let r: Vec<u64> = x.iter().zip(ga).map(|(a, b)| a ^ b).collect();
+            let u = inverse_action(&factors[3], &pivots[1], factors[1].n, &r)?;
+            r.iter()
+                .zip(factors[1].apply(&u)?)
+                .map(|(a, b)| a ^ b)
+                .collect::<Vec<u64>>()
+        } else {
+            factors[0].apply(&factors[1].apply(&x)?)?
+        };
+        if complement {
+            for (a, b) in z.iter_mut().zip(&x) {
+                *a ^= b;
+            }
+        }
+        supports.push((0..n).filter(|&i| z[i / 64] >> (i % 64) & 1 != 0).collect());
+        applied.push(x.iter().zip(&z).map(|(a, b)| a ^ b).collect());
+        projected.push(z);
+    }
+    Ok((
+        projected,
+        applied,
+        supports,
+        started.elapsed().as_secs_f64(),
+    ))
 }
 
 #[cfg(test)]

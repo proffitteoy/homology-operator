@@ -6,7 +6,7 @@ from math import isfinite
 from types import MappingProxyType
 from collections.abc import Mapping, Set
 
-from .algebra import Matrix, CyclicAction
+from .algebra import Matrix, CyclicAction, CompactAction
 
 
 class InvalidInput(ValueError):
@@ -57,6 +57,15 @@ def matrix_from_data(data):
 
 
 def action_data(action):
+    if isinstance(action, CompactAction):
+        return {
+            "kind": "CompactF2",
+            "version": 1,
+            "form": action.form,
+            "factors": [matrix_data(x) for x in action.factors],
+            "pivots": [list(row) for row in action.pivots],
+            "complement": action.complement,
+        }
     if isinstance(action, CyclicAction):
         return {
             "kind": "CyclicTrace",
@@ -68,6 +77,21 @@ def action_data(action):
 
 
 def action_from_data(data):
+    if isinstance(data, Mapping) and data.get("kind") == "CompactF2":
+        if (
+            set(data) != {"kind", "version", "form", "factors", "pivots", "complement"}
+            or type(data["version"]) is not int
+            or data["version"] != 1
+            or not isinstance(data["factors"], (tuple, list))
+            or not isinstance(data["pivots"], (tuple, list))
+        ):
+            raise InvalidInput("unsupported compact action handle")
+        return CompactAction(
+            data["form"],
+            tuple(matrix_from_data(x) for x in data["factors"]),
+            data["pivots"],
+            data["complement"],
+        )
     if isinstance(data, Mapping) and data.get("kind") == "CyclicTrace":
         if (
             set(data) != {"kind", "version", "m", "complement"}

@@ -8,3 +8,6 @@ benchmarks/s4_native_prototype.json text eol=lf
 benchmarks/s4_packed_ablation.json text eol=lf
 
 benchmarks/s4_solver_pilot.json text eol=lf
+
+benchmarks/s4_compact_action.json text eol=lf
+benchmarks/s4_compact_verification.log text eol=lf

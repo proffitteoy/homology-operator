@@ -8,7 +8,7 @@ from math import isfinite
 from time import perf_counter
 from uuid import uuid4
 
-from .algebra import Matrix, CyclicAction
+from .algebra import Matrix, CyclicAction, CompactAction
 from .chain import ChainWindow, matrix_data
 from .result import QueryResult, _freeze, content_id, make_identity
 
@@ -131,7 +131,7 @@ class ProjectionProblem:
 class ProjectionSolution:
     status: str
     solver_run_id: str
-    projection: Matrix | CyclicAction | None = None
+    projection: Matrix | CyclicAction | CompactAction | None = None
     identity: object = None
     certificate_level: str | None = None
     objective: QueryResult = field(default_factory=lambda: QueryResult("NotComputed"))
