@@ -101,6 +101,28 @@ class ChainWindowTests(unittest.TestCase):
         data["D"]["rows"][1][0] = 0
         with self.assertRaises(InvalidInput):
             ChainWindow.from_dict(data)
+
+    def test_unordered_or_text_coordinate_inputs_are_rejected(self):
+        for basis in (
+            {"e0", "e1", "e2"},
+            frozenset(("e0", "e1", "e2")),
+            "abc",
+            {"e0": 1, "e1": 1, "e2": 1},
+        ):
+            with self.subTest(basis=basis), self.assertRaises(InvalidInput):
+                self.window(basis_current=basis)
+        for weights in ({1, 2, 3}, frozenset((1, 2, 3)), "123", {1: 1, 2: 2, 3: 3}):
+            with self.subTest(weights=weights), self.assertRaises(InvalidInput):
+                self.window(weights=weights)
+
+    def test_bad_policy_types_are_input_errors(self):
+        for option in ("weight_semantics", "arithmetic"):
+            for value in ([], {}, set(), None, True):
+                with (
+                    self.subTest(option=option, value=value),
+                    self.assertRaises(InvalidInput),
+                ):
+                    self.window(**{option: value})
         data = self.window().to_dict()
         data["weights"][0]["denominator"] = 0
         with self.assertRaises(InvalidInput):
