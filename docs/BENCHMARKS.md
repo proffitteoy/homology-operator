@@ -32,3 +32,19 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 | GeneralSearch | 54个请求全部Unavailable，保留未实现事实，不能用已有solver结果填充它 |
 
 这些是单次带tracemalloc测量的有限记录，不提供稳健性能排序。它们说明一般搜索评估必须同时覆盖认证能力、质量与完整成本，而不能仅缩短候选构造；具体go/no-go留给#24。后续性能研究应另定重复次数、预热和隔离环境，不能从本表挑最好一次或混合认证等级作结论。
+
+## 一般搜索准入实验（S3-06）：冻结协议
+
+选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。
+
+预先固定输入为原23个来源/hash窗口（保留浮点拒绝）及一个人工A=0、n=5、两个边界、beta=3的窗口，不能运行后挑选有利实例。三种方法为GreedyCertifiedSolver、ExhaustiveExactSolver及该实验；全部请求Feasible、StableBasisOrder、原始算术、一般链窗口，预算分别state=20/2000、wall=10秒、matrix-entry=1000000。每配置单次完整成本测量，沿用上面配置身份、tracemalloc和额外独立重验；不同实际认证仍分组，不作稳健速度排名。
+
+准入条件：实验至少改善一个完整贪心结果，在相同请求/预算下保留可复核bounds，且证明已有公共基线无法满足的支持域或质量需求。若只在现有exact支持域得到同值/局部区间，没有新适用域或可重放的全局证明，则本轮no-go；即使个别构造更快也不能据此接入一般后端。数值MIP/SAT不在本次选择内，未安装或运行，不比较虚构版本/成本。固定上游native/compressed搜索是精确有限枚举；planar_mincut仅适用于已识别对偶结构，其浮点pruning容差不迁移为本库认证。
+
+执行入口：`uv run --locked python scripts/compare_solvers.py --experiment boundary-flips --output benchmarks/phase3_local_search.json`。协议与代码先提交，随后在干净提交运行并保留完整输出；原phase3_reference.json不改写。
+
+正式运行源码为干净提交`e12d2b5f82d0daa4a0e5ac22ce87f4a19038b157`，环境同前；[完整144行记录](../benchmarks/phase3_local_search.json) SHA256=`946ba12bdb2a458e9b5236fa2f52362180c37f156307a9d48862fce297cbea03`。120个保留action全部独立验证并JSON往返；84个ExactOptimal、12个CertifiedInterval和24个仅Feasible，另保留6个浮点Unavailable及18个无action中断。人工beta=3窗口属于明确记录的人工正权，不冒充欧氏来源。
+
+K4原基/重排两例从4/3改善到9/8，但实验仅认证[1,9/8]，Exhaustive在相同2000状态预算认证9/8最优；人工beta=3例没有改善贪心11/7，实验仍只认证[1,11/7]，Exhaustive在2000状态保留相同上界并中断。另独立放宽到默认100000状态作真值核验，Exhaustive以2090状态认证11/7；此核验不混入2000预算的性能记录。
+
+本轮结论为**no-go：不接入公共GeneralSearchSolver**。实验确有两项质量改善，但都在已有exact支持域，不能证明新的支持域或比现有认证更强；beta=3例没有质量收益。完整成本保留原K4约18.9ms及重排20.5ms，穷举分别约22.2ms及18.2ms；认证等级不同且每配置只有一次，不用这些数作速度排名。state=20/2000中断保留seed和已完成改进，已测中途改善保存；不完整neighbor扫描不标局部完成。该证据只拒绝本轮边界翻转原型的公共准入，不否定其他参数化、branch-and-bound、MILP或SAT未来研究；重新准入需要新需求、预先冻结的比较和独立证明。

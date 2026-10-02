@@ -7,7 +7,7 @@ from pathlib import Path
 import unittest
 
 from homology_operator import ChainWindow, Matrix, ProjectionProblem, ResourceLimits
-from homology_operator import OperatorResult
+from homology_operator import OperatorResult, HomologyOperator, solve_projection
 from homology_operator.result import _decode, content_id
 
 spec = importlib.util.spec_from_file_location(
@@ -100,6 +100,88 @@ class ComparisonTests(unittest.TestCase):
             )
             self.assertEqual(record, OperatorResult.from_json(record.to_json()))
         self.assertEqual(verified, 114)
+
+    def test_local_search_frozen_report_preserves_proof_and_cost_boundaries(self):
+        report = _decode(
+            json.loads(
+                (comparison.ROOT / "benchmarks/phase3_local_search.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        )
+        self.assertFalse(report["working_tree_dirty"])
+        self.assertEqual(len(report["rows"]), 144)
+        self.assertEqual(report["protocol"]["experiment"], "boundary-flips")
+        verified = 0
+        for row in report["rows"]:
+            if row["projection"] is None:
+                self.assertIn(
+                    row["solver"]["status"], {"Unavailable", "ResourceExhausted"}
+                )
+                continue
+            verified += 1
+            window = ChainWindow.from_dict(report["problem_windows"][row["problem_id"]])
+            record = OperatorResult(
+                row["identity"],
+                window,
+                row["projection"],
+                row["solver"],
+                row["certificate"],
+                {},
+            )
+            self.assertEqual(
+                record.solver["solver_config_id"],
+                content_id("solver-config", row["request"]),
+            )
+            self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+            if (
+                row["backend"] == "BoundaryFlipExperiment"
+                and row["fixture_id"] == "h1_k4_stage_4"
+                and row["solver"]["resource_usage"]["local_complete"]
+            ):
+                self.assertEqual(
+                    record.solver["upper_bound"], comparison.Fraction(9, 8)
+                )
+                self.assertEqual(
+                    record.solver["certificate_level"], "CertifiedInterval"
+                )
+                self.assertIs(record.certificate["optimality_verified"], False)
+        self.assertEqual(verified, 120)
+
+    def test_local_search_keeps_completed_improvements_on_interruption(self):
+        fixtures = json.loads(
+            (comparison.ROOT / "tests/fixtures/reference.json").read_text(
+                encoding="utf-8"
+            )
+        )["fixtures"]
+        problem = comparison.fixture_problem(
+            next(f for f in fixtures if f["id"] == "h1_k4_stage_4")
+        )
+        complete = solve_projection(problem, comparison.BoundaryFlipExperiment())
+        self.assertEqual(complete.upper_bound, comparison.Fraction(9, 8))
+        improved_interruption = False
+        for limit in range(complete.resource_usage["states"]):
+            solution = solve_projection(
+                replace(problem, resource_limits=ResourceLimits(state_limit=limit)),
+                comparison.BoundaryFlipExperiment(),
+            )
+            self.assertEqual(solution.status, "ResourceExhausted", solution.diagnostics)
+            if solution.projection is None:
+                continue
+            op = HomologyOperator(problem.window, solution)
+            self.assertEqual(
+                op.to_result(), OperatorResult.from_json(op.to_result().to_json())
+            )
+            if solution.upper_bound is not None:
+                self.assertEqual(op.stretch().value, solution.upper_bound)
+                self.assertGreaterEqual(solution.upper_bound, complete.upper_bound)
+                improved_interruption |= solution.upper_bound < comparison.Fraction(
+                    4, 3
+                )
+        self.assertTrue(improved_interruption)
+        self.assertEqual(
+            solve_projection(problem, "GeneralSearchSolver").status, "Unavailable"
+        )
 
 
 if __name__ == "__main__":

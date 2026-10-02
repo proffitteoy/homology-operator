@@ -33,6 +33,10 @@ from homology_operator import (
 )
 from homology_operator.result import canonical_json, content_id, input_identity
 from homology_operator.chain import action_data
+from homology_operator.solver import _Budget, _Exhausted, _cycle_objective
+from homology_operator.solver import ProjectionSolution
+from homology_operator.result import QueryResult, make_identity
+from homology_operator.validation import validate_projection
 
 ROOT = Path(__file__).resolve().parents[1]
 SOLVERS = {
@@ -45,6 +49,138 @@ SOLVERS = {
         StructuredFamilySolver,
     )
 }
+
+
+class BoundaryFlipExperiment(FeasibleSolver):
+    """Experimental T11 one-entry local descent; never registered as a backend.
+
+    Starting from the greedy section, toggle one boundary basis coefficient of
+    one homology generator. Require strict objective improvement; choose packed
+    projection columns for equal improving candidates. A local fixed point is
+    not an optimality certificate. All objective evaluations use full cycles.
+    """
+
+    def capabilities(self):
+        return dict(super().capabilities()) | {
+            "arithmetic_policies": ("ExactInteger", "ExactRational"),
+            "certificate_levels": (
+                "Feasible",
+                "CertifiedUpperBound",
+                "CertifiedInterval",
+            ),
+        }
+
+    def solve(self, problem):
+        window = problem.window
+        method = type(self).__name__
+        config = problem.solver_config(method)
+        budget = _Budget(problem.resource_limits)
+        seed = GreedyCertifiedSolver().solve(problem)
+        if seed.projection is None:
+            return replace(seed, method=method, solver_config=config)
+        budget.states = seed.resource_usage["states"]
+        best, value = seed.projection, seed.objective.value
+        witness = seed.objective.details.get("witness")
+        exhausted = seed.diagnostics[0] if seed.status == "ResourceExhausted" else None
+        visited, improvements, local_complete = 0, 0, False
+        cycles = Matrix.from_columns(window.A.kernel_basis(), nrows=window.n)
+        beta = window.n - window.A.rank() - window.D.rank()
+        try:
+            if exhausted is not None:
+                raise _Exhausted(exhausted)
+            budget.step()
+            boundaries = window.D.image_basis()
+            outputs = Matrix.from_columns(best.image_basis(), nrows=window.n)
+            coordinates = Matrix.from_columns(
+                (outputs.solve(z) for z in best.transpose().rows), nrows=beta
+            )
+            budget.entries(6 * window.n**2 + window.n * (cycles.ncols + beta))
+            while True:
+                origin, initial_value = best, value
+                choice = None
+                for boundary in boundaries:
+                    for row in coordinates.rows:
+                        budget.step()
+                        delta = Matrix.from_rows(
+                            tuple(tuple(bit * c for c in row) for bit in boundary),
+                            ncols=window.n,
+                        )
+                        candidate = origin + delta
+                        validate_projection(window, candidate)
+                        candidate_value, candidate_witness = _cycle_objective(
+                            window, candidate, cycles, budget
+                        )
+                        visited += 1
+                        key = tuple(
+                            sum(bit << j for j, bit in enumerate(column))
+                            for column in candidate.transpose().rows
+                        )
+                        if candidate_value < initial_value and (
+                            choice is None or (candidate_value, key) < choice[:2]
+                        ):
+                            choice = candidate_value, key, candidate, candidate_witness
+                            # Keep completed improvements when a sweep is interrupted.
+                            value, _, best, witness = choice
+                            improvements += 1
+                if choice is None:
+                    local_complete = True
+                    break
+        except _Exhausted as error:
+            exhausted = str(error)
+        identity = make_identity(
+            window, best, seed.solver_run_id, problem.tie_break_policy
+        )
+        count = (1 << cycles.ncols) - 1
+        lower = (
+            Fraction(0 if exhausted else int(beta > 0)) if value is not None else None
+        )
+        level = (
+            "Feasible"
+            if value is None
+            else "ExactOptimal"
+            if lower == value
+            else "CertifiedInterval"
+        )
+        return ProjectionSolution(
+            "ResourceExhausted" if exhausted else "Solved",
+            seed.solver_run_id,
+            best,
+            identity,
+            level,
+            QueryResult(
+                "ResourceExhausted"
+                if value is None
+                else "EmptyDomain"
+                if count == 0
+                else "Computed",
+                value,
+                identity,
+                None if value is None else True,
+                {"witness": witness, "nonzero_cycles": count},
+            ),
+            {}
+            if value is None
+            else {
+                "optimization": {
+                    "kind": "CycleBounds",
+                    "nonzero_cycles": count,
+                    "lower_bound_method": "UniversalHomology",
+                }
+            },
+            {
+                **budget.usage(),
+                "neighbors_evaluated": visited,
+                "improvements": improvements,
+                "local_complete": local_complete,
+            },
+            (exhausted,) if exhausted else (),
+            problem.tie_break_policy,
+            method=method,
+            arithmetic_policy=window.arithmetic,
+            lower_bound=lower,
+            upper_bound=value,
+            solver_config=config,
+        )
 
 
 class _MeasuredSolver:
@@ -78,7 +214,15 @@ def compare(problem, backend_name):
         "comparison-problem", {**input_identity(problem.window), **common_config}
     )
     measured = (
-        _MeasuredSolver(SOLVERS[backend_name]()) if backend_name in SOLVERS else None
+        _MeasuredSolver(
+            (
+                BoundaryFlipExperiment
+                if backend_name == "BoundaryFlipExperiment"
+                else SOLVERS[backend_name]
+            )()
+        )
+        if backend_name in SOLVERS or backend_name == "BoundaryFlipExperiment"
+        else None
     )
     started = perf_counter()
     solution = solve_projection(
@@ -261,6 +405,7 @@ def suite():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--experiment", choices=("boundary-flips",))
     args = parser.parse_args()
     source_paths = sorted((ROOT / "src").rglob("*.py")) + [
         Path(__file__).resolve(),
@@ -283,8 +428,43 @@ def main():
         ).strip()
     )
     rows, problems = [], {}
-    for fixture_id, problem in suite():
-        for backend in (*SOLVERS, "GeneralSearchSolver"):
+    if args.experiment:
+        fixtures = json.loads(
+            (ROOT / "tests/fixtures/reference.json").read_text(encoding="utf-8")
+        )["fixtures"]
+        cases = [(f["id"], fixture_problem(f)) for f in fixtures]
+        cases.append(
+            (
+                "two-boundaries-beta3",
+                ProjectionProblem(
+                    ChainWindow(
+                        2,
+                        Matrix.zero(0, 5),
+                        Matrix.from_columns(
+                            ((1, 1, 1, 1, 0), (1, 1, 0, 0, 1)), nrows=5
+                        ),
+                        (),
+                        ("a", "b", "c", "d", "e"),
+                        ("f", "g"),
+                        (5, 7, 4, 2, 6),
+                    )
+                ),
+            )
+        )
+        cases = [
+            (name, replace(problem, resource_limits=ResourceLimits(state_limit=limit)))
+            for name, problem in cases
+            for limit in (20, 2000)
+        ]
+        backends = (
+            "GreedyCertifiedSolver",
+            "ExhaustiveExactSolver",
+            "BoundaryFlipExperiment",
+        )
+    else:
+        cases, backends = suite(), (*SOLVERS, "GeneralSearchSolver")
+    for fixture_id, problem in cases:
+        for backend in backends:
             row = compare(problem, backend)
             row["fixture_id"] = fixture_id
             problems[row["problem_id"]] = problem.window.to_dict()
@@ -314,6 +494,7 @@ def main():
             "runs_per_case": 1,
             "ranking_claim": False,
             "general_search": "unimplemented backend is explicitly recorded as Unavailable, not omitted",
+            "experiment": args.experiment,
         },
         "rows": rows,
         "problem_windows": problems,
