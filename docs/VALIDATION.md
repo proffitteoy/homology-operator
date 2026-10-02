@@ -19,7 +19,7 @@ git diff --check
 
 ## 首次数学实现的验证门槛
 
-下表保留统一验收要求；Phase 1 单尺度与 Phase 2 有限过滤已落地，测试覆盖与实际成绩见各阶段验收报告。Phase 3 优化认证、Phase 4 性能和更高阶段仍待执行。依赖、真实命令与来源已记录于根README及FIXTURES。主路径只消费链输入和合法 solver 解，独立 oracle 留在 `tests/oracle/`。
+下表保留统一验收要求；Phase 1–3 reference 已合并，测试覆盖与实际成绩见各阶段验收报告。Phase 4 性能由 [S4/S5 项目](S4_S5_PROJECT.md) 细化，尚待实现；更高阶段仍待执行。依赖、真实命令与来源已记录于根README及FIXTURES。主路径只消费链输入和合法 solver 解，独立 oracle 留在 `tests/oracle/`。
 
 | 变更领域 | 最低验证 |
 | --- | --- |
@@ -51,7 +51,7 @@ git diff --check
 
 ## 阶段结论边界
 
-Phase 0 逻辑契约已具备；Phase 1的23份fixture/57项测试与Phase 2有限过滤/81项测试已经逐issue合入main。Phase 3完成五种限定solver、认证、对照/no-go与129项本地联合验收，证据见 [Phase 3报告](PHASE3_REPORT.md)。全部本阶段原PR准确head合入main并通过main数学测试/CI，才进入Phase 4。公开API及发行版本仍未冻结。
+Phase 0 逻辑契约已具备；Phase 1–3 全部原PR已合入 main `54ce78b`，该提交 CI通过。Phase 3五种限定solver、认证、对照/no-go与129项数学验收的历史证据见 [Phase 3报告](PHASE3_REPORT.md)。下一轮 [S4/S5](S4_S5_PROJECT.md) 细化 Phase 4：同语义性能优化与 GUDHI/完整成本验收；有限 barcode 原型仅作独立研究证据，不替代新后端、几何追踪、一般证明或正式性能测量。公开API及发行版本仍未冻结。
 
 Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
 
