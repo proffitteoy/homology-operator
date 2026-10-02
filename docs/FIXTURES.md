@@ -62,4 +62,6 @@ python -c "import sys; sys.path.insert(0, 'tests/oracle'); from reference import
 
 [solver_reference.json](../tests/fixtures/solver_reference.json) 复用原23个冻结输入及其 hash，不修改 reference.json。记录22个精确实例的最优有理数、完整候选数和非零循环数，以及1个浮点实例的 Unavailable 预期。所有精确值实际与上述固定 verify_highdim.py 的 compressed_native_operator 对照，16个 n≤6 精确窗口另与 verify.py 的 native_operator 对照；生产证书还由独立商基提升枚举重放。来源提交与原文件 SHA256 保存在记录中，不引入研究代码运行依赖。
 
-该回归记录 UTF-8/LF 原始文件 SHA256 为 `8523e5588c2a98834dd48a0314ee6d947912d8c6d80decd7d38dc1f8fa285ba7`。单尺度和族快照的证书往返由 test_solver.py 核验，通用下界和完整搜索证书的范围分别见 [solver 契约](SOLVER_CONTRACT.md)。
+该回归记录还冻结22个精确输入在固定 verify.py `model(optimize=False)` 下的贪心 objective、按 packed 原坐标表示的生成元、β理论上界及认证等级，保留全部原最优记录。β=0 的 native 算子 objective 为0，不能直接复制上游截面记账1。K4 stage 4 的贪心为4/3、最优为9/8；理论来源为固定 T4 中注明的 Rossman 贪心回缩加权同调版本。
+
+当前回归记录 UTF-8/LF 原始文件 SHA256 为 `1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1`。单尺度与族的已查询快照、证书篡改及反复往返由 test_solver.py 核验；通用下界、完整搜索和贪心证书的范围见 [solver 契约](SOLVER_CONTRACT.md)。Phase 1/2 的历史报告与输入 hash 保持原验收含义。
