@@ -6,7 +6,7 @@
 
 ## 当前可执行验证
 
-reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前57项测试包含独立数学联合验收，具体环境、源码身份和 fixture 见 [验收报告](PHASE1_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
+reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前79项测试包含单尺度与有限过滤独立数学联合验收，具体环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
 
 ```powershell
 pwsh -NoProfile -File ./scripts/check_docs.ps1
@@ -19,7 +19,7 @@ git diff --check
 
 ## 首次数学实现的验证门槛
 
-下表保留统一验收要求；Phase 1 单尺度部分已落地，测试覆盖与实际成绩见验收报告。Phase 2 过滤、Phase 4 性能和更高阶段仍待执行。依赖、真实命令与来源已记录于根README及FIXTURES。主路径只消费链输入和合法 solver 解，独立 oracle 留在 `tests/oracle/`。
+下表保留统一验收要求；Phase 1 单尺度与 Phase 2 有限过滤已落地，测试覆盖与实际成绩见各阶段验收报告。Phase 3 优化认证、Phase 4 性能和更高阶段仍待执行。依赖、真实命令与来源已记录于根README及FIXTURES。主路径只消费链输入和合法 solver 解，独立 oracle 留在 `tests/oracle/`。
 
 | 变更领域 | 最低验证 |
 | --- | --- |
@@ -51,7 +51,7 @@ git diff --check
 
 ## 阶段结论边界
 
-Phase 0 逻辑契约已具备；Phase 1 Python reference、运行时结果模型、23份固定fixture及57项本地验收已完成并提交逐issue PR。全部PR按用户授权合并进入main后才能跨阶段；公开API及发行版本仍未冻结。
+Phase 0 逻辑契约已具备；Phase 1 的23份固定fixture和57项单尺度验收已随PR #30–#41合入main。Phase 2 提供有限过滤及完整联合读取，79项本地测试通过并提交逐issue PR；所有本阶段PR进入main并验证后才能推进Phase 3。公开API及发行版本仍未冻结。
 
 Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
 

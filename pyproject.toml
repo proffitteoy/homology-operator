@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "homology-operator"
 version = "0.0.2.dev0"
-description = "Boundary-native F2 homology operators: single-scale reference implementation"
+description = "Boundary-native F2 homology operators and finite filtration reference"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []

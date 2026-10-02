@@ -1,6 +1,6 @@
 # Homology Operator：逻辑接口
 
-> 本文保留语言无关工程契约；Phase 1 的单尺度 Python reference 已实现，实际 API 与命令见 [根 README](../README.md)。过滤接口仍是 Phase 2 目标。对象职责见 [ARCHITECTURE](ARCHITECTURE.md)，身份与状态见 [RESULT_MODEL](RESULT_MODEL.md)，求解行为见 [SOLVER_CONTRACT](SOLVER_CONTRACT.md)。
+> 本文保留语言无关工程契约；Phase 1 单尺度和 Phase 2 有限过滤 Python reference 已实现，实际 API 与命令见 [根 README](../README.md)。对象职责见 [ARCHITECTURE](ARCHITECTURE.md)，身份与状态见 [RESULT_MODEL](RESULT_MODEL.md)，求解行为见 [SOLVER_CONTRACT](SOLVER_CONTRACT.md)。
 
 本契约延续固定理论正文的 D1、T2、T3 与第 3 节；不另建一套算子定义。
 

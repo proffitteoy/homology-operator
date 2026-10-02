@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成项目规则、文档入口和验证工具初始化。2026-10-02 已实现 Phase 1 单尺度 reference，并通过本地 57 项测试；23 份 H0–H3/加权 fixture 有固定来源和独立 oracle。变更按 issue 提交 PR，全部合并进 main 后才推进 Phase 2。OperatorFamily/filtration、一般最优 solver 和高性能核心尚未实现，没有已发布版本。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 已全部合入 main 并通过本地 57 项测试与 Python 3.10/3.12 CI。Phase 2 现已实现有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化，79 项本地测试通过；23 份 H0–H3/加权 fixture 组织为 11 个独立 PH 对拍族/变体。Phase 2 按 issue 提交 PR，全部合入 main 后才进入 Phase 3。一般最优 solver、高性能核心与发行尚未完成。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -34,6 +34,7 @@ reference 安装与检查（仓库根目录）：
 uv sync --locked --python 3.10
 uv run --locked python -m unittest discover -s tests -v
 uv run --locked python examples/single_scale.py
+uv run --locked python examples/filtration.py
 uv run --locked ruff check .
 uv run --locked ruff format --check .
 uv build --no-build-isolation
@@ -47,7 +48,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；57 项单尺度数学/边界/身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；79 项单尺度/过滤数学、边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
@@ -63,7 +64,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | [docs/development/](docs/development/) | 通用架构模板、约束、代码组织与审计参考材料 |
 | [scripts/check_docs.ps1](scripts/check_docs.ps1) | 文档一致性检查工具 |
 
-[源码](src/homology_operator/) 已实现 F2 代数、ChainWindow、FeasibleSolver、独立 validator、HomologyOperator 和结果身份；[数学测试](tests/) 与 [单尺度示例](examples/single_scale.py) 可运行。迁移来源见 [FIXTURES](docs/FIXTURES.md)，实际证据及源码/输入 hash 见 [Phase 1 验收报告](docs/PHASE1_REPORT.md)。其余路线图目录按实际需求创建。
+[源码](src/homology_operator/) 已实现 F2 代数、ChainWindow、FeasibleSolver、独立 validator、HomologyOperator、OperatorFamily 和完整结果身份；[数学测试](tests/)、[单尺度示例](examples/single_scale.py) 与 [过滤示例](examples/filtration.py) 可运行。迁移来源见 [FIXTURES](docs/FIXTURES.md)，实际证据及源码/输入 hash 见 [Phase 1](docs/PHASE1_REPORT.md) 和 [Phase 2 验收报告](docs/PHASE2_REPORT.md)。
 
 `selected_mass` 表示当前投影选定代表的质量，不能声称是最短代表。可行投影、精确拓扑、全局最优伸长、稳定性和性能分别需要相应证据，见 [solver 契约](docs/SOLVER_CONTRACT.md) 和 [开发路线](HOMOLOGY_OPERATOR_ROADMAP.md)。
 
@@ -122,6 +123,26 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | #12 有限 stretch | [#38](https://github.com/proffitteoy/homology-operator/pull/38) |
 | #13 sourced fixtures | [#39](https://github.com/proffitteoy/homology-operator/pull/39) |
 | #26 独立联合验收 | [#40](https://github.com/proffitteoy/homology-operator/pull/40) |
-| #1 Phase 1 汇总 | 本分支同步文档入口与阶段证据，最后合并 |
+| #1 Phase 1 汇总 | [#41](https://github.com/proffitteoy/homology-operator/pull/41)，已合并 |
 
 CI运行Python 3.10/3.12的实际测试、示例、Ruff、构建和隔离wheel导入；某个PR合并或检查通过不代表剩余PR已通过。数学源码与fixture内容身份见验收报告。
+
+## 有限过滤与 Phase 2
+
+`OperatorFamily(scales, windows, operators, weight_policy="Inherited")` 接受同次数的 ChainWindow 和已验证算子，按基标识生成三个次数的坐标包含。`Variable` 显式允许变权，单位/语义仍一致；重复尺度保留有序阶段，末端常量延拓。
+
+`transport(i,j)` 的 QueryResult 保存 kernel 坐标作用、目标原链作用和 source/target 完整身份；`transport_rank` 与 `transport_certificate` 从同一作用读取。`barcode()` 只读 transport rank，半开阶段端点保留重数与 None 末端；失败保持缺失，合法零同调给 Computed 空表。
+
+`track_class(x,i,j)` 接受源循环；质量、支撑、共享/总支撑从目标 P 读取。`endpoint_mass_bound` 只使用终点当前 stretch、源选定质量和显式变权因子，浮点不称认证。`to_result()` 快照保存完整阶段/传输/rank/barcode/tracking；`OperatorFamilyResult.from_json` 重验内容，`to_family()` 恢复原 P。当前是稠密有限 reference，无族级抢占预算。
+
+| Issue | 增量 PR |
+| --- | --- |
+| #14 过滤输入与阶段身份 | [#42](https://github.com/proffitteoy/homology-operator/pull/42) |
+| #15 transport/composition/rank | [#43](https://github.com/proffitteoy/homology-operator/pull/43) |
+| #16 rank barcode 与末端 | [#44](https://github.com/proffitteoy/homology-operator/pull/44) |
+| #17 跨尺度几何与终点界 | [#45](https://github.com/proffitteoy/homology-operator/pull/45) |
+| #27 族身份与序列化 | [#46](https://github.com/proffitteoy/homology-operator/pull/46) |
+| #18 独立联合验收 | [#47](https://github.com/proffitteoy/homology-operator/pull/47) |
+| #2 Phase 2 汇总 | 本阶段汇总 PR，最后合并 |
+
+后继 PR 依赖前置，前置合并后转向 main；监测根据实际 main 的代码与 CI 推进，后续阶段 PR 由用户合并。
