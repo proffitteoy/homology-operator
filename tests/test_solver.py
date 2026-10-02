@@ -13,6 +13,7 @@ from homology_operator.result import OperatorResult, QueryResult
 from homology_operator.solver import (
     FeasibleSolver,
     ExhaustiveExactSolver,
+    GreedyCertifiedSolver,
     ProjectionProblem,
     ResourceLimits,
     generalized_inverse,
@@ -726,6 +727,287 @@ class SolverTests(unittest.TestCase):
             self.assertEqual(failed.diagnostics, ("certificate_replay_state_limit",))
             self.assertNotEqual(failed.certificate_level, "ExactOptimal")
             HomologyOperator(large, failed).to_result()
+
+    def test_greedy_sourced_corpus_optimum_bound_and_queried_roundtrip(self):
+        from test_joint import oracle, window as fixture_window
+
+        fixtures = {f["id"]: f for f in oracle.load_fixtures()}
+        corpus = json.loads(
+            (Path(__file__).parent / "fixtures/solver_reference.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for expected in corpus["fixtures"]:
+            fixture = fixtures[expected["fixture_id"]]
+            self.assertEqual(fixture["input_hash"], expected["input_hash"])
+            window = fixture_window(fixture)
+            solution = solve_projection(
+                ProjectionProblem(
+                    window, requested_certificate_level="CertifiedInterval"
+                ),
+                "GreedyCertifiedSolver",
+            )
+            self.assertEqual(
+                solution.status, expected["expected_status"], solution.diagnostics
+            )
+            if solution.status == "Unavailable":
+                self.assertIsNone(solution.projection)
+                continue
+            result = expected["greedy"]
+            value = result["objective"]
+            self.assertEqual(
+                solution.objective.value,
+                Fraction(value["numerator"], value["denominator"]),
+            )
+            optimum = expected["expected_optimum"]
+            self.assertLessEqual(
+                Fraction(optimum["numerator"], optimum["denominator"]),
+                solution.objective.value,
+            )
+            self.assertLessEqual(
+                solution.objective.value, result["theoretical_upper_bound"]
+            )
+            self.assertEqual(solution.certificate_level, result["certificate_level"])
+            proof = solution.certificate["optimization"]
+            self.assertEqual(
+                [
+                    sum(bit << j for j, bit in enumerate(z))
+                    for z in proof["selected_generators"]
+                ],
+                result["selected_generators_packed"],
+            )
+            op = HomologyOperator(window, solution)
+            columns = tuple(
+                sum(bit << j for j, bit in enumerate(z)) for z in op.P.transpose().rows
+            )
+            self.assertTrue(oracle.verify_projection(fixture, columns))
+            op.readout("kernel_basis")
+            op.readout("selected_mass", (0,) * window.n)
+            op.stretch()
+            op.minimum_class_mass((0,) * window.n)
+            record = op.to_result()
+            self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+            family = OperatorFamily((0,), (window,), (op,))
+            family.barcode()
+            family.track_class((0,) * window.n, 0, 0)
+            snapshot = family.to_result()
+            for _ in range(2):
+                snapshot = (
+                    OperatorFamilyResult.from_json(snapshot.to_json())
+                    .to_family()
+                    .to_result()
+                )
+                self.assertEqual(snapshot.to_json(), family.to_result().to_json())
+            if fixture["id"] == "h1_k4_stage_4":
+                self.assertEqual(solution.objective.value, Fraction(4, 3))
+                self.assertEqual(
+                    (solution.lower_bound, solution.upper_bound), (1, Fraction(4, 3))
+                )
+                self.assertFalse(op.certificate()["optimality_verified"])
+
+    def test_greedy_proof_tampering_is_rejected(self):
+        window, _ = self.bound_solution()
+        solution = solve_projection(ProjectionProblem(window), "GreedyCertifiedSolver")
+        self.assertEqual(solution.status, "Solved", solution.diagnostics)
+        proof = dict(solution.certificate["optimization"])
+        for changes in (
+            {"selected_generators": ((1, 0),)},  # legal class, not minimum mass
+            {"selected_generators": ((1, 1),)},  # boundary, not independent
+            {"selected_generators": ()},
+            {"theoretical_upper_bound": 0},
+            {"theoretical_upper_bound": True},
+            {"hypotheses": dict(proof["hypotheses"]) | {"positive_weights": False}},
+            {"hypotheses": dict(proof["hypotheses"]) | {"betti": True}},
+            {
+                "hypotheses": dict(proof["hypotheses"])
+                | {"arithmetic_policy": "FloatingPoint"}
+            },
+            {"nonzero_cycles": 2},
+            {"optimality_verified": True},
+            {"cycle_retraction": {"nrows": 2, "ncols": 2, "rows": [[0, 0], [0, 0]]}},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                HomologyOperator(
+                    window,
+                    replace(solution, certificate={"optimization": proof | changes}),
+                )
+        for details in ({}, {"witness": (0, 0)}, {"witness": (1, 1)}):
+            with self.subTest(details=details), self.assertRaises(ValueError):
+                HomologyOperator(
+                    window,
+                    replace(
+                        solution, objective=replace(solution.objective, details=details)
+                    ),
+                )
+        same_run_problem = solve_projection(
+            ProjectionProblem(window), "GreedyCertifiedSolver"
+        )
+        with self.assertRaises(ValueError):
+            HomologyOperator(
+                window, replace(solution, objective=same_run_problem.objective)
+            )
+        record = HomologyOperator(window, solution).to_result()
+        data = record.to_dict()
+        data["certificate"]["optimization"]["theoretical_upper_bound"] = 0
+        with self.assertRaises(ValueError):
+            OperatorResult.from_dict(data)
+        equal_weights = replace(window, weights=(1, 1))
+        tied = solve_projection(
+            ProjectionProblem(equal_weights), "GreedyCertifiedSolver"
+        )
+        self.assertEqual(
+            tied.certificate["optimization"]["selected_generators"], ((1, 0),)
+        )
+        with self.assertRaisesRegex(ValueError, "greedy_minimum_or_tie_break"):
+            HomologyOperator(
+                equal_weights,
+                replace(
+                    tied,
+                    certificate={
+                        "optimization": dict(tied.certificate["optimization"])
+                        | {"selected_generators": ((0, 1),)}
+                    },
+                ),
+            )
+
+    def test_greedy_noncycle_and_wrong_action_cannot_claim_greedy_proof(self):
+        window = self.window()
+        solution = solve_projection(ProjectionProblem(window), "GreedyCertifiedSolver")
+        proof = dict(solution.certificate["optimization"])
+        with self.assertRaisesRegex(ValueError, "greedy_independence"):
+            HomologyOperator(
+                window,
+                replace(
+                    solution,
+                    certificate={
+                        "optimization": proof | {"selected_generators": ((1, 0, 0),)}
+                    },
+                ),
+            )
+        window, _ = self.bound_solution(weights=(1, 1))
+        solution = solve_projection(ProjectionProblem(window), "GreedyCertifiedSolver")
+        other_action = Matrix.from_rows(((0, 0), (1, 1)))
+        # Both actions have the same objective and are legal, but only one is greedy.
+        self.assertNotEqual(solution.projection, other_action)
+        from homology_operator.result import make_identity
+
+        identity = make_identity(
+            window,
+            other_action,
+            solution.solver_run_id,
+            solution.tie_break_policy,
+        )
+        with self.assertRaisesRegex(ValueError, "greedy_section_action"):
+            HomologyOperator(
+                window,
+                replace(
+                    solution,
+                    projection=other_action,
+                    identity=identity,
+                    objective=replace(solution.objective, identity=identity),
+                ),
+            )
+
+    def test_greedy_empty_zero_and_unsupported_requests(self):
+        for n in (0, 2):
+            window = ChainWindow(
+                0,
+                Matrix.zero(0, n),
+                Matrix.identity(n),
+                (),
+                tuple(f"x{i}" for i in range(n)),
+                tuple(f"b{i}" for i in range(n)),
+                (1,) * n,
+            )
+            solution = solve_projection(
+                ProjectionProblem(window), "GreedyCertifiedSolver"
+            )
+            self.assertEqual(solution.status, "Solved", solution.diagnostics)
+            self.assertEqual(solution.certificate_level, "ExactOptimal")
+            self.assertEqual(
+                solution.objective.state, "Computed" if n else "EmptyDomain"
+            )
+            self.assertEqual((solution.lower_bound, solution.upper_bound), (0, 0))
+            self.assertEqual(
+                solution.certificate["optimization"]["theoretical_upper_bound"], 0
+            )
+        window = self.window()
+        integer = replace(window, weights=(1, 2, 3), arithmetic="ExactInteger")
+        self.assertEqual(
+            solve_projection(
+                ProjectionProblem(integer), "GreedyCertifiedSolver"
+            ).status,
+            "Solved",
+        )
+        floating = replace(window, weights=(1.0, 2.0, 3.0), arithmetic="FloatingPoint")
+        for problem in (
+            ProjectionProblem(floating),
+            ProjectionProblem(window, requested_certificate_level="ExactOptimal"),
+            ProjectionProblem(window, tie_break_policy="LexicographicProjection"),
+            ProjectionProblem(window, matrix_free_output=True),
+        ):
+            self.assertEqual(
+                solve_projection(problem, "GreedyCertifiedSolver").status, "Unavailable"
+            )
+        self.assertEqual(GreedyCertifiedSolver().solve(None).status, "InvalidProblem")
+
+    def test_greedy_interruption_retains_only_completed_seed_bounds(self):
+        window, _ = self.bound_solution()
+        complete = solve_projection(ProjectionProblem(window), "GreedyCertifiedSolver")
+        saw_bound, saw_unbounded_action = False, False
+        for limit in range(complete.resource_usage["states"]):
+            solution = solve_projection(
+                ProjectionProblem(
+                    window,
+                    ResourceLimits(state_limit=limit),
+                    requested_certificate_level="CertifiedInterval",
+                ),
+                "GreedyCertifiedSolver",
+            )
+            self.assertEqual(solution.status, "ResourceExhausted", solution.diagnostics)
+            self.assertNotEqual(solution.certificate_level, "ExactOptimal")
+            if solution.projection is None:
+                continue
+            op = HomologyOperator(window, solution)
+            self.assertEqual(
+                op.to_result(), OperatorResult.from_json(op.to_result().to_json())
+            )
+            if solution.objective.state == "Computed":
+                saw_bound = True
+                self.assertEqual((solution.lower_bound, solution.upper_bound), (0, 10))
+                self.assertEqual(
+                    solution.certificate["optimization"]["kind"], "CycleBounds"
+                )
+            else:
+                saw_unbounded_action = True
+                self.assertEqual(solution.certificate_level, "Feasible")
+                self.assertIsNone(solution.upper_bound)
+        self.assertTrue(saw_bound and saw_unbounded_action)
+        for limits, retained in (
+            (ResourceLimits(wall_time_limit=0), False),
+            (ResourceLimits(matrix_entry_limit=0), False),
+            (ResourceLimits(matrix_entry_limit=32), True),
+        ):
+            solution = solve_projection(
+                ProjectionProblem(window, limits), "GreedyCertifiedSolver"
+            )
+            self.assertEqual(solution.status, "ResourceExhausted", solution.diagnostics)
+            self.assertEqual(solution.projection is not None, retained)
+            self.assertIsNone(solution.upper_bound)
+        n = 14
+        large = ChainWindow(
+            0,
+            Matrix.zero(0, n),
+            Matrix.zero(n, 0),
+            (),
+            tuple(f"x{i}" for i in range(n)),
+            (),
+            (1,) * n,
+        )
+        solution = solve_projection(ProjectionProblem(large), "GreedyCertifiedSolver")
+        self.assertEqual(solution.status, "ResourceExhausted", solution.diagnostics)
+        self.assertEqual(solution.diagnostics, ("certificate_replay_state_limit",))
+        HomologyOperator(large, solution).to_result()
 
     def test_exhaustive_two_boundary_directions_three_homology_directions(self):
         # Direct sum of a three-coordinate circuit quotient and a two-coordinate one.

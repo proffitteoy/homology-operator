@@ -8,6 +8,7 @@ from .result import OperatorResult, QueryResult
 from .solver import (
     FeasibleSolver,
     ExhaustiveExactSolver,
+    GreedyCertifiedSolver,
     ProjectionProblem,
     ProjectionSolution,
     ResourceLimits,
@@ -25,6 +26,7 @@ __all__ = [
     "QueryResult",
     "FeasibleSolver",
     "ExhaustiveExactSolver",
+    "GreedyCertifiedSolver",
     "ProjectionProblem",
     "ProjectionSolution",
     "ResourceLimits",

@@ -685,3 +685,13 @@ Solver framework 可视为冻结，至少满足：
 精确权重、state/time/matrix-entry 预算和独立重放上限为实际支持域：最多100000个非零循环，且候选数乘 `max(1,非零循环数)` 至多100000。状态预算计入可行种子的构造与实际循环求值，时间在 checkpoint 检查，matrix-entry 为保守条目上限。独立重放成本另外发生。中断时保留最后一个合法 P；未完成其 objective 时没有 bounds，完成后保留 U=Γ(P)、已跟踪的下界0和 CertifiedInterval。完整搜索结束前不报告 ExactOptimal；唯一候选完成求值即为完整搜索。
 
 [solver 回归 corpus](../tests/fixtures/solver_reference.json) 绑定原23个窗口的 input hash：22个精确实例的最优值经固定上游 compressed 搜索核对，16个 n≤6 实例再经 native 搜索核对；浮点实例预期 Unavailable。本仓库另对49个1–3维输入独立枚举全部环境矩阵，检查全局最优值。高秩人工窗口、原 H0–H3/欧氏有理权、空域、零同调、候选计数/极值 witness 篡改、错误并列选择及中断快照均有回归。该有限指数算法不提供一般高效性结论。
+
+## 23. 带理论界的贪心截面（S3-03）
+
+`GreedyCertifiedSolver` 直接从全部循环按 `(质量, 原坐标 packed 整数)` 排序，依次选择模边界与已选循环独立的生成元；以它们和边界基构造截面，并沿固定 R 延拓成 P。不消费最短类质量表或 PH 结果。当前仅支持精确整数/有理正权、StableBasisOrder、显式一般链窗口以及 Feasible/CertifiedUpperBound/CertifiedInterval 请求；不能保证满足一般 ExactOptimal 请求。排序和循环枚举使它仍是小规模 reference，不是多项式算法。
+
+理论依据是[固定 PROOF 的 T4](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/docs/proof/PROOF.md#T4)：Rossman 贪心回缩论证的加权同调版本。β>0 时，依次最低质量的独立同调生成元给出 Γ≤β；β=0 的算子 Γ=0，与上游截面记账 κ=1 区别处理。`GreedyBasis` 证书记录 F2、严格正权、算术策略、β、选定生成元、R 和理论上界。verifier 不信任排序结果，每步重新扫描所有可选循环，核对质量与并列最小值，再重建完整 P；当前 Γ 与极值 witness 另外穷举验证。
+
+完整输出保存 `objective=U=Γ(P)`、通用下界 L=1（β=0 时0）与 gap；L=U 才报告 ExactOptimal，其余为 CertifiedInterval。理论 β 界独立保存在已验证 proof 中，不能替代实算 objective 或最优性证明。22个精确 fixture 的 Γ 和所选生成元与固定 verify.py `model(optimize=False)` 一致；与 #20 的 optimum 对照均满足 optimum≤Γ≤β。K4 stage 4 的4/3只提供区间[1,4/3]，穷举最优是9/8。
+
+独立重放限制为非零循环数乘 `max(1,β)` 至多100000；构造还受 state/time/matrix-entry 预算，循环表计入保守条目数。资源耗尽时保留可行种子：其 objective 未完成则只有 Feasible，已完成则保留 L=0、U=种子 Γ 的 CertifiedInterval 和 CycleBounds，不携带未完成的贪心理论保证。零同调种子完整求值后已经完成搜索，直接认证0。证书重放成本单独发生，排序/稠密代数检查点之间没有强制抢占或 RSS 保证。回归覆盖所有 state 中断位置、零时间/条目预算、重放上限、假设/并列/action/witness 篡改、身份混用与已查询快照反复往返；族恢复保留已验证的 tracking 历史。
