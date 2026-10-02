@@ -13,6 +13,7 @@ from .solver import (
 )
 from .validation import ValidationError, validate_projection
 from .operator import HomologyOperator
+from .family import OperatorFamily
 
 __all__ = [
     "Matrix",
@@ -27,5 +28,6 @@ __all__ = [
     "ValidationError",
     "validate_projection",
     "HomologyOperator",
+    "OperatorFamily",
     "__version__",
 ]

@@ -49,6 +49,8 @@
 
 ## 过滤与传输
 
+reference 已提供 `OperatorFamily(scales, windows, operators, weight_policy="Inherited")` 的过滤输入和阶段身份。由三个次数的基标识生成坐标包含，验证两侧链映射相容；可选择显式 `Variable` 变权，但单位与权重语义一致。重复尺度采用 `OrderedStages`，保留不同阶段索引；末端采用 `Constant` 延拓。非空阶段列表允许合法零维窗口；失败算子记录保留为 `Partial` 族，不能用空空间代替。
+
 Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重继承和明确末端延拓规则。`OperatorFamily` 的逻辑入口是 `stage(i)`、`transport(i,j)`、`transport_rank(i,j)`、`barcode()`、类/质量/支撑追踪及 transport 证书。
 
 输入映射必须满足链映射与复合相容性；第一版仅要求过滤包含映射。跨尺度权重是否继承必须显式记录。
