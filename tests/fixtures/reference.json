@@ -1,0 +1,5689 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "h0_interval_stage_0",
+      "k": 0,
+      "A": {
+        "nrows": 0,
+        "ncols": 2,
+        "rows": []
+      },
+      "D": {
+        "nrows": 2,
+        "ncols": 0,
+        "rows": [
+          [],
+          []
+        ]
+      },
+      "basis_previous": [],
+      "basis_current": [
+        "(0)",
+        "(1)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "edge_cases ordinary_h0 interval; stage 0 locally removes its edge",
+        "parameters": {
+          "function": "edge_cases",
+          "local_extension": true
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 4,
+        "boundary_count": 1,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 1,
+            "denominator": 1
+          },
+          {
+            "numerator": 2,
+            "denominator": 1
+          },
+          {
+            "numerator": 3,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h0_interval_merge",
+          "stage": 0,
+          "scale": 0,
+          "barcode": [
+            [
+              0,
+              null
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "stage_endpoint": "half-open by stage index",
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 2,
+          "ncols": 2,
+          "rows": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "951753b358065fa94d7e8b3015b3a81f0b98186073f6904274bc823305223590"
+    },
+    {
+      "id": "h0_interval_stage_1",
+      "k": 0,
+      "A": {
+        "nrows": 0,
+        "ncols": 2,
+        "rows": []
+      },
+      "D": {
+        "nrows": 2,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      },
+      "basis_previous": [],
+      "basis_current": [
+        "(0)",
+        "(1)"
+      ],
+      "basis_next": [
+        "(0,1)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "edge_cases ordinary_h0 interval; stage 0 locally removes its edge",
+        "parameters": {
+          "function": "edge_cases",
+          "local_extension": false
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 4,
+        "boundary_count": 2,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 1,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h0_interval_merge",
+          "stage": 1,
+          "scale": 1,
+          "barcode": [
+            [
+              0,
+              null
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "stage_endpoint": "half-open by stage index",
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 2,
+          "ncols": 2,
+          "rows": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "e2d3582c63cbd99632896ceb7a8ed4e9e11b7b0f367fe4bc1c9d7fa40b3b4a7b"
+    },
+    {
+      "id": "h0_interval_duplicate_scale",
+      "k": 0,
+      "A": {
+        "nrows": 0,
+        "ncols": 2,
+        "rows": []
+      },
+      "D": {
+        "nrows": 2,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      },
+      "basis_previous": [],
+      "basis_current": [
+        "(0)",
+        "(1)"
+      ],
+      "basis_next": [
+        "(0,1)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "edge_cases ordinary_h0 interval; stage 0 locally removes its edge; local repeated final stage at the same scale",
+        "parameters": {
+          "function": "edge_cases",
+          "local_extension": false
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 4,
+        "boundary_count": 2,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 1,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h0_interval_merge",
+          "stage": 2,
+          "scale": 1,
+          "barcode": [
+            [
+              0,
+              null
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "stage_endpoint": "half-open by stage index",
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only",
+          "repeat_of": 1
+        },
+        "known_feasible_projection": {
+          "nrows": 2,
+          "ncols": 2,
+          "rows": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "e2d3582c63cbd99632896ceb7a8ed4e9e11b7b0f367fe4bc1c9d7fa40b3b4a7b"
+    },
+    {
+      "id": "h1_k4_stage_0",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 3,
+        "rows": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 3,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 0
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 1,
+        "boundary_count": 1,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 0,
+          "scale": 0,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 3,
+          "ncols": 3,
+          "rows": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "2ec7c5614bb42cc37b7c11ff5ee7d33321a4987a0ec0d35656e24c12fe25132f"
+    },
+    {
+      "id": "h1_k4_stage_1",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 4,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 4,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 1
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 2,
+        "boundary_count": 1,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 9,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 1,
+          "scale": 1,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 4,
+          "ncols": 4,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "560f97c52adf5edad4151336213b862270d30d65f8e845c09777dab7955891bc"
+    },
+    {
+      "id": "h1_k4_stage_2",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 5,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 5,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 2
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 4,
+        "boundary_count": 1,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 9,
+            "denominator": 1
+          },
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 13,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 2,
+          "scale": 2,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 5,
+          "ncols": 5,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "3d5b98e58652f289924112459baf71e21e72020c4a7be503f038a5ee3c77a390"
+    },
+    {
+      "id": "h1_k4_stage_3",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 3
+        }
+      },
+      "expected": {
+        "betti": 3,
+        "cycle_count": 8,
+        "boundary_count": 1,
+        "class_count": 8,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 9,
+            "denominator": 1
+          },
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 13,
+            "denominator": 1
+          },
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 9,
+            "denominator": 1
+          },
+          {
+            "numerator": 12,
+            "denominator": 1
+          },
+          {
+            "numerator": 9,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 3,
+          "scale": 3,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "ab01d6b77d2a2f0f31974a6401ab51e0fc1f331d3271292976ebec0bc3f6772c"
+    },
+    {
+      "id": "h1_k4_stage_4",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            0
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_next": [
+        "(0,1,2)"
+      ],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 4
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 8,
+        "boundary_count": 2,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 9,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 4,
+          "scale": 4,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [
+            "death",
+            "nonzero merger"
+          ],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_optimum": {
+          "numerator": 9,
+          "denominator": 8
+        },
+        "optimality_evidence": "source k4_example native exhaustive projection search and independent quotient enumeration",
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 4,
+          "denominator": 3
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "af621d8a278eafe1822443373ae7bfc9aa338feceb3030a68d9f0f99ee148c4b"
+    },
+    {
+      "id": "h1_k4_stage_5",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 2,
+        "rows": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_next": [
+        "(0,1,2)",
+        "(0,1,3)"
+      ],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 5
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 8,
+        "boundary_count": 4,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 8,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 5,
+          "scale": 5,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [
+            "death",
+            "nonzero merger"
+          ],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "53442ab9d0f88100417e908828a2abc6e2bd7a1a385e3351d0347863de773787"
+    },
+    {
+      "id": "h1_k4_stage_6",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 3,
+        "rows": [
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_next": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,2,3)"
+      ],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 6
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 8,
+        "boundary_count": 8,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 6,
+          "scale": 6,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "099fd172d7e9c874e8e870b795da981ee07c67120be447f0a6d193d4fe10447a"
+    },
+    {
+      "id": "h1_k4_stage_7",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 4,
+        "rows": [
+          [
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)",
+        "(3)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_next": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,2,3)",
+        "(1,2,3)"
+      ],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 7
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 8,
+        "boundary_count": 8,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 7,
+          "scale": 7,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "fe180c1da5e30d57f08667b744a23b08d9ecc43f1357d5b05bf9e4debac4c928"
+    },
+    {
+      "id": "h1_k4_stage_4_permuted",
+      "k": 1,
+      "A": {
+        "nrows": 4,
+        "ncols": 6,
+        "rows": [
+          [
+            1,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 6,
+        "ncols": 1,
+        "rows": [
+          [
+            0
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(3)",
+        "(1)",
+        "(0)",
+        "(2)"
+      ],
+      "basis_current": [
+        "(2,3)",
+        "(0,3)",
+        "(0,1)",
+        "(1,3)",
+        "(0,2)",
+        "(1,2)"
+      ],
+      "basis_next": [
+        "(0,1,2)"
+      ],
+      "weights": [
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 4,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/verify.py",
+        "sha256": "f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9",
+        "migration": "filtration_example stage; retain ordered simplices and inherited engineered costs; apply explicit previous/current coordinate permutations to rows/columns and weights",
+        "parameters": {
+          "function": "filtration_example",
+          "source_stage": 4,
+          "related_fixture": "h1_k4_stage_4",
+          "current_permutation": [
+            5,
+            2,
+            0,
+            4,
+            1,
+            3
+          ],
+          "previous_permutation": [
+            3,
+            1,
+            0,
+            2
+          ]
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 8,
+        "boundary_count": 2,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 8,
+            "denominator": 1
+          },
+          {
+            "numerator": 9,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h1_k4_all_deaths",
+          "stage": 4,
+          "scale": 4,
+          "barcode": [
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ]
+          ],
+          "events": [
+            "death",
+            "nonzero merger"
+          ],
+          "survivor_prefix": {
+            "last_stage": 5,
+            "barcode": [
+              [
+                1,
+                4
+              ],
+              [
+                2,
+                5
+              ],
+              [
+                3,
+                null
+              ]
+            ]
+          },
+          "terminal_extension": "constant after chosen final stored stage",
+          "implementation": "metadata only; no transport or persistence API in Phase 1"
+        },
+        "known_optimum": {
+          "numerator": 9,
+          "denominator": 8
+        },
+        "optimality_evidence": "source k4_example native exhaustive projection search and independent quotient enumeration",
+        "known_feasible_projection": {
+          "nrows": 6,
+          "ncols": 6,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 4,
+          "denominator": 3
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "0ea668ff0c7ecf3dcebb81e099ee8c2c528519743cdf44305e993dea3e51f3eb"
+    },
+    {
+      "id": "h2_euclidean_two_holes",
+      "k": 2,
+      "A": {
+        "nrows": 9,
+        "ncols": 7,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 7,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(0,4)",
+        "(1,2)",
+        "(1,3)",
+        "(1,4)",
+        "(2,3)",
+        "(2,4)"
+      ],
+      "basis_current": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(1,2,3)",
+        "(1,2,4)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 2
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        }
+      ],
+      "weight_semantics": "euclidean_area",
+      "unit": "model_length^2",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 2,
+          "m": 8,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3
+            ],
+            [
+              0,
+              1,
+              2,
+              4
+            ]
+          ],
+          "filled_simplices": []
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 4,
+        "boundary_count": 1,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 40,
+            "denominator": 31
+          },
+          {
+            "numerator": 40,
+            "denominator": 31
+          },
+          {
+            "numerator": 49,
+            "denominator": 31
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h2_euclidean_caps",
+          "stage": 0,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 7,
+          "ncols": 7,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 3,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "8/31"
+          ],
+          [
+            "0",
+            "0",
+            "-8/31"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            0,
+            1,
+            2,
+            4
+          ]
+        ],
+        "parameter_m": 8,
+        "measure": "Euclidean area",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "ce8c6cc53c833f190594312688ac19ac25e165b6df70e539072af27f664fe967"
+    },
+    {
+      "id": "h2_euclidean_one_hole",
+      "k": 2,
+      "A": {
+        "nrows": 9,
+        "ncols": 7,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 7,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(0,4)",
+        "(1,2)",
+        "(1,3)",
+        "(1,4)",
+        "(2,3)",
+        "(2,4)"
+      ],
+      "basis_current": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(1,2,3)",
+        "(1,2,4)"
+      ],
+      "basis_next": [
+        "(0,1,2,3)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 2
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        }
+      ],
+      "weight_semantics": "euclidean_area",
+      "unit": "model_length^2",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 2,
+          "m": 8,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3
+            ],
+            [
+              0,
+              1,
+              2,
+              4
+            ]
+          ],
+          "filled_simplices": [
+            [
+              0,
+              1,
+              2,
+              3
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 4,
+        "boundary_count": 2,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 40,
+            "denominator": 31
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h2_euclidean_caps",
+          "stage": 1,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 7,
+          "ncols": 7,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 3,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "8/31"
+          ],
+          [
+            "0",
+            "0",
+            "-8/31"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            0,
+            1,
+            2,
+            4
+          ]
+        ],
+        "parameter_m": 8,
+        "measure": "Euclidean area",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "f59085d36a0ed6c201b257c89aaac7ae63b0de35c047eb42fac0c84bc49881d0"
+    },
+    {
+      "id": "h2_euclidean_filled",
+      "k": 2,
+      "A": {
+        "nrows": 9,
+        "ncols": 7,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 7,
+        "ncols": 2,
+        "rows": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(0,4)",
+        "(1,2)",
+        "(1,3)",
+        "(1,4)",
+        "(2,3)",
+        "(2,4)"
+      ],
+      "basis_current": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(1,2,3)",
+        "(1,2,4)"
+      ],
+      "basis_next": [
+        "(0,1,2,3)",
+        "(0,1,2,4)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 2
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 4,
+          "denominator": 31
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        },
+        {
+          "numerator": 33,
+          "denominator": 62
+        }
+      ],
+      "weight_semantics": "euclidean_area",
+      "unit": "model_length^2",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 2,
+          "m": 8,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3
+            ],
+            [
+              0,
+              1,
+              2,
+              4
+            ]
+          ],
+          "filled_simplices": [
+            [
+              0,
+              1,
+              2,
+              3
+            ],
+            [
+              0,
+              1,
+              2,
+              4
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 4,
+        "boundary_count": 4,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h2_euclidean_caps",
+          "stage": 2,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 7,
+          "ncols": 7,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 3,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "8/31"
+          ],
+          [
+            "0",
+            "0",
+            "-8/31"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            0,
+            1,
+            2,
+            4
+          ]
+        ],
+        "parameter_m": 8,
+        "measure": "Euclidean area",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "052090330cb86583221f3d1bf1c61aaaa30aad28efe3edb76a6809eb1cc89a46"
+    },
+    {
+      "id": "h2_abstract_top_sphere",
+      "k": 2,
+      "A": {
+        "nrows": 6,
+        "ncols": 4,
+        "rows": [
+          [
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 4,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0,1)",
+        "(0,2)",
+        "(0,3)",
+        "(1,2)",
+        "(1,3)",
+        "(2,3)"
+      ],
+      "basis_current": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,2,3)",
+        "(1,2,3)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 2
+        },
+        {
+          "numerator": 1,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 2
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "local degree-2 boundary-of-simplex edge case motivated by edge_cases top_sphere; replace all weights by declared artificial positive rational costs",
+        "parameters": {
+          "function": "edge_cases",
+          "local_extension": true
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 2,
+        "boundary_count": 1,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 5,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "known_feasible_projection": {
+          "nrows": 4,
+          "ncols": 4,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "f27559b9896439dcc164adfa54f875fb98c5400bc387aa419f0921b8d91182d6"
+    },
+    {
+      "id": "h3_euclidean_two_holes",
+      "k": 3,
+      "A": {
+        "nrows": 16,
+        "ncols": 9,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 9,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,1,5)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(0,2,5)",
+        "(0,3,4)",
+        "(0,3,5)",
+        "(1,2,3)",
+        "(1,2,4)",
+        "(1,2,5)",
+        "(1,3,4)",
+        "(1,3,5)",
+        "(2,3,4)",
+        "(2,3,5)"
+      ],
+      "basis_current": [
+        "(0,1,2,3)",
+        "(0,1,2,4)",
+        "(0,1,2,5)",
+        "(0,1,3,4)",
+        "(0,1,3,5)",
+        "(0,2,3,4)",
+        "(0,2,3,5)",
+        "(1,2,3,4)",
+        "(1,2,3,5)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 6
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        }
+      ],
+      "weight_semantics": "euclidean_volume",
+      "unit": "model_length^3",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 3,
+          "m": 12,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              0,
+              1,
+              2,
+              3,
+              5
+            ]
+          ],
+          "filled_simplices": []
+        }
+      },
+      "expected": {
+        "betti": 2,
+        "cycle_count": 4,
+        "boundary_count": 1,
+        "class_count": 4,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 20,
+            "denominator": 47
+          },
+          {
+            "numerator": 20,
+            "denominator": 47
+          },
+          {
+            "numerator": 73,
+            "denominator": 141
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h3_euclidean_caps",
+          "stage": 0,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 9,
+          "ncols": 9,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 4,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "8/47"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "-8/47"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            0,
+            1,
+            2,
+            3,
+            5
+          ]
+        ],
+        "parameter_m": 12,
+        "measure": "Euclidean three-dimensional volume",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "a694899c977f7c7b869edf3374b99032304d1d84d4ba7234f380b2d396923b40"
+    },
+    {
+      "id": "h3_euclidean_one_hole",
+      "k": 3,
+      "A": {
+        "nrows": 16,
+        "ncols": 9,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 9,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,1,5)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(0,2,5)",
+        "(0,3,4)",
+        "(0,3,5)",
+        "(1,2,3)",
+        "(1,2,4)",
+        "(1,2,5)",
+        "(1,3,4)",
+        "(1,3,5)",
+        "(2,3,4)",
+        "(2,3,5)"
+      ],
+      "basis_current": [
+        "(0,1,2,3)",
+        "(0,1,2,4)",
+        "(0,1,2,5)",
+        "(0,1,3,4)",
+        "(0,1,3,5)",
+        "(0,2,3,4)",
+        "(0,2,3,5)",
+        "(1,2,3,4)",
+        "(1,2,3,5)"
+      ],
+      "basis_next": [
+        "(0,1,2,3,4)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 6
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        }
+      ],
+      "weight_semantics": "euclidean_volume",
+      "unit": "model_length^3",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 3,
+          "m": 12,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              0,
+              1,
+              2,
+              3,
+              5
+            ]
+          ],
+          "filled_simplices": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 4,
+        "boundary_count": 2,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 20,
+            "denominator": 47
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h3_euclidean_caps",
+          "stage": 1,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 9,
+          "ncols": 9,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 4,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "8/47"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "-8/47"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            0,
+            1,
+            2,
+            3,
+            5
+          ]
+        ],
+        "parameter_m": 12,
+        "measure": "Euclidean three-dimensional volume",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "0e90df198bbae7af5f5002055565415a2b5660aa380e9dab6a39ef573880ec7c"
+    },
+    {
+      "id": "h3_euclidean_filled",
+      "k": 3,
+      "A": {
+        "nrows": 16,
+        "ncols": 9,
+        "rows": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 9,
+        "ncols": 2,
+        "rows": [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "basis_previous": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,1,5)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(0,2,5)",
+        "(0,3,4)",
+        "(0,3,5)",
+        "(1,2,3)",
+        "(1,2,4)",
+        "(1,2,5)",
+        "(1,3,4)",
+        "(1,3,5)",
+        "(2,3,4)",
+        "(2,3,5)"
+      ],
+      "basis_current": [
+        "(0,1,2,3)",
+        "(0,1,2,4)",
+        "(0,1,2,5)",
+        "(0,1,3,4)",
+        "(0,1,3,5)",
+        "(0,2,3,4)",
+        "(0,2,3,5)",
+        "(1,2,3,4)",
+        "(1,2,3,5)"
+      ],
+      "basis_next": [
+        "(0,1,2,3,4)",
+        "(0,1,2,3,5)"
+      ],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 6
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 4,
+          "denominator": 141
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        },
+        {
+          "numerator": 49,
+          "denominator": 282
+        }
+      ],
+      "weight_semantics": "euclidean_volume",
+      "unit": "model_length^3",
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(k,4*k): select central and lower simplex boundaries; omit upper and all its exclusive faces; fill the indicated containing simplices only; sorted lexicographic bases; retain source Gram-volume weights",
+        "parameters": {
+          "function": "geometry",
+          "k": 3,
+          "m": 12,
+          "selected_containing_simplices": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              0,
+              1,
+              2,
+              3,
+              5
+            ]
+          ],
+          "filled_simplices": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              0,
+              1,
+              2,
+              3,
+              5
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 4,
+        "boundary_count": 4,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "filtration_slice": {
+          "family": "h3_euclidean_caps",
+          "stage": 2,
+          "barcode": [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "terminal_extension": "constant after final stage",
+          "implementation": "metadata only"
+        },
+        "known_feasible_projection": {
+          "nrows": 9,
+          "ncols": 9,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 4,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "8/47"
+          ],
+          [
+            "0",
+            "0",
+            "0",
+            "-8/47"
+          ]
+        ],
+        "containing_simplices": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            0,
+            1,
+            2,
+            3,
+            5
+          ]
+        ],
+        "parameter_m": 12,
+        "measure": "Euclidean three-dimensional volume",
+        "formula": "sqrt(det(Gram(edge vectors)))/factorial(k)",
+        "coordinate_unit": "model_length",
+        "upstream_subset": "central and lower; upper simplex omitted"
+      },
+      "input_hash": "25e9b020701f3667a40f6988e0ac716e2a2248753c368990c0245ce686cc93bb"
+    },
+    {
+      "id": "h3_abstract_top_sphere",
+      "k": 3,
+      "A": {
+        "nrows": 10,
+        "ncols": 5,
+        "rows": [
+          [
+            1,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 5,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0,1,2)",
+        "(0,1,3)",
+        "(0,1,4)",
+        "(0,2,3)",
+        "(0,2,4)",
+        "(0,3,4)",
+        "(1,2,3)",
+        "(1,2,4)",
+        "(1,3,4)",
+        "(2,3,4)"
+      ],
+      "basis_current": [
+        "(0,1,2,3)",
+        "(0,1,2,4)",
+        "(0,1,3,4)",
+        "(0,2,3,4)",
+        "(1,2,3,4)"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 1,
+          "denominator": 2
+        },
+        {
+          "numerator": 1,
+          "denominator": 1
+        },
+        {
+          "numerator": 3,
+          "denominator": 2
+        },
+        {
+          "numerator": 2,
+          "denominator": 1
+        },
+        {
+          "numerator": 5,
+          "denominator": 2
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "local degree-3 boundary-of-simplex edge case motivated by edge_cases top_sphere; replace all weights by declared artificial positive rational costs",
+        "parameters": {
+          "function": "edge_cases",
+          "local_extension": true
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 2,
+        "boundary_count": 1,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          {
+            "numerator": 15,
+            "denominator": 2
+          }
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "known_feasible_projection": {
+          "nrows": 5,
+          "ncols": 5,
+          "rows": [
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "fd0b8c0e33bc41e974faba2aae83c9be90d081ce3b8d40553c809c681085b797"
+    },
+    {
+      "id": "h1_euclidean_length_triangle",
+      "k": 1,
+      "A": {
+        "nrows": 3,
+        "ncols": 3,
+        "rows": [
+          [
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 3,
+        "ncols": 0,
+        "rows": [
+          [],
+          [],
+          []
+        ]
+      },
+      "basis_previous": [
+        "(0)",
+        "(1)",
+        "(2)"
+      ],
+      "basis_current": [
+        "(0,1)",
+        "(0,2)",
+        "(1,2)"
+      ],
+      "basis_next": [],
+      "weights": [
+        1.0,
+        0.25806451612903225,
+        1.0327619737794917
+      ],
+      "weight_semantics": "euclidean_length",
+      "unit": "model_length",
+      "arithmetic": "FloatingPoint",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_euclidean_family.py",
+        "sha256": "79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c",
+        "migration": "geometry(2,8): retain original vertices [0,1,3], relabel them [0,1,2], retain the three edges; compute actual lengths; store binary64 approximations",
+        "parameters": {
+          "function": "geometry",
+          "k": 2,
+          "m": 8,
+          "selected_source_vertices": [
+            0,
+            1,
+            3
+          ]
+        }
+      },
+      "expected": {
+        "betti": 1,
+        "cycle_count": 2,
+        "boundary_count": 1,
+        "class_count": 2,
+        "minimum_class_masses": [
+          0,
+          2.290826489908524
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "known_feasible_projection": {
+          "nrows": 3,
+          "ncols": 3,
+          "rows": [
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        },
+        "known_projection_objective": 1.0,
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "geometry": {
+        "ambient_dimension": 3,
+        "coordinates": [
+          [
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "0",
+            "8/31"
+          ]
+        ],
+        "source_vertex_indices": [
+          0,
+          1,
+          3
+        ],
+        "parameter_m": 8,
+        "formula": "sqrt(sum((endpoint coordinates difference)^2))",
+        "coordinate_unit": "model_length",
+        "rounding": "Python binary64 square root; objective is numerical"
+      },
+      "input_hash": "81a4ce898efc064e00dab49b7c938eae704869cfaf9bec041f480f02a04fa8af"
+    },
+    {
+      "id": "empty_h1",
+      "k": 1,
+      "A": {
+        "nrows": 0,
+        "ncols": 0,
+        "rows": []
+      },
+      "D": {
+        "nrows": 0,
+        "ncols": 0,
+        "rows": []
+      },
+      "basis_previous": [],
+      "basis_current": [],
+      "basis_next": [],
+      "weights": [],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "local empty-chain specialization of randomized_regression n=0; no upstream serialized fixture",
+        "parameters": {
+          "function": "randomized_regression",
+          "local_extension": true
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 1,
+        "boundary_count": 1,
+        "class_count": 1,
+        "minimum_class_masses": [
+          0
+        ],
+        "algebraic_evidence": "independent exhaustive column-combination oracle",
+        "solver_certificate_level": "Feasible",
+        "known_feasible_projection": {
+          "nrows": 0,
+          "ncols": 0,
+          "rows": []
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "a5d57198cb1b742dc39294e39387ff4bc7ebad1e965e1637df3e5ed33d19efa1"
+    },
+    {
+      "id": "acyclic_injection_h1",
+      "k": 1,
+      "A": {
+        "nrows": 1,
+        "ncols": 1,
+        "rows": [
+          [
+            1
+          ]
+        ]
+      },
+      "D": {
+        "nrows": 1,
+        "ncols": 0,
+        "rows": [
+          []
+        ]
+      },
+      "basis_previous": [
+        "v"
+      ],
+      "basis_current": [
+        "e"
+      ],
+      "basis_next": [],
+      "weights": [
+        {
+          "numerator": 7,
+          "denominator": 3
+        }
+      ],
+      "weight_semantics": "abstract_positive_cost",
+      "unit": null,
+      "arithmetic": "ExactRational",
+      "source": {
+        "repository": "proffitteoy/homology-operator-lab",
+        "revision": "6143729669902ee875b211b58085e954c76cdf88",
+        "path": "candidates/minimum-stretch/highdim/verify_highdim.py",
+        "sha256": "c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13",
+        "migration": "local hand-derived one-coordinate injective A, empty D; distinguishes ker(A)=0 from Betti=0 with nonzero cycles",
+        "parameters": {
+          "function": "randomized_regression",
+          "local_extension": true
+        }
+      },
+      "expected": {
+        "betti": 0,
+        "cycle_count": 1,
+        "boundary_count": 1,
+        "class_count": 1,
+        "minimum_class_masses": [
+          {
+            "numerator": 0,
+            "denominator": 1
+          }
+        ],
+        "algebraic_evidence": "hand-derived A=[1], verified by exhaustive oracle",
+        "solver_certificate_level": "Feasible",
+        "known_feasible_projection": {
+          "nrows": 1,
+          "ncols": 1,
+          "rows": [
+            [
+              0
+            ]
+          ]
+        },
+        "known_projection_objective": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "projection_evidence": "local exhaustive column-combination complement, independently checked on every ambient chain; feasible only"
+      },
+      "input_hash": "08972c24ca41bd9869c3a840c65c58ffc7890304881c3438f6b69c576c1bb043"
+    }
+  ]
+}
