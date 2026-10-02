@@ -159,6 +159,68 @@ def validate_solver_config(window, solver):
         raise ValidationError(("arithmetic_policy",))
 
 
+def _replay_backend_details(solver, native, window):
+    if not solver.get("method", "").startswith("Native"):
+        return {}
+    from .native import _integer_weights
+
+    return {
+        "certificate_replay_backend": "packed-rust-v1"
+        if native
+        else "python-reference",
+        "certificate_mass_backend": "u128-normalized-rational"
+        if native and _integer_weights(window.weights) is not None
+        else "python-unbounded-rational",
+    }
+
+
+def _replay_native(solver):
+    if solver.get("method") not in {
+        "NativeExhaustiveExactSolver",
+        "NativeGreedyCertifiedSolver",
+        "NativeRank2ExactSolver",
+        "NativeStructuredFamilySolver",
+    }:
+        return False
+    from .native import _extension
+
+    try:
+        return hasattr(_extension(), "span_objective")
+    except ImportError:
+        return False
+
+
+def _replay_objective(window, projection, basis, inputs, native):
+    if native:
+        from .native import _span_objective
+
+        result = _span_objective(window, projection, basis, detail={})
+        if result is not None:
+            return result[0]
+    return max(
+        (
+            Fraction(
+                sum(w for w, bit in zip(window.weights, projection.apply(z)) if bit)
+            )
+            / mass
+            for z, mass in inputs
+        ),
+        default=Fraction(0),
+    )
+
+
+def _reference_cycle_inputs(window, cycles):
+    inputs = []
+    for bits in product((0, 1), repeat=len(cycles)):
+        z = tuple(
+            sum(bit * vector[j] for bit, vector in zip(bits, cycles)) % 2
+            for j in range(window.n)
+        )
+        if any(z):
+            inputs.append((z, sum(w for w, bit in zip(window.weights, z) if bit)))
+    return inputs
+
+
 def validate_solver_certificate(window, projection, solver, certificate, identity):
     """Independently replay rational cycle bounds; never trust certification flags.
 
@@ -166,6 +228,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     It proves exact optimality only when this meets a certified upper bound.
     Complete search certificates require a separate supported verifier.
     """
+    native = _replay_native(solver)
     level = solver.get("certificate_level")
     if level not in {
         "Feasible",
@@ -290,7 +353,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         raise ValidationError(("certified_lower_bound_required",))
     if certified and proof["kind"] == "CyclicTrace":
         return _validate_cyclic_certificate(
-            window, projection, proof, solver, objective, lower, upper
+            window, projection, proof, solver, objective, lower, upper, native
         )
     if (
         not certified
@@ -317,33 +380,34 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     if cycle_count > 100_000:
         raise ValidationError(("certificate_replay_state_limit",))
     current = Fraction(0)
-    cycle_inputs = []
-    for bits in product((0, 1), repeat=len(cycles)):
-        z = tuple(
-            sum(bit * vector[j] for bit, vector in zip(bits, cycles)) % 2
-            for j in range(window.n)
-        )
-        if not any(z):
-            continue
-        output = projection.apply(z)
-        numerator = sum(w for w, bit in zip(window.weights, output) if bit)
-        denominator = sum(w for w, bit in zip(window.weights, z) if bit)
-        cycle_inputs.append((z, denominator))
-        current = max(current, Fraction(numerator) / Fraction(denominator))
+    if native:
+        from .native import _span_table
+
+        cycle_inputs = _span_table(window, cycles, detail={})
+    else:
+        cycle_inputs = None
+    if cycle_inputs is None:
+        cycle_inputs = _reference_cycle_inputs(window, cycles)
+    if len(cycle_inputs) != cycle_count:
+        raise ValidationError(("cycle_enumeration_count",))
+    current = _replay_objective(window, projection, cycles, cycle_inputs, native)
     beta = len(cycles) - window.D.rank()
+
     universal_lower = int(beta > 0)
     replayed_optimum = None
     rank2_cut = None
     if certified and proof["kind"] == "Rank2Search":
         rank2_cut = _validate_rank2_reduction(
-            window, projection, proof, cycle_inputs, solver
+            window, projection, proof, cycle_inputs, solver, native
         )
     if certified and proof["kind"] in {"ExhaustiveSearch", "Rank2Search"}:
         replayed_optimum = _replay_exhaustive(
-            window, projection, proof, cycles, cycle_inputs, rank2_cut
+            window, projection, proof, cycles, cycle_inputs, rank2_cut, native
         )
     if certified and proof["kind"] == "GreedyBasis":
-        theoretical = _replay_greedy(window, projection, proof, cycles, cycle_inputs)
+        theoretical = _replay_greedy(
+            window, projection, proof, cycles, cycle_inputs, native
+        )
         if current > theoretical:
             raise ValidationError(("greedy_theoretical_bound",))
     if lower is not None and lower > (
@@ -404,10 +468,13 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         "objective_replayed": True,
         "bounds_verified": lower is not None or upper is not None,
         "optimality_verified": level == "ExactOptimal",
+        **_replay_backend_details(solver, native, window),
     }
 
 
-def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut=None):
+def _replay_exhaustive(
+    window, projection, proof, cycle_basis, inputs, rank2_cut=None, native=False
+):
     """Enumerate lifts of a quotient basis, independently of retraction rows Y."""
     R = matrix_from_data(proof.get("cycle_retraction"))
     if (
@@ -436,9 +503,13 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut
     if count * max(1, len(inputs)) > 100_000:
         raise ValidationError(("certificate_replay_state_limit",))
     coordinate_basis = Matrix.from_columns(full, nrows=window.n)
-    coordinates = Matrix.from_columns(
-        (coordinate_basis.solve(z) for z in R.transpose().rows), nrows=len(full)
-    )
+    if native:
+        from .native import PreparedMatrix
+
+        solved = PreparedMatrix(coordinate_basis).solve_many(R.transpose().rows)
+    else:
+        solved = (coordinate_basis.solve(z) for z in R.transpose().rows)
+    coordinates = Matrix.from_columns(solved, nrows=len(full))
     optimum, global_value = None, None
     for parameters in product((0, 1), repeat=r * beta):
         lifts = tuple(
@@ -453,17 +524,13 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut
             for i, z in enumerate(quotient_basis)
         )
         section = Matrix.from_columns(((0,) * window.n,) * r + lifts, nrows=window.n)
-        candidate = section @ coordinates
-        value = max(
-            (
-                Fraction(
-                    sum(w for w, bit in zip(window.weights, candidate.apply(z)) if bit)
-                )
-                / denominator
-                for z, denominator in inputs
-            ),
-            default=Fraction(0),
-        )
+        if native:
+            from .native import packed_multiply
+
+            candidate = packed_multiply(section, coordinates)
+        else:
+            candidate = section @ coordinates
+        value = _replay_objective(window, candidate, cycle_basis, inputs, native)
         global_value = value if global_value is None else min(global_value, value)
         if proof["kind"] == "Rank2Search":
             if rank2_cut is None:
@@ -501,23 +568,14 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut
         sum(bit << j for j, bit in enumerate(column))
         for column in projection.transpose().rows
     )
-    current = max(
-        (
-            Fraction(
-                sum(w for w, bit in zip(window.weights, projection.apply(z)) if bit)
-            )
-            / denominator
-            for z, denominator in inputs
-        ),
-        default=Fraction(0),
-    )
+    current = _replay_objective(window, projection, cycle_basis, inputs, native)
     if (current, declared_key) != optimum or current != global_value:
         raise ValidationError(("optimal_projection_or_tie_break",))
     return optimum[0]
 
 
 def _validate_cyclic_certificate(
-    window, projection, proof, solver, objective, lower, upper
+    window, projection, proof, solver, objective, lower, upper, native=False
 ):
     m = proof.get("m")
     if (
@@ -545,10 +603,18 @@ def _validate_cyclic_certificate(
         if projection.apply(e) != expected or sum(expected) != m:
             raise ValidationError(("cyclic_formula",))
     for weight in range(1, m + 1):
-        for support in combinations(range(window.n), weight):
-            z = tuple(int(i in support) for i in range(window.n))
-            if not any(projection.apply(z)):
-                raise ValidationError(("cyclic_kernel_distance",))
+        vectors = tuple(
+            tuple(int(i in support) for i in range(window.n))
+            for support in combinations(range(window.n), weight)
+        )
+        if native:
+            from .native import _apply_many
+
+            outputs = _apply_many(projection, vectors)
+        else:
+            outputs = (projection.apply(z) for z in vectors)
+        if any(not any(z) for z in outputs):
+            raise ValidationError(("cyclic_kernel_distance",))
     e0 = (1,) + (0,) * (window.n - 1)
     b = tuple(a ^ c for a, c in zip(e0, projection.apply(e0)))
     if sum(b) != m + 1 or window.D.solve(b) is None or window.D.rank() == 0:
@@ -570,6 +636,7 @@ def _validate_cyclic_certificate(
         "objective_replayed": True,
         "bounds_verified": True,
         "optimality_verified": True,
+        **_replay_backend_details(solver, native, window),
     }
 
 
@@ -643,7 +710,7 @@ def validate_rank2_structure(window, structure, options):
     return delta, vertices, tuple(terminals), internal
 
 
-def _validate_rank2_reduction(window, projection, proof, inputs, solver):
+def _validate_rank2_reduction(window, projection, proof, inputs, solver, native=False):
     config = solver.get("solver_config")
     if not isinstance(config, Mapping) or config["input_structure"] != proof.get(
         "structure"
@@ -667,9 +734,14 @@ def _validate_rank2_reduction(window, projection, proof, inputs, solver):
     if basis.rank() != r + 2 or any(any(window.A.apply(z)) for z in H):
         raise ValidationError(("rank2_quotient_generators",))
     minima = [None] * 3
-    for z, mass in inputs:
-        coordinates = basis.solve(z)
-        h = coordinates[-2] + 2 * coordinates[-1]
+    if native:
+        from .native import PreparedMatrix
+
+        coordinates = PreparedMatrix(basis).solve_many(z for z, _ in inputs)
+    else:
+        coordinates = (basis.solve(z) for z, _ in inputs)
+    for (_, mass), coordinate in zip(inputs, coordinates):
+        h = coordinate[-2] + 2 * coordinate[-1]
         if h:
             minima[h - 1] = mass if minima[h - 1] is None else min(mass, minima[h - 1])
     if content_id("minima", tuple(minima)) != content_id(
@@ -742,7 +814,7 @@ def _validate_rank2_reduction(window, projection, proof, inputs, solver):
     return cut
 
 
-def _replay_greedy(window, projection, proof, cycle_basis, inputs):
+def _replay_greedy(window, projection, proof, cycle_basis, inputs, native=False):
     """Verify each greedy minimum against every eligible cycle, then reconstruct P."""
     boundary_basis = window.D.image_basis()
     beta = len(cycle_basis) - len(boundary_basis)
@@ -785,18 +857,28 @@ def _replay_greedy(window, projection, proof, cycle_basis, inputs):
             sum(w for w, bit in zip(window.weights, z) if bit),
             sum(bit << j for j, bit in enumerate(z)),
         )
+        if native:
+            from .native import PreparedMatrix
+
+            membership = PreparedMatrix(span).membership_many(x for x, _ in inputs)
+        else:
+            membership = (span.solve(x) is not None for x, _ in inputs)
         minimum = min(
             (cost, sum(bit << j for j, bit in enumerate(x)))
-            for x, cost in inputs
-            if span.solve(x) is None
+            for (x, cost), member in zip(inputs, membership)
+            if not member
         )
         if actual != minimum:
             raise ValidationError(("greedy_minimum_or_tie_break",))
         full.append(z)
     basis = Matrix.from_columns(full, nrows=window.n)
-    coordinates = Matrix.from_columns(
-        (basis.solve(z) for z in R.transpose().rows), nrows=len(full)
-    )
+    if native:
+        from .native import PreparedMatrix
+
+        solved = PreparedMatrix(basis).solve_many(R.transpose().rows)
+    else:
+        solved = (basis.solve(z) for z in R.transpose().rows)
+    coordinates = Matrix.from_columns(solved, nrows=len(full))
     section = Matrix.from_columns(
         ((0,) * window.n,) * len(boundary_basis) + tuple(selected), nrows=window.n
     )

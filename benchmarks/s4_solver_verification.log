@@ -21,10 +21,6 @@ test_r0_frozen_lf_and_historical_crlf_checksums (test_comparison.ComparisonTests
 test_r0_json_output_is_lf_before_git_normalization (test_comparison.ComparisonTests) ... ok
 test_r0_library_failures_are_not_successful_or_zero_queries (test_comparison.ComparisonTests) ... ok
 test_unsupported_and_budget_failure_are_preserved (test_comparison.ComparisonTests) ... ok
-test_5689_original_modules_plus_historical_bases_against_enumeration (test_family.AdjacentFiltrationTests) ... ok
-test_compact_shared_storage_and_legacy_roundtrip (test_family.AdjacentFiltrationTests) ... ok
-test_historical_merge_generator_dies_and_stage_bases_commute (test_family.AdjacentFiltrationTests) ... ok
-test_long_barcode_only_adjacent_actions_and_bounded_cache (test_family.AdjacentFiltrationTests) ... ok
 test_empty_barcode_and_failure_are_distinct (test_family.BarcodeTests) ... ok
 test_merge_essential_duplicate_and_rank_reconstruction (test_family.BarcodeTests) ... ok
 test_same_betti_different_barcode_and_zero_scale_length (test_family.BarcodeTests) ... ok
@@ -60,15 +56,14 @@ test_corpus_sources_hashes_and_coverage (test_joint.JointAcceptanceTests) ... ok
 test_cross_solver_frozen_corpus_joint_readouts_and_bounds (test_joint.JointAcceptanceTests) ... ok
 test_identity_snapshot_and_readout_round_trip (test_joint.JointAcceptanceTests) ... ok
 test_joint_geometry_pairs_metric_and_current_stretch (test_joint.JointAcceptanceTests) ... ok
-test_compact_family_transport_ranks_barcode_and_restore (test_native.CompactActionTests) ... ok
-test_corpus_all_generator_and_cycle_actions_same_p_and_geometry (test_native.CompactActionTests) ... ok
-test_full_augmented_inverse_rows_and_small_chain_windows (test_native.CompactActionTests) ... ok
-test_illegal_factors_hc_zero_projection_and_tampered_version_identity (test_native.CompactActionTests) ... ok
-test_multiword_factor_hc_resource_and_query_domains (test_native.CompactActionTests) ... ok
-test_no_dense_projection_inverse_identity_or_rust_required_for_restore (test_native.CompactActionTests) ... ok
-test_independent_homology_validation_rejects_zero_and_bad_hc (test_native.CompactValidationTests) ... ok
-test_reference_only_compact_identity_recovery_and_geometry (test_native.CompactValidationTests) ... ok
 test_missing_extension_and_unsupported_domain_are_explicit (test_native.NativeAvailabilityTests) ... ok
+test_all_state_interruptions_keep_completed_bounds_and_seeds (test_native.NativeSolverTests) ... ok
+test_cut_and_structured_supports_remain_exact (test_native.NativeSolverTests) ... ok
+test_missing_extension_recovery_and_unsupported_requests (test_native.NativeSolverTests) ... ok
+test_multiword_cycle_objective_matches_independent_finite_vectors (test_native.NativeSolverTests) ... ok
+test_sourced_corpus_same_actions_certificates_and_states (test_native.NativeSolverTests) ... ok
+test_tampered_proofs_actions_and_witnesses_rejected_by_both_replays (test_native.NativeSolverTests) ... ok
+test_unbounded_weights_visible_fallback_and_cross_product_overflow (test_native.NativeSolverTests) ... ok
 test_all_small_augmented_inverses_match_noncycle_extension (test_native.NativeTests) ... ok
 test_entire_corpus_actions_identities_and_independent_homology (test_native.NativeTests) ... ok
 test_failure_inputs_cycles_padding_and_wrong_identity (test_native.NativeTests) ... ok
@@ -156,26 +151,22 @@ test_shape_and_type_failures_are_structured (test_validation.ProjectionValidatio
 test_zero_projection_cannot_erase_nonzero_homology (test_validation.ProjectionValidationTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 156 tests in 137.068s
+Ran 151 tests in 115.559s
 
 OK
 
-=== PR82 integration with main 63138fc (merged PR83 + PR84) ===
-Prior PR82 HEAD: 39f8b2be5df91c6e71a53139bdeaef3992cc545e
-Windows x64 / CPython 3.10.11 / Rust 1.98.1 / release / native required
+=== S4-05 integration verification after ordinary merge of main 520ecc9 ===
+Pre-merge S4-05 HEAD: 5e05372d91f62aaf56e060d168b598bcdd4108f6
+CPython 3.10.11 / Windows x64 / Rust 1.98.1 / release extension
 Command: HOMOLOGY_NATIVE_REQUIRED=1 .venv/Scripts/python.exe -m unittest discover -s tests -v
-Source hashes use UTF-8 LF bytes:
-src/homology_operator/family.py db63249088f35ac5310984fd0f776df21dd11c88111fbdcead36be5c678a990a
+Final integrated source hashes use UTF-8 LF bytes:
+native/src/lib.rs a1f056ab656c41fc3fc3b0350465586a52f07f39545bc895d6c7c03f0af38b39
+native/src/packed.rs 80fb46c244f8f6bb350927d7ee0d3c24022500aa3936570397c782f796ec24c3
 src/homology_operator/native.py 70ec0d56d4a905d971f515f6bffac77ed27a6d2755fe24f2ad626ab421d690b0
 src/homology_operator/solver.py ee28f1adc290b9e58e848aa26e4dbb7ba7390c1c7ebfa2e8eaa30991198cce10
 src/homology_operator/validation.py 7f4350c4d693ac11df0072e367002f77462957e0b922e04fd686667efce87e6d
-src/homology_operator/result.py 97a9a66547ba9b6ecad884bda5b693fdee1a81d118f665a7bb727f9f80ab8542
-native/src/lib.rs a1f056ab656c41fc3fc3b0350465586a52f07f39545bc895d6c7c03f0af38b39
-native/src/packed.rs 80fb46c244f8f6bb350927d7ee0d3c24022500aa3936570397c782f796ec24c3
-tests/test_family.py 6ff204b1be747cc2c8ab27fc5b43c2e6118a5c222842b3ee3849f9f7e5deba89
-tests/test_family_joint.py 95f6acf66705a6732b963eaae98a67ae49d8cc7917c41a3b5e51b899a5512edc
 tests/test_native.py ffac570c70446ff2eb6538085933281a69eeb24474924bd8aab784e0852ff96c
-Installed release extension SHA256: 1545e244691f9c29df2f245fe3f311ab6152a6b1704ffe13d63c5ea01ab9c9ce
+Installed release extension SHA256: 1a4deb797adb5fad96c37eee576a80df31ca8bee6ca03d055ba39d16f87e2fb6
 
 test_deterministic_elimination_retains_original_columns (test_algebra.MatrixAlgebraTests) ... ok
 test_exhaustive_small_matrices_against_enumerated_vectors (test_algebra.MatrixAlgebraTests) ... ok
@@ -200,10 +191,6 @@ test_r0_frozen_lf_and_historical_crlf_checksums (test_comparison.ComparisonTests
 test_r0_json_output_is_lf_before_git_normalization (test_comparison.ComparisonTests) ... ok
 test_r0_library_failures_are_not_successful_or_zero_queries (test_comparison.ComparisonTests) ... ok
 test_unsupported_and_budget_failure_are_preserved (test_comparison.ComparisonTests) ... ok
-test_5689_original_modules_plus_historical_bases_against_enumeration (test_family.AdjacentFiltrationTests) ... ok
-test_compact_shared_storage_and_legacy_roundtrip (test_family.AdjacentFiltrationTests) ... ok
-test_historical_merge_generator_dies_and_stage_bases_commute (test_family.AdjacentFiltrationTests) ... ok
-test_long_barcode_only_adjacent_actions_and_bounded_cache (test_family.AdjacentFiltrationTests) ... ok
 test_empty_barcode_and_failure_are_distinct (test_family.BarcodeTests) ... ok
 test_merge_essential_duplicate_and_rank_reconstruction (test_family.BarcodeTests) ... ok
 test_same_betti_different_barcode_and_zero_scale_length (test_family.BarcodeTests) ... ok
@@ -342,73 +329,6 @@ test_shape_and_type_failures_are_structured (test_validation.ProjectionValidatio
 test_zero_projection_cannot_erase_nonzero_homology (test_validation.ProjectionValidationTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 163 tests in 135.844s
+Ran 159 tests in 137.268s
 
 OK
-
-=== Additional mixed-family / README smoke script ===
-import re
-from pathlib import Path
-from homology_operator import ChainWindow, Matrix, ProjectionProblem, HomologyOperator, OperatorFamily, OperatorFamilyResult, solve_projection
-from homology_operator.native import NativeFactorizedSolver
-
-w = ChainWindow(1, Matrix.zero(0, 3), Matrix.from_columns(((1, 1, 1),), nrows=3), (), ('x', 'y', 'z'), ('b',), (1, 1, 1))
-operators = []
-for method in ('NativeExhaustiveExactSolver', 'NativeGreedyCertifiedSolver', 'NativeRank2ExactSolver', 'NativeStructuredFamilySolver'):
-    options = {'input_structure': 'CyclicTrace', 'matrix_free_output': True} if method == 'NativeStructuredFamilySolver' else {}
-    s = solve_projection(ProjectionProblem(w, **options), method)
-    assert s.status == 'Solved', (method, s.status, s.diagnostics)
-    operators.append(HomologyOperator(w, s))
-for representation in ('HC', 'Factorized'):
-    p = ProjectionProblem(w, matrix_free_output=True, solver_options={'representation': representation})
-    s = solve_projection(p, NativeFactorizedSolver())
-    assert s.projection is not None, s.diagnostics
-    operators.append(HomologyOperator(w, s))
-family = OperatorFamily((0, 0, 1, 2, 3, 4), (w,) * 6, tuple(operators))
-assert family.barcode().state == 'Computed'
-assert sum(b['multiplicity'] for b in family.barcode().value) == 2
-history = family.barcode_basis()
-assert history.state == 'Computed'
-for i in range(6):
-    for j in range(i, 6):
-        assert family.transport_rank(i, j).value == 2
-        assert family.transport_certificate(i, j).state == 'Computed'
-        assert family.track_mass((1, 0, 0), i, j).state == 'Computed'
-for version in (1, 2):
-    record = family.to_result(schema_version=version)
-    restored = OperatorFamilyResult.from_json(record.to_json())
-    assert restored.to_json() == record.to_json()
-    recovered = restored.to_family()
-    assert recovered.barcode().value == family.barcode().value
-    assert recovered.barcode_basis().value == history.value
-    Path(f'.task-artifacts/pr82_mixed_native_family_v{version}.json').write_text(record.to_json(), encoding='utf-8')
-print('Native four solvers + CyclicAction + HC/Factorized mixed family: all interval ranks/composition/tracking and schema 1/2 round-trip passed')
-
-ns = {}
-for source in re.findall(r'```python\n(.*?)```', Path('README.md').read_text(encoding='utf-8'), re.S):
-    exec(compile(source, 'README.md', 'exec'), ns)
-ns['family'].barcode_basis()
-assert ns['family'].rank_table().state == 'Computed'
-print('README examples and new optional family readouts passed')
-Result: all interval ranks/composition/tracking, history and schema1/2 round-trips passed; README examples passed.
-
-=== Isolated no-extension family restore script (reference wheel; python -I) ===
-from importlib.util import find_spec
-from pathlib import Path
-import sys
-from homology_operator import OperatorFamilyResult
-
-assert find_spec('_homology_native') is None
-for path in sys.argv[1:]:
-    record = OperatorFamilyResult.from_json(Path(path).read_text(encoding='utf-8'))
-    family = record.to_family()
-    assert family.barcode().state == 'Computed'
-    assert sum(b['multiplicity'] for b in family.barcode().value) == 2
-    assert family.barcode_basis().state == 'Computed'
-    for i in range(6):
-        for j in range(i, 6):
-            assert family.transport_rank(i, j).value == 2
-            assert family.track_mass((1, 0, 0), i, j).state == 'Computed'
-    print(Path(path).name, 'restored native solvers + Cyclic/HC/Factorized without extension')
-Arguments: pr82_mixed_native_family_v1.json pr82_mixed_native_family_v2.json
-Result: both native mixed-family snapshots restored and queried without extension.
