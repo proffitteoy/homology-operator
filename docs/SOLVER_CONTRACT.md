@@ -663,3 +663,13 @@ Solver framework 可视为冻结，至少满足：
 8. structured solver 可以返回 matrix-free action；
 9. solver 更换不改变 `HomologyOperator` 查询定义；
 10. benchmark 不混淆不同认证等级。
+
+## 21. 当前 reference 支持范围（S3-01）
+
+`FeasibleSolver.capabilities()` 与 `solve_projection` 已实现运行前能力匹配，无隐藏 fallback；当前构造只支持显式 Matrix、StableBasisOrder、ExactInteger/ExactRational/FloatingPoint 及 state/time/matrix-entry 三种实际资源限制。其他 solver 和 matrix-free 输出随后续 issue 实现。
+
+统一 ProjectionSolution 已保留 lower/upper、gap、不可变 solver_config 和内容配置身份。ResourceExhausted 可保留经独立验证的 action 和证书；HomologyOperator 的 Ready 与 solver 的停止状态分开。Heuristic 的 action 同样须经完整投影验证。
+
+独立证书 verifier 当前支持 `optimization={kind: "CycleBounds", nonzero_cycles: N, lower_bound_method: "UniversalHomology"}`。它枚举所有非零循环重算当前 Γ（重放上限100000个循环），校验精确 objective、U≥Γ，以及 L≤0（β=0）或 L≤1（β>0）。通用下界来自固定理论 T1/T4；非零合法投影在其非零像向量上恒等，所以扩张至少1。仅 L=U=Γ 且证书有效时接受 ExactOptimal；等界仍标 CertifiedInterval 则拒绝，须改用 ExactOptimal。空循环域的0与非空循环域的零同调0保留不同状态。
+
+该证书不宣称完整最优搜索，不能认证大于1的全局下界。未知证明类型、篡改计数/objective/gap/配置身份、浮点等界或未经验证的 action 均拒绝。完整搜索证书属于 #20；证书重放是独立检查成本，不纳入 solver 构造时的 checkpoint 预算，尚无抢占式时间/RSS保证。固定研究提交的 native_operator、compressed_native_operator 和 T1 已逐项阅读，并在线核对缓存的 Git blob hash；它们的完整搜索成绩不作为本项实现成绩。

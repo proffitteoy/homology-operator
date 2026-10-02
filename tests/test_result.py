@@ -207,7 +207,7 @@ class ResultTests(unittest.TestCase):
             record.query_results["extra"] = QueryResult("Unavailable")
 
     def test_unsupported_certificate_and_failed_ready_are_rejected(self):
-        for level in ("CertifiedInterval", "CertifiedUpperBound", "Heuristic"):
+        for level in ("CertifiedInterval", "CertifiedUpperBound"):
             solver = dict(self.record().solver)
             solver["certificate_level"] = level
             with self.assertRaises(ValueError):
@@ -309,7 +309,7 @@ class ResultTests(unittest.TestCase):
         ):
             with self.subTest(bounds=bounds), self.assertRaises(ValueError):
                 self.record(solver=dict(self.record().solver) | bounds)
-        for grade in ("CertifiedUpperBound", "CertifiedInterval", "Heuristic"):
+        for grade in ("CertifiedUpperBound", "CertifiedInterval"):
             with self.subTest(grade=grade), self.assertRaises(ValueError):
                 self.record(
                     solver=dict(self.record().solver) | {"certificate_level": grade}
@@ -317,7 +317,7 @@ class ResultTests(unittest.TestCase):
 
     def test_nested_objective_requires_same_identity(self):
         identity = self.record().identity
-        objective = QueryResult("Computed", Fraction(3, 2), identity, True)
+        objective = QueryResult("Computed", Fraction(1), identity, True)
         record = self.record(
             solver=dict(self.record().solver) | {"objective": objective.to_dict()}
         )

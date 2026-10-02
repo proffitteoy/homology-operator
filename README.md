@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 已全部合入 main 并通过本地 57 项测试与 Python 3.10/3.12 CI。Phase 2 现已实现有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化，81 项本地测试通过；23 份 H0–H3/加权 fixture 组织为 11 个独立 PH 对拍族/变体。Phase 2 按 issue 提交 PR，全部合入 main 后才进入 Phase 3。一般最优 solver、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 从 #19 的统一能力匹配与认证边界开始，当前89项本地测试通过；完整最优搜索、专用 solver、高性能核心与发行尚未完成。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -48,7 +48,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；81 项单尺度/过滤数学、边界与身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；89 项单尺度/过滤数学、solver 边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
@@ -78,7 +78,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 
 ## 身份、状态与序列化
 
-`QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。Ready 结果还必须重新运行独立 projection validator；独立 validator 已接入；当前结果记录只接受 Feasible solver 认证，stretch 查询可单独给当前投影的精确上界证据。Phase 1 不提供全局认证验证器，因此明确拒绝 ExactOptimal 等未经支持的 solver 认证标签。
+`QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。所有记录的 P 均重新经过独立 projection validator；认证还要独立重放支持的证书，不能凭标签或 true 标志接受最优性。
 
 内容身份使用规范 UTF-8 JSON SHA256，projection_id 与 operator_id 不包含每次独立 solver_run UUID。安全缓存包含输入、基、权重、投影、solver 配置、并列策略与 backend semantics，独立 run 仍保存在来源中；同一记录内的查询必须完全匹配六身份。
 
@@ -87,6 +87,10 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 `FeasibleSolver().solve(ProjectionProblem(window))` 用确定性广义逆构造 G/U，并精确复核 AGA=A、DUD=D，形成 P=(I+DU)(I+GA)。返回 FeasibleOnly/Feasible、独立 run UUID、稳定基顺序、实际资源计数及尚未计算的 objective。相同输入的 P 与内容身份可复现；这不证明最小伸长。
 
 `ResourceLimits` 限制参考构造的 checkpoint/state 数、wall time 和保守矩阵条目数。输入规模先检查，时间在稠密代数步骤之间检查；它不是单步强制抢占或峰值 RSS 上限。不支持的 objective/认证/并列策略返回 Unavailable，非法问题返回 InvalidProblem，超限返回 ResourceExhausted 且不伪造投影。进入算子前仍需独立 validator。
+
+`solve_projection(problem, backend="FeasibleSolver")` 在运行前核对 `capabilities()` 的算术、结构、次数/Betti范围、认证、matrix-free、确定性、并列与资源能力，未知后端或不支持的请求返回 Unavailable；也可传入声明相同接口的 solver 对象。所有返回 action 经 `validate_solution`，构造算子和 JSON恢复时再次验证。当前 FeasibleSolver 只宣称 Feasible，不会隐藏调用其他优化器。
+
+`ProjectionSolution` 保存上下界、绝对/相对 gap、不可变配置及 `solver_config_id`，独立 run 不改变配置身份。合法的中断解可保持 ResourceExhausted 与 CertifiedInterval，算子仍为 Ready。当前 `CycleBounds` 证书在精确有理/整数权上独立枚举全部非零循环（重放上限100000），证明当前 objective 和上界；全局下界仅支持零同调的0及非零同调的通用下界1。只有经过验证的等界可标 ExactOptimal；其他最优性证明仍不支持。Heuristic 候选必须独立证明投影合法才能构造算子。浮点不提供认证 bounds，完整搜索属于 #20。证书重放成本独立于 solver 构造预算记录，不是高性能或抢占式资源保证。
 `validate_projection(window,P)` 与 solver 独立，验证 P²=P、L²=L、AP=0、PD=0，且在 ker(A) 的完整基上验证 z+Pz 属于 im(D)。失败抛带 `InternalValidationFailed` 状态与具体失败项的 `ValidationError`。非零同调上的零投影即便前三项成立也被拒绝；Ready 序列化记录重新执行该验证，输入证书布尔值不作为信任来源。
 
 ## 同一算子的拓扑读取

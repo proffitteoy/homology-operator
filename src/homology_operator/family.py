@@ -622,6 +622,10 @@ def _restore_family(data):
             tie_break_policy=metadata.get("tie_break_policy", "StableBasisOrder"),
             method=metadata.get("method", "FeasibleSolver"),
             arithmetic_policy=metadata.get("arithmetic_policy"),
+            lower_bound=metadata.get("lower_bound"),
+            upper_bound=metadata.get("upper_bound"),
+            solver_config=metadata.get("solver_config"),
+            diagnostics=metadata.get("diagnostics", ()),
         )
         operator = HomologyOperator(
             record.input_data,

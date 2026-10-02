@@ -1,14 +1,14 @@
 """Deterministic feasible construction, with explicit reference resource limits."""
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from math import isfinite
 from time import perf_counter
-from types import MappingProxyType
 from uuid import uuid4
 
 from .algebra import Matrix
 from .chain import ChainWindow
-from .result import QueryResult, make_identity
+from .result import QueryResult, _freeze, content_id, make_identity
 
 
 @dataclass(frozen=True)
@@ -90,6 +90,29 @@ class ProjectionProblem:
     objective: str = "MinimumStretch"
     requested_certificate_level: str = "Feasible"
     tie_break_policy: str = "StableBasisOrder"
+    arithmetic_policy: str | None = None
+    input_structure: str = "GeneralChainWindow"
+    matrix_free_output: bool = False
+    deterministic: bool = True
+    solver_options: object = field(default_factory=dict)
+
+    def __post_init__(self):
+        if isinstance(self.solver_options, Mapping):
+            object.__setattr__(self, "solver_options", _freeze(self.solver_options))
+
+    def solver_config(self, method):
+        return {
+            "method": method,
+            "objective": self.objective,
+            "arithmetic_policy": self.arithmetic_policy or self.window.arithmetic,
+            "requested_certificate_level": self.requested_certificate_level,
+            "tie_break_policy": self.tie_break_policy,
+            "input_structure": self.input_structure,
+            "matrix_free_output": self.matrix_free_output,
+            "deterministic": self.deterministic,
+            "resource_limits": asdict(self.resource_limits),
+            "solver_options": self.solver_options,
+        }
 
 
 @dataclass(frozen=True)
@@ -108,12 +131,15 @@ class ProjectionSolution:
     generalized_inverse_d: Matrix | None = None
     method: str = "FeasibleSolver"
     arithmetic_policy: str | None = None
+    lower_bound: object = None
+    upper_bound: object = None
+    solver_config: object = None
 
     def __post_init__(self):
-        for name in ("identity", "certificate", "resource_usage"):
+        for name in ("identity", "certificate", "resource_usage", "solver_config"):
             value = getattr(self, name)
             if value is not None:
-                object.__setattr__(self, name, MappingProxyType(dict(value)))
+                object.__setattr__(self, name, _freeze(dict(value)))
         object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
 
     def solver_metadata(self):
@@ -125,32 +151,131 @@ class ProjectionSolution:
             "method": self.method,
             "arithmetic_policy": self.arithmetic_policy,
             "objective": self.objective.to_dict(),
-            "lower_bound": None,
-            "upper_bound": None,
-            "optimality_gap": None,
+            "lower_bound": self.lower_bound,
+            "upper_bound": self.upper_bound,
+            "optimality_gap": self.optimality_gap,
+            "solver_config": self.solver_config,
+            "solver_config_id": self.solver_config_id,
+            "diagnostics": self.diagnostics,
             "resource_usage": dict(self.resource_usage),
         }
 
+    @property
+    def solver_config_id(self):
+        return (
+            None
+            if self.solver_config is None
+            else content_id("solver-config", self.solver_config)
+        )
+
+    @property
+    def optimality_gap(self):
+        if self.lower_bound is None or self.upper_bound is None:
+            return None
+        from fractions import Fraction
+
+        difference = self.upper_bound - self.lower_bound
+        return {
+            "absolute": difference,
+            "relative": None
+            if self.lower_bound == 0
+            else Fraction(difference) / Fraction(self.lower_bound),
+        }
+
+
+def check_solver_request(problem, capabilities):
+    """Return a structured preflight rejection; never select an implicit fallback."""
+    if (
+        not isinstance(problem, ProjectionProblem)
+        or not isinstance(problem.window, ChainWindow)
+        or not isinstance(problem.resource_limits, ResourceLimits)
+        or not isinstance(problem.solver_options, Mapping)
+        or type(problem.matrix_free_output) is not bool
+        or type(problem.deterministic) is not bool
+        or any(
+            not isinstance(value, str)
+            for value in (
+                problem.objective,
+                problem.requested_certificate_level,
+                problem.tie_break_policy,
+                problem.input_structure,
+            )
+        )
+        or (
+            problem.arithmetic_policy is not None
+            and not isinstance(problem.arithmetic_policy, str)
+        )
+    ):
+        return "InvalidProblem", "invalid input or request fields"
+    if not isinstance(capabilities, Mapping):
+        return "Unavailable", "backend capabilities must be a mapping"
+    checks = (
+        (problem.objective, "objectives"),
+        (problem.arithmetic_policy or problem.window.arithmetic, "arithmetic_policies"),
+        (problem.input_structure, "input_structures"),
+        (problem.requested_certificate_level, "certificate_levels"),
+        (problem.tie_break_policy, "tie_break_policies"),
+    )
+    for value, key in checks:
+        if value not in capabilities.get(key, ()):
+            return "Unavailable", f"unsupported {key}: {value}"
+    if problem.arithmetic_policy not in {None, problem.window.arithmetic}:
+        return "Unavailable", "arithmetic policy differs from the input weights"
+    if problem.matrix_free_output and not capabilities.get("matrix_free_output"):
+        return "Unavailable", "matrix-free output is unsupported"
+    if problem.deterministic and not capabilities.get("deterministic"):
+        return "Unavailable", "deterministic output is unsupported"
+    if set(problem.solver_options) - set(capabilities.get("solver_options", ())):
+        return "Unavailable", "unsupported solver options"
+    dimensions = capabilities.get("supported_dimensions")
+    if dimensions is not None and problem.window.k not in dimensions:
+        return "Unavailable", "unsupported homological degree"
+    betti_range = capabilities.get("supported_betti_range")
+    if betti_range is not None:
+        beta = problem.window.n - problem.window.A.rank() - problem.window.D.rank()
+        if not betti_range[0] <= beta <= betti_range[1]:
+            return "Unavailable", "unsupported Betti number"
+    requested_limits = {
+        key
+        for key, value in asdict(problem.resource_limits).items()
+        if value is not None
+    }
+    if requested_limits - set(capabilities.get("resource_limits", ())):
+        return "Unavailable", "unsupported resource limits"
+    return None
+
 
 class FeasibleSolver:
+    def capabilities(self):
+        return _freeze(
+            {
+                "objectives": ("MinimumStretch",),
+                "arithmetic_policies": (
+                    "ExactInteger",
+                    "ExactRational",
+                    "FloatingPoint",
+                ),
+                "input_structures": ("GeneralChainWindow",),
+                "certificate_levels": ("Feasible",),
+                "tie_break_policies": ("StableBasisOrder",),
+                "supported_dimensions": None,
+                "supported_betti_range": None,
+                "matrix_free_output": False,
+                "deterministic": True,
+                "resource_limits": (
+                    "state_limit",
+                    "wall_time_limit",
+                    "matrix_entry_limit",
+                ),
+                "solver_options": (),
+            }
+        )
+
     def solve(self, problem):
         run_id = str(uuid4())
-        if (
-            not isinstance(problem, ProjectionProblem)
-            or not isinstance(problem.window, ChainWindow)
-            or not isinstance(problem.resource_limits, ResourceLimits)
-        ):
-            return ProjectionSolution(
-                "InvalidProblem", run_id, diagnostics=("invalid input",)
-            )
-        if (
-            problem.objective != "MinimumStretch"
-            or problem.requested_certificate_level != "Feasible"
-            or problem.tie_break_policy != "StableBasisOrder"
-        ):
-            return ProjectionSolution(
-                "Unavailable", run_id, diagnostics=("unsupported policy",)
-            )
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(rejection[0], run_id, diagnostics=(rejection[1],))
         window = problem.window
         budget = _Budget(problem.resource_limits)
         try:
@@ -196,6 +321,7 @@ class FeasibleSolver:
                 G,
                 U,
                 arithmetic_policy=window.arithmetic,
+                solver_config=problem.solver_config("FeasibleSolver"),
             )
         except _Exhausted as error:
             return ProjectionSolution(
@@ -203,4 +329,90 @@ class FeasibleSolver:
                 run_id,
                 resource_usage=budget.usage(),
                 diagnostics=(str(error),),
+                arithmetic_policy=window.arithmetic,
+                solver_config=problem.solver_config("FeasibleSolver"),
             )
+
+
+def solve_projection(problem, backend="FeasibleSolver"):
+    """Dispatch a declared solver and independently check any returned action."""
+    from .validation import validate_solution
+
+    if isinstance(backend, str):
+        if backend != "FeasibleSolver":
+            return ProjectionSolution(
+                "Unavailable",
+                str(uuid4()),
+                diagnostics=(f"unknown backend: {backend}",),
+            )
+        backend = FeasibleSolver()
+    if not callable(getattr(backend, "capabilities", None)) or not callable(
+        getattr(backend, "solve", None)
+    ):
+        return ProjectionSolution(
+            "Unavailable",
+            str(uuid4()),
+            diagnostics=("backend has no solver interface",),
+        )
+    try:
+        rejection = check_solver_request(problem, backend.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(
+                rejection[0], str(uuid4()), diagnostics=(rejection[1],)
+            )
+        solution = backend.solve(problem)
+        if not isinstance(solution, ProjectionSolution):
+            raise ValueError("backend did not return ProjectionSolution")
+        if solution.projection is not None:
+            validate_solution(problem.window, solution)
+            acceptable = {
+                "Feasible": {
+                    "Feasible",
+                    "Heuristic",
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                    "ExactOptimal",
+                },
+                "Heuristic": {
+                    "Feasible",
+                    "Heuristic",
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                    "ExactOptimal",
+                },
+                "CertifiedUpperBound": {
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                    "ExactOptimal",
+                },
+                "CertifiedInterval": {"CertifiedInterval", "ExactOptimal"},
+                "ExactOptimal": {"ExactOptimal"},
+            }
+            if (
+                solution.status != "ResourceExhausted"
+                and solution.certificate_level
+                not in acceptable[problem.requested_certificate_level]
+            ):
+                raise ValueError("backend did not meet the requested certificate level")
+        elif (
+            solution.status
+            not in {
+                "ResourceExhausted",
+                "Unavailable",
+                "InvalidProblem",
+                "NumericalFailure",
+                "InternalError",
+            }
+            or solution.certificate_level is not None
+            or solution.certificate
+            or solution.lower_bound is not None
+            or solution.upper_bound is not None
+            or solution.objective.state != "NotComputed"
+            or solution.objective.identity is not None
+        ):
+            raise ValueError("missing action cannot claim feasibility or certification")
+    except Exception as error:
+        return ProjectionSolution(
+            "InternalError", str(uuid4()), diagnostics=(str(error),)
+        )
+    return solution
