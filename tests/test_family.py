@@ -1,6 +1,7 @@
 from dataclasses import replace
 from fractions import Fraction
 import unittest
+from itertools import product
 
 from homology_operator import (
     ChainWindow,
@@ -11,6 +12,7 @@ from homology_operator import (
     OperatorResult,
     ProjectionProblem,
 )
+from homology_operator.chain import matrix_from_data
 
 
 def op(window):
@@ -93,6 +95,83 @@ class FamilyInputTests(unittest.TestCase):
         self.assertEqual(partial.stage(1).status, "ResourceExhausted")
         self.assertIsNone(partial.stage(1).projection)
         self.assertEqual(partial.inclusion(0, 1), Matrix.identity(2))
+
+
+class TransportTests(unittest.TestCase):
+    def test_identity_composition_rank_and_original_chain_action(self):
+        family = merge_family()
+        for i in range(3):
+            self.assertEqual(
+                matrix_from_data(family.transport(i, i).value["action"]),
+                Matrix.identity(family.stage(i).betti()),
+            )
+            for j in range(i, 3):
+                result = family.transport(i, j)
+                self.assertEqual(result.identity, family.stage(j).identity)
+                self.assertEqual(
+                    result.details["source_identity"], family.stage(i).identity
+                )
+                self.assertEqual(family.transport_certificate(i, j).state, "Computed")
+                for middle in range(i, j + 1):
+                    direct = matrix_from_data(result.value["action"])
+                    composed = matrix_from_data(
+                        family.transport(middle, j).value["action"]
+                    ) @ matrix_from_data(family.transport(i, middle).value["action"])
+                    self.assertEqual(direct, composed)
+        self.assertEqual(family.transport_rank(0, 2).value, 1)
+        chain = matrix_from_data(family.transport(0, 1).value["chain_action"])
+        self.assertEqual(chain, family.stage(1).P)
+
+    def test_same_betti_different_maps_and_quotient_rank(self):
+        first = ChainWindow(
+            1, Matrix.zero(0, 1), Matrix.zero(1, 0), (), ("a",), (), (1,)
+        )
+        for boundary, expected in ((((1,), (0,)), 0), (((0,), (1,)), 1)):
+            second = ChainWindow(
+                1,
+                Matrix.zero(0, 2),
+                Matrix.from_rows(boundary),
+                (),
+                ("a", "b"),
+                ("f",),
+                (1, 1),
+            )
+            family = OperatorFamily((0, 1), (first, second), (op(first), op(second)))
+            self.assertEqual([stage.betti() for stage in family.operators], [1, 1])
+            self.assertEqual(family.transport_rank(0, 1).value, expected)
+            # Enumerate image cosets under the coordinate inclusion independently.
+            boundaries = {
+                tuple(
+                    sum(row[c] * bits[c] for c in range(second.p)) % 2
+                    for row in second.D.rows
+                )
+                for bits in product((0, 1), repeat=second.p)
+            }
+            cosets = {
+                min(
+                    tuple(a ^ b for a, b in zip((bit, 0), boundary))
+                    for boundary in boundaries
+                )
+                for bit in (0, 1)
+            }
+            self.assertEqual(len(cosets).bit_length() - 1, expected)
+
+    def test_partial_transport_is_missing_not_zero(self):
+        family = merge_family()
+        failure = OperatorResult(
+            None,
+            family.windows[1],
+            None,
+            {"status": "ResourceExhausted"},
+            {},
+            {},
+            "ResourceExhausted",
+        )
+        partial = replace(family, operators=(family.stage(0), failure, family.stage(2)))
+        self.assertEqual(partial.transport_rank(0, 1).state, "ResourceExhausted")
+        self.assertIsNone(partial.transport_rank(0, 1).value)
+        self.assertEqual(partial.transport(0, 2).state, "Computed")
+        self.assertEqual(partial.transport_certificate(0, 2).state, "Unavailable")
 
 
 if __name__ == "__main__":

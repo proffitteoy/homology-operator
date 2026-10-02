@@ -55,6 +55,8 @@ Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重�
 
 输入映射必须满足链映射与复合相容性；第一版仅要求过滤包含映射。跨尺度权重是否继承必须显式记录。
 
+`transport(i,j)` 返回带目标六身份及 source/target 完整身份的 `QueryResult`，value 中的 `action` 是双方 kernel 基坐标矩阵，`chain_action` 将源 kernel 坐标送入目标原链坐标，显式保存零维形状。`transport_rank` 与 `transport_certificate` 同源；证书重新核对恒等、所有已存中间阶段的 composition、目标核以及诱导同调映射。失败端点返回缺失状态；中间 solver 失败不阻止合法端点之间的直达作用，但无法给完整 composition 证书。
+
 `T_ij=P_j J_ij|ker(L_i)` 绑定源与目标算子身份，须满足 `T_ii=I` 与 composition。Barcode 从这些传输的 rank invariant 恢复；逐尺度 Betti 和外部 PH 结果不能替代该来源。重复尺度、区间端点与末端存活的编码在 Phase 2 实现前明确并测试。
 
 ## 失败与缺失
