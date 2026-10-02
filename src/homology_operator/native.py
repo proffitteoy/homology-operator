@@ -1,4 +1,4 @@
-"""Optional vertical prototype; explicit matrices and Python validation remain.
+"""Optional native adapters; Python remains the independent validator.
 
 Importing this adapter never requires Rust. Missing/unsupported construction is
 Unavailable, without silently calling a different solver. Geometry uses exact
@@ -9,10 +9,16 @@ from dataclasses import asdict, dataclass, field
 from time import perf_counter
 from uuid import uuid4
 
-from .algebra import Matrix, validate_vector
+from .algebra import Matrix, CompactAction, validate_vector
 from .operator import HomologyOperator
 from .result import QueryResult, make_identity
-from .solver import FeasibleSolver, ProjectionSolution, check_solver_request
+from .solver import (
+    FeasibleSolver,
+    ProjectionSolution,
+    check_solver_request,
+    _Budget,
+    _Exhausted,
+)
 
 
 def _extension():
@@ -242,12 +248,137 @@ class NativeFeasibleSolver:
         )
 
 
+class NativeFactorizedSolver:
+    """Stable feasible P in factor/HC form; no dense P or expanded inverses."""
+
+    def capabilities(self):
+        return {
+            **FeasibleSolver().capabilities(),
+            "matrix_free_output": True,
+            "solver_options": ("representation",),
+        }
+
+    def solve(self, problem):
+        run_id = str(uuid4())
+        method = type(self).__name__
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(rejection[0], run_id, diagnostics=(rejection[1],))
+        w = problem.window
+        common = {
+            "method": method,
+            "arithmetic_policy": w.arithmetic,
+            "tie_break_policy": problem.tie_break_policy,
+            "solver_config": problem.solver_config(method),
+        }
+        representation = problem.solver_options.get("representation", "Factorized")
+        if (
+            not problem.matrix_free_output
+            or type(representation) is not str
+            or representation not in {"Factorized", "HC"}
+        ):
+            return ProjectionSolution(
+                "Unavailable",
+                run_id,
+                diagnostics=(
+                    "requires matrix_free_output and Factorized/HC representation",
+                ),
+                **common,
+            )
+        try:
+            _extension()
+        except ImportError:
+            return ProjectionSolution(
+                "Unavailable",
+                run_id,
+                diagnostics=("optional native extension is not installed",),
+                **common,
+            )
+        budget = _Budget(problem.resource_limits)
+        try:
+            budget.step()
+            # Keep reference's logical entry guard; not a claim about packed RSS.
+            budget.entries(w.m * w.n + w.n * w.p + w.n * w.m + w.p * w.n + 4 * w.n**2)
+            parts, indices = [], []
+            for matrix in (w.A, w.D):
+                budget.step()
+                budget.entries(matrix.nrows * (matrix.ncols + matrix.nrows))
+                prepared = PreparedMatrix(matrix)
+                rows = prepared._handle.inverse_rows()
+                parts.append(
+                    Matrix.from_rows(
+                        (_unwords(row, matrix.nrows) for row in rows),
+                        ncols=matrix.nrows,
+                    )
+                )
+                indices.append(tuple(prepared._handle.pivots))
+                budget.step(matrix.nrows)
+            budget.step()
+            action = CompactAction(
+                "GeneralizedInverse", (w.A, w.D, *parts), tuple(indices)
+            )
+            if any(
+                w.A.apply(action._inverse(0, z)) != z for z in w.A.transpose().rows
+            ) or any(
+                w.D.apply(action._inverse(1, z)) != z for z in w.D.transpose().rows
+            ):
+                raise ValueError(
+                    "compact generalized inverse failed independent validation"
+                )
+            if representation == "HC":
+                # Stream columns of P to construct its image. Never store all P.
+                H = Matrix.from_columns(action.image_basis(), nrows=w.n)
+                budget.step(w.n)
+                prepared_h = PreparedMatrix(H)
+                coordinates = []
+                for j in range(w.n):
+                    budget.step()
+                    z = action.apply(tuple(int(i == j) for i in range(w.n)))
+                    coordinates.append(prepared_h.solve(z))
+                C = Matrix.from_columns(coordinates, nrows=H.ncols)
+                action = CompactAction("HC", (H, C))
+            budget.step()
+            identity = make_identity(w, action, run_id, problem.tie_break_policy)
+            budget.step(0)
+            usage = budget.usage()
+            usage.update(
+                threads=1,
+                representation=representation,
+                expanded_projection=False,
+                factor_entries=sum(x.nrows * x.ncols for x in action.factors),
+            )
+            return ProjectionSolution(
+                "FeasibleOnly",
+                run_id,
+                action,
+                identity,
+                "Feasible",
+                QueryResult("NotComputed", identity=identity),
+                {
+                    "exact_arithmetic": True,
+                    "verification_method": "CompactGeneralizedInverseConstruction",
+                },
+                usage,
+                **common,
+            )
+        except _Exhausted as error:
+            return ProjectionSolution(
+                "ResourceExhausted",
+                run_id,
+                resource_usage=budget.usage(),
+                diagnostics=(str(error),),
+                **common,
+            )
+
+
 def apply_batch(operator, vectors):
     """P/L on all chains in one call; preserve the operator's six identities."""
-    if not isinstance(operator, HomologyOperator) or not isinstance(operator.P, Matrix):
-        raise ValueError("prototype batch requires an explicit validated operator")
+    if not isinstance(operator, HomologyOperator) or not isinstance(
+        operator.P, (Matrix, CompactAction)
+    ):
+        raise ValueError("native batch requires an explicit/compact validated operator")
     n = operator.window.n
-    if n > 64:
+    if n > 64 and isinstance(operator.P, Matrix):
         return QueryResult(
             "Unavailable",
             identity=operator.identity,
@@ -263,14 +394,33 @@ def apply_batch(operator, vectors):
         )
     started = perf_counter()
     vectors = tuple(validate_vector(x, n) for x in vectors)
-    packed = tuple(map(_pack, vectors))
-    rows = tuple(map(_pack, operator.P.rows))
+    if isinstance(operator.P, CompactAction):
+        action = operator.P
+        packed = tuple(map(_words, vectors))
+        rows = tuple(tuple(map(_words, matrix.rows)) for matrix in action.factors)
+    else:
+        packed = tuple(map(_pack, vectors))
+        rows = tuple(map(_pack, operator.P.rows))
     converted = perf_counter()
-    projected, applied, supports, native_wall = extension.actions(rows, n, packed)
+    if isinstance(operator.P, CompactAction):
+        projected, applied, supports, native_wall = extension.compact_actions(
+            action.form,
+            rows,
+            tuple(x.ncols for x in action.factors),
+            action.pivots,
+            action.complement,
+            packed,
+        )
+    else:
+        projected, applied, supports, native_wall = extension.actions(rows, n, packed)
     returned = perf_counter()
     result = {
-        "project": tuple(tuple((z >> j) & 1 for j in range(n)) for z in projected),
-        "apply_operator": tuple(tuple((z >> j) & 1 for j in range(n)) for z in applied),
+        "project": tuple(_unwords(z, n) for z in projected)
+        if isinstance(operator.P, CompactAction)
+        else tuple(tuple((z >> j) & 1 for j in range(n)) for z in projected),
+        "apply_operator": tuple(_unwords(z, n) for z in applied)
+        if isinstance(operator.P, CompactAction)
+        else tuple(tuple((z >> j) & 1 for j in range(n)) for z in applied),
         "support": tuple(tuple(indices) for indices in supports),
     }
     return QueryResult(
