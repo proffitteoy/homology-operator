@@ -74,3 +74,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 `QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。Ready 结果还必须重新运行独立 projection validator；validator 尚未接入时明确拒绝。Phase 1 不提供最优性证书验证器，因此明确拒绝 ExactOptimal 标签。
 
 内容身份使用规范 UTF-8 JSON SHA256，projection_id 与 operator_id 不包含每次独立 solver_run UUID。安全缓存包含输入、基、权重、投影、solver 配置、并列策略与 backend semantics，独立 run 仍保存在来源中；同一记录内的查询必须完全匹配六身份。
+## 可行投影求解
+
+`FeasibleSolver().solve(ProjectionProblem(window))` 用确定性广义逆构造 G/U，并精确复核 AGA=A、DUD=D，形成 P=(I+DU)(I+GA)。返回 FeasibleOnly/Feasible、独立 run UUID、稳定基顺序、实际资源计数及尚未计算的 objective。相同输入的 P 与内容身份可复现；这不证明最小伸长。
+
+`ResourceLimits` 限制参考构造的 checkpoint/state 数、wall time 和保守矩阵条目数。输入规模先检查，时间在稠密代数步骤之间检查；它不是单步强制抢占或峰值 RSS 上限。不支持的 objective/认证/并列策略返回 Unavailable，非法问题返回 InvalidProblem，超限返回 ResourceExhausted 且不伪造投影。进入算子前仍需独立 validator。
