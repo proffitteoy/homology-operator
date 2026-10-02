@@ -162,6 +162,10 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 这是一个真实窗口的原型计时实验，不是R0全配置替代、统计准入或S4/S5性能验收；本项不测RSS，也不推断大尺寸或其他solver的收益。原型的单字宽、显式Matrix导出、Python验证与几何成本均公开；不利结果如实保存。后续任意尺寸prepared代数、factorized action、native几何和平台集成仍需独立工作包。
 
+源码 `d6d6966fc4615078f7ac29798c568d4f0ccd5f38` 的 [30行冷worker采样](../benchmarks/s4_native_prototype.json)（LF SHA256 `bb417695081833ab2faabb7915605ef9fbeeda3a9b511a52eed54ca396714339`）保存3个查询量的相同语义hash。Windows x64/MSVC、Python3.10.11，release/safe Rust/单线程。worker中位数（含导入及完整恢复）：reference/native，q0为29.961/31.780ms，q8为32.899/31.915ms，q64为46.123/53.486ms；native/reference比值为1.061、0.970、1.160。外部进程中位数另为127.251/131.411、129.892/123.994、142.099/150.934ms。有限5次采样没有稳定完整成本收益，q64反而退化，不能据q8约3%的差异宣称性能改善。native的显式decode、QueryResult冻结/参数记录、Python循环检查和几何后备仍有成本，应由后续工作包分别处理。
+
+[实际完整回归日志](../benchmarks/s4_native_verification.log) 记录140项全部通过（历史129项数学+4项测量+7项原型），另本地Ruff、Rust fmt/Clippy、两示例、文档、reference构建及隔离无扩展安装通过；这些不代替远端CI。采样与历史R0数据不覆盖，结果中的fixture/source/output/扩展二进制hash可逐项核验。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。

@@ -9,7 +9,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41、Phase 2 的 #42–#48 和 Phase 3 的 #49–#58 已全部合入 main。当前 reference 基线为 `54ce78bccdcba619ffa2a4d76aeb450bfd24270e`，该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788) 通过。129项数学测试、五种限定solver与证书、冻结对照/no-go、73次窗口支持运行和44个过滤配置的历史证据见 [Phase 3报告](docs/PHASE3_REPORT.md)；历史报告保留当时状态。
 
-下一轮由同一私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理：[S4/S5 项目计划](docs/S4_S5_PROJECT.md) 将 S4 定为同语义高性能开发、S5 定为 GUDHI 对拍与真实性能报告，细化原 Phase 4。新 S4 性能任务与 S5 对拍任务保留原有 S3 solver 阶段。上传研究计划、barcode 原型与原始记录已整合；Rust、GUDHI 正式对拍和性能报告尚待各工作包实现。
+下一轮由同一私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理：[S4/S5 项目计划](docs/S4_S5_PROJECT.md) 将 S4 定为同语义高性能开发、S5 定为 GUDHI 对拍与真实性能报告，细化原 Phase 4。新 S4 性能任务与 S5 对拍任务保留原有 S3 solver 阶段。上传研究计划、barcode 原型与原始记录已整合；可选 Rust 纵向原型已提供；完整高性能后端、GUDHI 正式对拍和性能报告仍按工作包推进。
 
 Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局部搜索支持、失败、中断与完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。联合验收覆盖73次冻结窗口支持运行、44个过滤配置和五solver混合表示族。高性能、采样稳定性、应用收益、许可证与发行仍待后续阶段。
 
