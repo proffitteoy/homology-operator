@@ -209,6 +209,23 @@ uv run --locked --no-sync python scripts/benchmark_geometry.py --revision <准�
 
 3次时间、1次RSS只构成 S4-06 有限可重复研究，不能替代 S4-09/S5 正式区组、准入、规模和稳定性验收；保留退化，不按本批数据选择默认表示或扩大 solver 证明范围。R0、S4-02/03/04 历史样本不覆盖。
 
+实际测量源码为干净提交 `294ac10ec0f3b514bfce6fa418afff51ad792c84`，Windows x64、Python3.12.13、Rust1.98.1、release/safe Rust/单线程。[288条原始记录](../benchmarks/s4_geometry_workspace.json)（LF SHA256 `f7abd1562d0f10ccab178741c3f6a0d4e34565382ca33518fb5032d9e480d18c`）全部 Computed、无失败、30个输入/查询量组的三路线完整输出hash一致。实际扩展 .pyd SHA256为 `171d60eae4c0311da6f40d8410834123df56ae60b53ccbd4c212ad3a19aceab4`；源码文件、wheel、派生input_id及原fixture hash保存在报告内。
+
+q1024 的第二批 warm 中位数与完整冷worker中位数（各3次，毫秒；worker包含两批查询与全部准备/恢复）：
+
+| 输入 | warm scalar / batch / workspace | worker scalar / batch / workspace |
+| --- | --- | --- |
+| K4 正整数 | 194.57 / 81.55 / 70.99 | 627.20 / 403.49 / 353.48 |
+| K4 有理数 | 165.09 / 74.06 / 75.71 | 537.87 / 356.23 / 368.03 |
+| K4 大整数 | 164.43 / 76.36 / 76.67 | 542.98 / 375.18 / 377.44 |
+| K4 求和溢出 | 167.88 / 94.76 / 71.70 | 540.42 / 435.53 / 344.41 |
+| K4 浮点 | 176.56 / 69.72 / 82.67 | 597.62 / 333.72 / 411.41 |
+| 人工65维 β=2 | 4039.04 / 350.94 / 404.11 | 11247.13 / 3162.13 / 3448.86 |
+
+有限样本显示批量复用投影降低大批量成本；workspace相对临时batch的增量收益不足以作通用排名，有理/大整数/浮点/65维本组中位数均更慢。q0 的workspace/scalar完整worker中位数比为1.013/1.295/1.044/1.149/1.052/1.071（按表序），准备与固定成本有退化。独立Windows绝对峰值RSS：scalar范围27,930,624–33,169,408 B、workspace范围28,295,168–32,903,168 B；五个K4组workspace更高，65维略低，不宣称普遍内存收益。workspace第二批无新增projection缓冲扩容；原生每批仅q次P作用。q1024有理/大整数/浮点各2048次权重后备，溢出组1705次求和溢出后备，全部计入冷/warm调用；空批没有数值后备。
+
+[158项完整回归与最终release wheel的7项复核日志](../benchmarks/s4_geometry_verification.log) 保存真实本地结果。该轮在独立worktree完成；未合并#64的核心几何实现已被共享工作区提交 `3a6c6fa` 收入，其上独立#66增量保存测试、协议与证据。前置PR/最终PR准确head的CI另核实，不以本地通过代替远端或main退出验收。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。

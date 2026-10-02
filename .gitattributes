@@ -7,3 +7,4 @@ benchmarks/s4_r0_*.json text eol=lf
 benchmarks/s4_native_prototype.json text eol=lf
 benchmarks/s4_packed_ablation.json text eol=lf
 benchmarks/s4_compact_action.json text eol=lf
+benchmarks/s4_geometry_workspace.json text eol=lf
