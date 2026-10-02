@@ -13,6 +13,8 @@ from homology_operator import (
     OperatorFamily,
     OperatorFamilyResult,
     QueryResult,
+    ProjectionProblem,
+    solve_projection,
 )
 from homology_operator.chain import matrix_data
 from homology_operator.result import make_identity
@@ -52,6 +54,149 @@ def family_from(stages):
 
 
 class FamilyJointTests(unittest.TestCase):
+    def test_cross_solver_replacements_preserve_ph_and_action_bound_geometry(self):
+        configurations = 0
+        for name, stages in corpus_families():
+            base = family_from(stages)
+            for policy in (
+                "FeasibleSolver",
+                "ExhaustiveExactSolver",
+                "GreedyCertifiedSolver",
+                "Mixed",
+            ):
+                operators = []
+                for i, fixture in enumerate(stages):
+                    method = policy
+                    if policy == "Mixed":
+                        method = (
+                            "Rank2ExactSolver"
+                            if oracle.betti(fixture) == 2
+                            else (
+                                "FeasibleSolver",
+                                "ExhaustiveExactSolver",
+                                "GreedyCertifiedSolver",
+                            )[i % 3]
+                        )
+                    if fixture["arithmetic"] == "FloatingPoint":
+                        method = "FeasibleSolver"
+                    solution = solve_projection(
+                        ProjectionProblem(base.windows[i]), method
+                    )
+                    operators.append(HomologyOperator(base.windows[i], solution))
+                family = replace(base, operators=tuple(operators))
+                configurations += 1
+                with self.subTest(family=name, policy=policy):
+                    bars = family.barcode()
+                    self.assertEqual(
+                        tuple(
+                            (bar["birth_stage"], bar["death_stage"])
+                            for bar in bars.value
+                            for _ in range(bar["multiplicity"])
+                        ),
+                        oracle.persistence_barcode(stages),
+                    )
+                    for (i, j), expected_rank in oracle.persistence_ranks(
+                        stages
+                    ).items():
+                        self.assertEqual(
+                            family.transport_rank(i, j).value, expected_rank
+                        )
+                        self.assertEqual(
+                            family.transport_certificate(i, j).state, "Computed"
+                        )
+                        inclusion = oracle.columns(matrix_data(family.inclusion(i, j)))
+                        P = oracle.columns(matrix_data(family.stage(j).P))
+                        for z in oracle.cycles(stages[i]):
+                            vector = unpack(z, family.windows[i].n)
+                            expected = oracle.apply(P, oracle.apply(inclusion, z))
+                            self.assertEqual(
+                                pack(family.track_class(vector, i, j).value), expected
+                            )
+                            self.assertAlmostEqual(
+                                family.track_mass(vector, i, j).value,
+                                oracle.mass(expected, oracle.weights(stages[j])),
+                            )
+                            self.assertEqual(
+                                family.track_support(vector, i, j).value,
+                                oracle.support(expected),
+                            )
+                            for middle in range(i, j + 1):
+                                via = family.track_class(vector, i, middle).value
+                                self.assertEqual(
+                                    family.track_class(via, middle, j).value,
+                                    family.track_class(vector, i, j).value,
+                                )
+                    snapshot = family.to_result()
+                    for _ in range(2):
+                        restored = OperatorFamilyResult.from_json(
+                            snapshot.to_json()
+                        ).to_family()
+                        self.assertEqual(
+                            restored.to_result().to_json(), snapshot.to_json()
+                        )
+        self.assertEqual(configurations, 44)
+
+    def test_all_five_solvers_dense_and_structured_in_one_family(self):
+        from test_structured import cyclic_window
+
+        window, _ = cyclic_window(2)
+        methods = (
+            "FeasibleSolver",
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+            "StructuredFamilySolver",
+        )
+        operators = []
+        for i, method in enumerate(methods):
+            problem = ProjectionProblem(
+                window,
+                input_structure="CyclicTrace"
+                if method == "StructuredFamilySolver"
+                else "GeneralChainWindow",
+                matrix_free_output=i == 5,
+            )
+            operators.append(
+                HomologyOperator(window, solve_projection(problem, method))
+            )
+        family = OperatorFamily(tuple(range(6)), (window,) * 6, tuple(operators))
+        for i in range(6):
+            for j in range(i, 6):
+                self.assertEqual(family.transport_rank(i, j).value, 2)
+                self.assertEqual(family.transport_certificate(i, j).state, "Computed")
+                for z in range(8):
+                    vector = unpack(z, 3)
+                    target = operators[j].project(vector)
+                    self.assertEqual(family.track_class(vector, i, j).value, target)
+                    self.assertEqual(family.track_mass(vector, i, j).value, sum(target))
+                    for middle in range(i, j + 1):
+                        via = family.track_class(vector, i, middle).value
+                        self.assertEqual(
+                            family.track_class(via, middle, j).value, target
+                        )
+        bars = family.barcode().value
+        self.assertEqual(
+            tuple(
+                (bar["birth_stage"], bar["death_stage"])
+                for bar in bars
+                for _ in range(bar["multiplicity"])
+            ),
+            ((0, None), (0, None)),
+        )
+        snapshot = family.to_result()
+        for _ in range(3):
+            restored = OperatorFamilyResult.from_json(snapshot.to_json()).to_family()
+            self.assertEqual(restored.to_result().to_json(), snapshot.to_json())
+        wire = snapshot.to_dict()
+        # Query the structured stage so that its distinct representation/run is present.
+        operators[5].readout("support", (1, 0, 0))
+        wire["stage_results"][0]["query_results"] = (
+            operators[5].to_result().to_dict()["query_results"]
+        )
+        with self.assertRaises(ValueError):
+            OperatorFamilyResult.from_dict(wire)
+
     def test_numerical_failures_and_bool_rank_tampering_are_explicit(self):
         source = ChainWindow(
             1,
