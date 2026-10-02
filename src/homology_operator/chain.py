@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from fractions import Fraction
 from math import isfinite
 from types import MappingProxyType
-from collections.abc import Mapping
+from collections.abc import Mapping, Set
 
 from .algebra import Matrix
 
@@ -84,6 +84,10 @@ class ChainWindow:
             ("basis_current", self.A.ncols),
             ("basis_next", self.D.ncols),
         ):
+            if isinstance(getattr(self, name), (str, bytes, bytearray, Set, Mapping)):
+                raise InvalidInput(
+                    f"{name} must be ordered, not text or an unordered container"
+                )
             try:
                 basis = tuple(getattr(self, name))
             except TypeError as error:
@@ -97,7 +101,7 @@ class ChainWindow:
             object.__setattr__(self, name, basis)
         if self.A @ self.D != Matrix.zero(self.m, self.p):
             raise InvalidInput("chain condition AD=0 is required")
-        if self.weight_semantics not in {
+        if not isinstance(self.weight_semantics, str) or self.weight_semantics not in {
             "unit",
             "abstract_positive_cost",
             "euclidean_length",
@@ -108,8 +112,16 @@ class ChainWindow:
             raise InvalidInput("unknown weight semantics")
         if self.unit is not None and (not isinstance(self.unit, str) or not self.unit):
             raise InvalidInput("unit must be a nonempty string or None")
-        if self.arithmetic not in {"ExactInteger", "ExactRational", "FloatingPoint"}:
+        if not isinstance(self.arithmetic, str) or self.arithmetic not in {
+            "ExactInteger",
+            "ExactRational",
+            "FloatingPoint",
+        }:
             raise InvalidInput("unsupported weight arithmetic")
+        if isinstance(self.weights, (str, bytes, bytearray, Set, Mapping)):
+            raise InvalidInput(
+                "weights must be ordered, not text or an unordered container"
+            )
         try:
             weights = tuple(self.weights)
         except TypeError as error:
@@ -160,6 +172,7 @@ class ChainWindow:
         return self.D.ncols
 
     def identity(self):
+        """Content identity of the validated input, coordinate bases and weights."""
         from .result import input_identity
 
         return input_identity(self)

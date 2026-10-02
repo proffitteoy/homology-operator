@@ -16,6 +16,8 @@ jobs:
         python: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.5"
@@ -33,3 +35,9 @@ jobs:
           .task-artifacts/wheel-env/bin/python -I -c "import homology_operator; print(homology_operator.__version__)"
       - run: pwsh -NoProfile -File ./scripts/check_docs.ps1
       - run: git diff --check
+      - name: Check whitespace in the complete pull request
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git diff --check "$BASE_SHA...$HEAD_SHA"
