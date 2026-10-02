@@ -11,6 +11,7 @@ from homology_operator import (
     OperatorFamily,
     OperatorFamilyResult,
     OperatorResult,
+    QueryResult,
     ResourceLimits,
     ProjectionProblem,
 )
@@ -289,6 +290,66 @@ class TrackingTests(unittest.TestCase):
 
 
 class FamilySerializationTests(unittest.TestCase):
+    def test_queried_failures_survive_with_and_without_partial_identity(self):
+        family = merge_family()
+        for status, solver_status in (
+            ("InvalidInput", "InvalidProblem"),
+            ("SolverFailed", "NumericalFailure"),
+            ("ResourceExhausted", "ResourceExhausted"),
+            ("Unavailable", "Unavailable"),
+            ("InternalValidationFailed", "InternalError"),
+        ):
+            for with_identity in (False, True):
+                with self.subTest(status=status, with_identity=with_identity):
+                    identity = {
+                        key: family.windows[1].identity()[key]
+                        for key in ("input_id", "basis_id", "weight_id")
+                    }
+                    identity["solver_run_id"] = "failed-run"
+                    failure = OperatorResult(
+                        identity if with_identity else None,
+                        family.windows[1],
+                        None,
+                        {
+                            "status": solver_status,
+                            "certificate_level": None,
+                            "solver_run_id": "failed-run",
+                        },
+                        {},
+                        {"diagnostic": status},
+                        status,
+                    )
+                    partial = replace(
+                        family, operators=(family.stage(0), failure, family.stage(2))
+                    )
+                    transport, rank = (
+                        partial.transport(0, 1),
+                        partial.transport_rank(0, 1),
+                    )
+                    expected = (
+                        "ResourceExhausted"
+                        if status == "ResourceExhausted"
+                        else "Unavailable"
+                    )
+                    self.assertEqual(transport.state, expected)
+                    self.assertIsNone(rank.value)
+                    result = partial.to_result()
+                    restored = OperatorFamilyResult.from_json(result.to_json())
+                    data = restored.to_dict()
+                    self.assertEqual(
+                        QueryResult.from_dict(data["transports"]["0:1"]), transport
+                    )
+                    self.assertEqual(
+                        QueryResult.from_dict(data["rank_readout"]["0:1"]), rank
+                    )
+                    self.assertEqual(restored, result)
+                    self.assertEqual(
+                        data["transports"]["0:1"]["details"]["target_identity"],
+                        dict(identity) if with_identity else None,
+                    )
+                    self.assertNotIn("0:2", data["transports"])
+                    self.assertEqual(result.to_json(), partial.to_result().to_json())
+
     def test_lossless_snapshot_and_restored_actions(self):
         family = merge_family()
         family = replace(family, scales=(Fraction(0), Fraction(1, 2), Fraction(1, 2)))
