@@ -69,3 +69,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 
 这是显式行存储的小规模 correctness reference，消元为多项式稠密运算，核/像枚举只在独立测试使用；不提供高性能保证。测试穷举所有至多 3×3 的 F2 矩阵，以独立向量枚举核对核、像、秩和可解性。
 `ChainWindow(k,A,D,basis_previous,basis_current,basis_next,weights,...)` 在输入边界验证 AD=0、矩阵与三个带序基的形状、唯一非空基标识、有限严格正权；不合法抛 `InvalidInput`。它保留原坐标，支持空链空间及 H0 的 0×n 矩阵。`ExactRational` 只接受 int/Fraction，`ExactInteger` 只接受整数，`FloatingPoint` 显式采用浮点；权重语义和单位必须由调用者给出。`to_dict/from_dict` 保存显式形状及权重类型并重新校验输入。
+## 身份、状态与序列化
+
+`QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。Ready 结果还必须重新运行独立 projection validator；validator 尚未接入时明确拒绝。Phase 1 不提供最优性证书验证器，因此明确拒绝 ExactOptimal 标签。
+
+内容身份使用规范 UTF-8 JSON SHA256，projection_id 与 operator_id 不包含每次独立 solver_run UUID。安全缓存包含输入、基、权重、投影、solver 配置、并列策略与 backend semantics，独立 run 仍保存在来源中；同一记录内的查询必须完全匹配六身份。
