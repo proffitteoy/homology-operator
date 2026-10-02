@@ -208,6 +208,12 @@ rank、核、像和 solve 当前重复消元。用同一不可变分解复用代
 
 ### S4-05：加速限定 solver 与独立证书重放
 
+本地实现提供四个显式 native 入口、packed 循环/候选代数和独立证书重放；
+支持域、精确质量后备及 portable 恢复见 [solver 契约](SOLVER_CONTRACT.md)。
+开发基于 S4-03，已普通 merge 同步合入 main 的 S4-04；认证 solver 仍使用原显式/结构 action，
+因子输出对接与全后端集成仍属于 S4-08。实际有限对拍、性能复跑与限制见 [验证](VALIDATION.md) 和
+[测量协议](BENCHMARKS.md)，本地实现不代表 issue 已合并或 S4 整体通过。
+
 一般规模可行线和认证求解线分别优化，Rust 降低常数不能消除已有指数搜索或扩大证明支持域。
 
 实施交付：

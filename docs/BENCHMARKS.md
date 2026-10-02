@@ -1,6 +1,6 @@
 # Solver 对照与性能协议
 
-本页保存已执行的 Phase 3 solver 对照、S4-01 R0、S4-02 原型、S4-03 packed 复用及 S4-04 紧凑 action 协议与冻结结果。Phase 3 的同问题/认证/预算对照用于 #24 一般搜索 go/no-go；后续实验按各节声明的完整成本口径解释。不把单次 reference 耗时当作性能排名，也不宣称 PH 加速。
+本页保存已执行的 Phase 3 solver 对照、S4-01 R0、S4-02 原型、S4-03 packed 复用、S4-04 紧凑 action 与 S4-05 限定 solver 协议与冻结结果。Phase 3 的同问题/认证/预算对照用于 #24 一般搜索 go/no-go；后续实验按各节声明的完整成本口径解释。不把单次 reference 耗时当作性能排名，也不宣称 PH 加速。
 
 正式全后端/GUDHI 验收见 [S4/S5 项目计划](S4_S5_PROJECT.md)，当前实现状态见 [文档索引](README.md)。本页及冻结数据保留各次实验的源码、输入、输出、测量范围与不利结果；S4-01 已有独立计时/RSS 基线，但原型/人工代数收益不替代 S4-09/S5 的冻结负载与正式统计。
 
@@ -235,3 +235,79 @@ Windows x64 / CPython 3.10.11，release wheel与扩展hash保存在
 K4原基/重排两例从4/3改善到9/8，但实验仅认证[1,9/8]，Exhaustive在相同2000状态预算认证9/8最优；人工beta=3例没有改善贪心11/7，实验仍只认证[1,11/7]，Exhaustive在2000状态保留相同上界并中断。另独立放宽到默认100000状态作真值核验，Exhaustive以2090状态认证11/7；此核验不混入2000预算的性能记录。
 
 本轮结论为**no-go：不接入公共GeneralSearchSolver**。实验确有两项质量改善，但都在已有exact支持域，不能证明新的支持域或比现有认证更强；beta=3例没有质量收益。完整成本保留原K4约18.9ms及重排20.5ms，穷举分别约22.2ms及18.2ms；认证等级不同且每配置只有一次，不用这些数作速度排名。state=20/2000中断保留seed和已完成改进，已测中途改善保存；不完整neighbor扫描不标局部完成。该证据只拒绝本轮边界翻转原型的公共准入，不否定其他参数化、branch-and-bound、MILP或SAT未来研究；重新准入需要新需求、预先冻结的比较和独立证明。
+
+
+## S4-05：限定 solver 与证书重放的有限同语义 pilot
+
+使用 `scripts/benchmark_native.py --solvers`，预先固定7个配置：原 K4 窗口的
+Exact exhaustive 与 CertifiedInterval greedy、固定 T-A4 三终端 Rank2、固定 T-B1
+m=4 Structured handle、K4任意精度整数 greedy、state=20 exhaustive 中断及浮点拒绝。
+沿用 `compare_solvers.suite` 的来源/公式与完整输入身份，不改历史 corpus。
+全部 reference/native 比较在同请求、权重、预算、支持域和实际认证等级内进行。
+
+协议先提交再测量：10个独立进程区组，每后端每区组5次重复；worker 启动后导入并
+按配对顺序执行请求，属于已有导入环境的求解/完整操作成本，不能称每样本冷启动。
+后端进程顺序 seed=65，区组内共同顺序 seed=6500+block。计时关闭 profiler/tracemalloc，
+逐条记录构造、含必要独立验证的调度、算子读取/序列化/恢复及合计；原始 solver 状态、
+认证、预算计数、精确质量后备、序列化大小和完整链生成元/proof/几何/恢复输出 hash 保存。
+转换包含在各对应阶段，全部必需重复验证保留；hash计算在计时段外。
+
+内存另用两个新进程，调用既有操作系统绝对 peak RSS 入口；值表示整个7配置 worker，
+不能作为各配置内存或归因某项优化的证据，无可靠结果保存 null。全部失败/拒绝/中断
+保留；进程timeout=120秒。每配置应有100条记录与同一语义输出 hash，任何缺失/不一致
+写入报告并失败。样本是有限 pilot，不以其挑选新的路线或声称 S4/S5 退出通过。
+
+复跑（安装可选 wheel 后，使用测量报告记录的干净精确源码提交）：
+
+```powershell
+$revision = git rev-parse HEAD
+uv run --locked --no-sync python scripts/benchmark_native.py --solvers --revision $revision --output .task-artifacts/s4_solver_rerun.json
+```
+
+保存wheel hash时构建输出应为 `.task-artifacts/native-s4-65-wheels`；复跑使用该路径的
+已安装 release wheel。报告需同时记录源码 SHA、全部测量文件 LF hash、fixture/request hash、release 二进制与
+wheel hash、Python/Rust/OS/CPU、构建参数和所有原始样本。构造与重放的收益分开解释；
+可行种子、普通几何读取和显式快照仍有 reference 成本，不能称整个算子已原生化。
+
+
+汇总预先约定为各阶段的50样本 median/IQR、每个进程区组5重复的 reference/native
+median比，以及10个配对区组的median比的95% percentile bootstrap区间
+（10000次重采样，seed=65000）。区组为统计单位；拒绝请求无构造计时，不把None填0。
+内存worker也复核同一输出hash，任何库内诊断与实际method/config身份均保留。
+
+
+本地实际测量源码为干净提交 `99adf07a4d9fd967ae021589bed897769f5d3360`，Windows x64 / CPython 3.10.11 /
+Rust 1.98.1，release 单线程；源码 LF、fixture/request、扩展与 wheel hash 全部记录在
+[700条原始样本](../benchmarks/s4_solver_pilot.json)，报告文件 SHA256 为
+`60d71d2999d82991f54ce8aff574886600d137f4c6a3005c579aa891ac016c87`。
+500条成功、100条库内 ResourceExhausted、100条 Unavailable；两后端各配置的完整
+生成元 action、proof、联合读取与恢复 hash 相同，采样/语义失败为0。
+
+| 固定配置 | reference完整成本 median/ms | native完整成本 median/ms | 配对区组median比 | 95%区组bootstrap区间 |
+| --- | --- | --- | --- | --- |
+| k4_exact | 20.195 | 17.163 | 1.184 | [1.048, 1.259] |
+| k4_greedy | 16.986 | 15.249 | 1.128 | [1.026, 1.183] |
+| cut_rank2 | 46.270 | 34.979 | 1.272 | [1.203, 1.419] |
+| cyclic_m4 | 86.574 | 77.075 | 1.096 | [1.021, 1.214] |
+| k4_bigint | 16.713 | 15.076 | 1.093 | [1.030, 1.208] |
+| k4_interrupted | 7.621 | 7.946 | 0.976 | [0.831, 1.028] |
+| floating_unavailable | 0.186 | 0.191 | 0.993 | [0.902, 1.042] |
+
+Rank2 的构造 median 为3.582/3.697ms，配对比0.979、区间[0.920,1.098]，收益主要来自
+独立重放；Structured 构造0.998/0.995ms，区间覆盖无差异。大整数配置每次报告3次
+精确质量后备；该构造配对比1.047、区间[0.967,1.102]，没有独立构造收益证据。
+提前中断配置完整成本7.621/7.946ms，保留其退化，不作为成功求解加速。
+
+两个新内存worker的操作系统绝对峰值RSS分别为22,437,888 / 23,048,192 bytes
+（reference/native），native反而高610,304 bytes。各仅一次、覆盖整个7配置worker，
+不能宣称每配置或稳定内存改善。成功配置有限完整成本的配对改善约1.09–1.27倍，
+不从这些小规模/预先选定配置外推一般规模、高维、S4全后端或S5正式结论。
+
+[完整151项回归日志](../benchmarks/s4_solver_verification.log) 记录本地强制native、无跳过
+的完整数学/测量回归；Rust比值单测、fmt/Clippy、Ruff、文档与git diff检查通过。
+reference sdist/wheel构建及真实无扩展的隔离wheel安装通过，四种reference请求完成、
+四种native请求Unavailable，native快照经完整reference重放恢复。
+上述性能与151项回归证据冻结于 S4-03 基线上的测量提交；原始样本及 hash 保持不变。
+本分支后续普通 merge 同步已合并 S4-04 的 main `520ecc9`，保留双方实现并重新构建验证；
+这次整合验证不替代上述源码的性能测量，也不证明认证 solver 已改为输出 CompactAction。
+远端 CI 与合并状态按 PR 精确 head 的实际 checks 另行核验。

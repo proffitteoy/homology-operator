@@ -98,7 +98,9 @@ assert solution.certificate_level == "ExactOptimal"
 
 字符串调度支持 `FeasibleSolver`、`ExhaustiveExactSolver`、`GreedyCertifiedSolver`、
 `Rank2ExactSolver`、`StructuredFamilySolver`。也可传入提供 `capabilities()` / `solve(problem)` 的对象；
-native solver 采用对象调用，不是已注册字符串名称。
+S4-05 四个限定 solver 另有 `NativeExhaustiveExactSolver`、`NativeGreedyCertifiedSolver`、
+`NativeRank2ExactSolver`、`NativeStructuredFamilySolver` 字符串入口，或使用现有类的 `native=True`。
+`NativeFeasibleSolver` 与 `NativeFactorizedSolver` 仍采用对象调用。
 未知后端或不支持的请求返回 Unavailable，不静默选择其他 solver。
 
 统一调度核对 capability、配置、并列策略、算术和报告预算，再独立验证返回投影与证书。
@@ -280,3 +282,27 @@ HC 流式读取同 P 的生成元构造规范像基 H，再逐列求 C。β 接�
 身份绑定具体表示；跨表示查询不能凭 action 等价直接混用。紧凑 handle 恢复规则见结果模型。
 常规 A/D、因子、核基输出和 transport 仍可为显式矩阵，资源检查仍非硬 RSS 限制。
 正式性能与集成验收属于 [S4/S5 工作包](S4_S5_PROJECT.md)。
+
+
+### 限定 native 认证求解（S4-05）
+
+沿用本节的可选 release wheel 构建与安装命令。四个限定 solver 保留原支持域，
+显式选择 native 实现，默认 reference 入口不变：
+
+```python
+from homology_operator import ProjectionProblem, solve_projection
+
+problem = ProjectionProblem(window, requested_certificate_level="ExactOptimal")
+solution = solve_projection(problem, "NativeExhaustiveExactSolver")
+# 另有 NativeGreedyCertifiedSolver、NativeRank2ExactSolver、NativeStructuredFamilySolver。
+# Greedy 不接受一般 ExactOptimal 请求；Rank2/Structured 仍要求各自已验证的结构。
+```
+
+也可用既有 solver 类的 `native=True` 参数。原生 packed 循环枚举、精确质量比值、
+共享分解、多 RHS 与独立证书重放保持完整 action、并列和预算 state 语义。
+归一化权重超出 u128 时显式保留任意精度后备；缺少扩展返回 Unavailable。
+可行种子、候选外循环和部分代数仍在 Python，最终投影仍为原显式 Matrix 或
+既有 CyclicAction。支持域、身份与恢复路径见 [solver 契约](SOLVER_CONTRACT.md)。
+
+[S4-05 有限同 solver 协议](BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
+它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。

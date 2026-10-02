@@ -96,6 +96,9 @@ barcode 来自 `T_ij=P_j J_ij|ker(L_i)` 的 rank invariant。
 uv run --locked python examples/filtration.py
 ```
 
+四种限定 solver 可显式选择 native 加速与独立证书重放；默认 reference 入口保持不变。
+调用及支持域见 [native 认证求解](docs/INTERFACE.md#限定-native-认证求解s4-05)。
+
 ## 能力与边界
 
 | 能力 | 当前范围 |
@@ -104,7 +107,7 @@ uv run --locked python examples/filtration.py
 | 单尺度与有限过滤 | 同 P 联合查询、transport、rank/barcode、几何追踪、结果快照 |
 | 求解与认证 | 五种限定 reference solver；投影合法性、objective 计算、最优认证分别报告 |
 | 权重 | 任意精度整数/有理数；显式浮点政策，浮点几何不提供精确最优证书 |
-| 可选 Rust | 单字宽可行原型与批查询；多字 packed 代数、可复用分解、多 RHS 与同 P 的因子/HC action |
+| 可选 Rust | 单字宽可行原型与批查询；多字 packed 代数、可复用分解、多 RHS、同 P 的因子/HC action 与限定 solver/证书重放 |
 | 开发目标 | 完整后端集成与性能验收、GUDHI 正式对拍、稳定性与应用实验 |
 
 当前输入是链窗口与带序基。点云、Rips 构造器和通用复形前端仍需调用者或后续适配提供。

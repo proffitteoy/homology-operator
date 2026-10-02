@@ -39,8 +39,8 @@ cargo +1.98.1 clippy --manifest-path native/Cargo.toml --locked --all-targets --
 `HOMOLOGY_NATIVE_REQUIRED=1` 使缺扩展直接失败，避免全部跳过后误报 native 成功。
 `--no-sync` 保留单独安装的扩展；重新 sync 后需要再次安装。
 当前 native CI 覆盖 Windows/MSVC Python 3.10 与 Linux Python 3.12 的 release 构建、
-fmt/Clippy 与强制 native 差分/回归测试。当前 Cargo test 没有独立 Rust 单元测试，
-不能用它的 0 tests 结果替代 Python 差分/不变量测试。
+fmt/Clippy 与强制 native 差分/回归测试。S4-05 另提供精确比值商余比较的 Rust 单测；
+Rust 单测不能替代 Python 差分/不变量测试，实际本地命令与证据见下方 S4-05 记录。
 工作区有 native 源码变动时先重建；旧二进制不能验证新源码。
 
 ## 文档变更
@@ -115,6 +115,35 @@ GUDHI 同输入 F2 正式对拍属于 S5，不把现有独立 reduction 或归�
 | [S4-02 回归日志](../benchmarks/s4_native_verification.log) | 140 项历史全回归：129 数学 + 4 测量 + 7 原型；原型尺寸有限 |
 | [S4-03 回归日志](../benchmarks/s4_packed_verification.log) | 144 项历史全回归，另增 4 packed 差分/枚举与复用测试；详细源码/成本见 BENCHMARKS |
 | [S4-04 回归日志](../benchmarks/s4_compact_verification.log) | 152 项历史全回归与无扩展 wheel 恢复；源码及有限 time/RSS 记录见 BENCHMARKS |
+
+### S4-05 本地与整合验证
+
+S4-05 增加7项 native solver 验证：原23窗口的支持/拒绝、三种搜索的完整 P/objective/
+证书/并列/state 对拍；三终端及 m=2/3/4 两种结构表示；全部 state 中断位置与零时间/
+条目预算；任意精度整数/互素大分母后备与 u128 比值交叉乘积溢出；0/1及63/64/65、
+127/128/129宽度的独立 objective；两条重放路径的证书/action/witness 篡改拒绝；
+缺少扩展的 Unavailable 与 portable reference 恢复。所有合法 native 解另强制由
+原 Python verifier 重新验收；连续 JSON 往返、projection_id 与配置/run 区分有检查。
+Rust 单测独立检查商余比较的全部小比值及 u128 极端边界。
+
+本地完整151项强制native测试无跳过地通过，含新增7项；原始日志与700样本测量见
+[性能协议](BENCHMARKS.md)。reference wheel的真实无扩展隔离安装及native快照的
+完整reference恢复另实际通过。新增测试纳入现有native CI的强制入口；Windows Rust单测命令为：
+
+```powershell
+$env:PYO3_PYTHON = Join-Path (Get-Location) '.venv/Scripts/python.exe'
+cargo +1.98.1 test --manifest-path native/Cargo.toml --locked --lib
+```
+
+Rust 单测本轮只在 Windows 执行；跨平台 release 构建与 Python differential 已接入
+现有 native CI，远端成绩仍以该分支精确 SHA 的实际 checks 为据。
+
+
+本分支普通 merge 同步已合并 S4-04 的 main `520ecc9` 后，重新构建 release 扩展，
+完整159项强制 native 回归无跳过地通过（137.268秒）；整合日志追加保存在
+[同一验证日志](../benchmarks/s4_solver_verification.log)，原151项记录保留。
+Rust 单测/fmt/Clippy、Ruff、文档检查、reference sdist/wheel、真实无扩展安装下的
+四 solver 与旧 native 快照重放及两示例也通过。性能样本仍属于 `99adf07`，未重新测量整合源码。
 
 [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 新增 8 项验收（其中 2 项不依赖 Rust），覆盖23窗口的因子/HC 全链作用与几何、
 11过滤族的区间 transport/rank/barcode/恢复、完整增广逆及小窗口、字边界、
