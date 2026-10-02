@@ -25,6 +25,91 @@ INPUT_FIELDS = (
 )
 
 
+def persistence_ranks(stages):
+    """Independent image-coset enumeration; no projection or elimination input."""
+    ranks = {}
+    for i, source in enumerate(stages):
+        for j in range(i, len(stages)):
+            target = stages[j]
+            positions = {
+                label: index for index, label in enumerate(target["basis_current"])
+            }
+            target_boundaries = boundaries(target)
+            cosets = set()
+            for cycle in cycles(source):
+                included = sum(
+                    ((cycle >> index) & 1) << positions[label]
+                    for index, label in enumerate(source["basis_current"])
+                )
+                cosets.add(min(included ^ boundary for boundary in target_boundaries))
+            count = len(cosets)
+            if count & (count - 1):
+                raise ValueError("image quotient is not an F2 vector space")
+            ranks[i, j] = count.bit_length() - 1
+    return ranks
+
+
+def persistence_barcode(stages):
+    """Standard global boundary-column reduction on a truncated based filtration.
+
+    C_(k-1) has zero outgoing boundary in the truncated complex, which preserves
+    degree-k homology. Same-stage transient pairs are omitted from stored ranks.
+    The implementation imports no production code and consumes no expected bars.
+    """
+    k = stages[0]["k"]
+    cells, seen = [], set()
+    for stage_index, stage in enumerate(stages):
+        for degree, name in (
+            (k - 1, "basis_previous"),
+            (k, "basis_current"),
+            (k + 1, "basis_next"),
+        ):
+            for coordinate, label in enumerate(stage[name]):
+                cell = (degree, label)
+                if cell in seen:
+                    continue
+                seen.add(cell)
+                if degree == k - 1:
+                    boundary = ()
+                else:
+                    matrix, row_names = (
+                        (stage["A"], stage["basis_previous"])
+                        if degree == k
+                        else (stage["D"], stage["basis_current"])
+                    )
+                    boundary = tuple(
+                        (degree - 1, row_names[row])
+                        for row, values in enumerate(matrix["rows"])
+                        if values[coordinate]
+                    )
+                cells.append((cell, stage_index, boundary))
+    positions = {cell: index for index, (cell, _, _) in enumerate(cells)}
+    pivots, births, paired, intervals = {}, {}, set(), []
+    for index, (cell, stage_index, boundary) in enumerate(cells):
+        column = {positions[face] for face in boundary}
+        if any(row >= index for row in column):
+            raise ValueError("a boundary must precede its cell")
+        while column and max(column) in pivots:
+            column ^= pivots[max(column)]
+        if not column:
+            births[index] = (cell[0], stage_index)
+        else:
+            pivot = max(column)
+            pivots[pivot] = column
+            paired.add(pivot)
+            degree, birth = births[pivot]
+            if degree == k and birth < stage_index:
+                intervals.append((birth, stage_index))
+    intervals.extend(
+        (birth, None)
+        for index, (degree, birth) in births.items()
+        if degree == k and index not in paired
+    )
+    return tuple(
+        sorted(intervals, key=lambda x: (x[0], len(stages) if x[1] is None else x[1]))
+    )
+
+
 def fixture_input_hash(fixture):
     payload = {key: fixture[key] for key in INPUT_FIELDS}
     encoded = json.dumps(

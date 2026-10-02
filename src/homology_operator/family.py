@@ -18,6 +18,7 @@ from .result import (
     _encode,
     _decode,
     _freeze,
+    canonical_json,
 )
 from .solver import ProjectionSolution
 
@@ -672,16 +673,21 @@ class OperatorFamilyResult:
             json.dumps(data, allow_nan=False)
         except (TypeError, ValueError) as error:
             raise ValueError("family snapshot must be finite JSON wire data") from error
-        family, records = _restore_family(data)
+        try:
+            family, records = _restore_family(data)
+        except (TypeError, KeyError, AttributeError) as error:
+            raise ValueError("malformed family stages or inputs") from error
         if data["identity"] != family.identity or data["status"] != family.status:
             raise ValueError(
                 "family result content does not match its identity or status"
             )
-        if data["provenance"] != {
-            "rank_invariant_source": "operator_family",
-            "oracle_used_for_result": False,
-            "theory_revision": THEORY_REVISION,
-        }:
+        if canonical_json(data["provenance"]) != canonical_json(
+            {
+                "rank_invariant_source": "operator_family",
+                "oracle_used_for_result": False,
+                "theory_revision": THEORY_REVISION,
+            }
+        ):
             raise ValueError(
                 "barcode provenance must reference the current operator family"
             )
@@ -696,11 +702,17 @@ class OperatorFamilyResult:
                     i, j = map(int, key.split(":"))
                 except (AttributeError, TypeError, ValueError) as error:
                     raise ValueError("invalid interval key") from error
-                if key != f"{i}:{j}" or QueryResult.from_dict(wire) != method(i, j):
+                QueryResult.from_dict(wire)
+                if key != f"{i}:{j}" or canonical_json(wire) != canonical_json(
+                    method(i, j).to_dict()
+                ):
                     raise ValueError(
                         "persisted transport or rank differs from its operator family"
                     )
-        if QueryResult.from_dict(data["barcode_readout"]) != family.barcode():
+        QueryResult.from_dict(data["barcode_readout"])
+        if canonical_json(data["barcode_readout"]) != canonical_json(
+            family.barcode().to_dict()
+        ):
             raise ValueError("persisted barcode differs from current transport ranks")
         if not isinstance(data["tracking_readout"], Mapping):
             raise ValueError("tracking readouts must be a mapping")
@@ -725,7 +737,7 @@ class OperatorFamilyResult:
                 expected = getattr(family, name)(*arguments, i, j)
             except TypeError as error:
                 raise ValueError("invalid tracking arguments") from error
-            if query != expected:
+            if canonical_json(wire) != canonical_json(expected.to_dict()):
                 raise ValueError("persisted tracking differs from its family")
         object.__setattr__(self, "data", _freeze(data))
         object.__setattr__(self, "identity", _freeze(data["identity"]))

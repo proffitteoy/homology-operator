@@ -42,6 +42,8 @@ H3 是嵌入 R4 的四面体的实际三维体积；单位是 `model_length^3`�
 
 ## 存储与独立核验
 
+Phase 2 的 [联合测试](../tests/test_family_joint.py) 现已将全部 23 份冻结窗口组织为 11 个族/变体（四个多阶段过滤、五个单阶段边界、K4 末端存活前缀及基重排变体）。生产只消费 A/D/基/权重及合法 P；预期区间只用于测试断言。独立 oracle 新增全局边界列约化与循环像商空间枚举，分别对拍 barcode 和 transport rank；原 fixture 文件及来源/input hash 保持冻结。
+
 矩阵始终包含 `nrows`、`ncols`、`rows`，包括 `0×n` 和 `n×0`。基是非空唯一字符串标识的有序数组。精确权为 `{numerator, denominator}`，浮点权为 JSON 数值；语义、单位和算术策略是单独字段。
 
 `input_hash` 为 SHA256，内容仅包括 `k`、`A`、`D`、三组有序基、`weights`、`weight_semantics`、`unit`、`arithmetic`。编码为 UTF-8 的 `json.dumps(..., sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)`。Fixture id、source、expected 和 geometry 不在此输入 hash 中；source 的 hash 单独绑定原始来源文件。生产身份模型可再包含 provenance，但不能用 source hash 代替链输入 hash。
