@@ -147,7 +147,8 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     proof = certificate.get("optimization")
     if certified and (
         not isinstance(proof, Mapping)
-        or proof.get("kind") not in {"CycleBounds", "ExhaustiveSearch", "Rank2Search"}
+        or proof.get("kind")
+        not in {"CycleBounds", "ExhaustiveSearch", "Rank2Search", "GreedyBasis"}
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
     if certified:
@@ -173,6 +174,14 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
                 "initial_generators",
                 "pareto_steps",
                 "terminal_labels",
+            },
+            "GreedyBasis": {
+                "kind",
+                "nonzero_cycles",
+                "selected_generators",
+                "cycle_retraction",
+                "theoretical_upper_bound",
+                "hypotheses",
             },
         }[proof["kind"]]
         if set(proof) - allowed_fields or (
@@ -239,6 +248,10 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         replayed_optimum = _replay_exhaustive(
             window, projection, proof, cycles, cycle_inputs, rank2_cut
         )
+    if certified and proof["kind"] == "GreedyBasis":
+        theoretical = _replay_greedy(window, projection, proof, cycles, cycle_inputs)
+        if current > theoretical:
+            raise ValidationError(("greedy_theoretical_bound",))
     if lower is not None and lower > (
         universal_lower if replayed_optimum is None else replayed_optimum
     ):
@@ -273,7 +286,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
                     raise ValidationError(("objective_witness",))
         if (
             certified
-            and proof["kind"] in {"ExhaustiveSearch", "Rank2Search"}
+            and proof["kind"] in {"ExhaustiveSearch", "Rank2Search", "GreedyBasis"}
             and "witness" not in objective.details
         ):
             raise ValidationError(("objective_witness_required",))
@@ -576,6 +589,69 @@ def _validate_rank2_reduction(window, projection, proof, inputs, solver):
         ):
             raise ValidationError(("three_terminal_action",))
     return cut
+
+
+def _replay_greedy(window, projection, proof, cycle_basis, inputs):
+    """Verify each greedy minimum against every eligible cycle, then reconstruct P."""
+    boundary_basis = window.D.image_basis()
+    beta = len(cycle_basis) - len(boundary_basis)
+    hypotheses = {
+        "coefficient_field": "F2",
+        "positive_weights": True,
+        "arithmetic_policy": window.arithmetic,
+        "betti": beta,
+    }
+    if content_id("hypotheses", proof.get("hypotheses")) != content_id(
+        "hypotheses", hypotheses
+    ):
+        raise ValidationError(("greedy_hypotheses",))
+    if (
+        type(proof.get("theoretical_upper_bound")) is not int
+        or proof["theoretical_upper_bound"] != beta
+    ):
+        raise ValidationError(("greedy_theoretical_bound",))
+    if len(inputs) * max(1, beta) > 100_000:
+        raise ValidationError(("certificate_replay_state_limit",))
+    selected = proof.get("selected_generators")
+    if not isinstance(selected, (tuple, list)) or len(selected) != beta:
+        raise ValidationError(("greedy_generator_count",))
+    R = matrix_from_data(proof.get("cycle_retraction"))
+    if (
+        (R.nrows, R.ncols) != (window.n, window.n)
+        or R @ R != R
+        or window.A @ R != Matrix.zero(window.m, window.n)
+        or any(R.apply(z) != z for z in cycle_basis)
+        or projection @ R != projection
+    ):
+        raise ValidationError(("cycle_retraction",))
+    full = list(boundary_basis)
+    for candidate in selected:
+        z = validate_vector(candidate, window.n)
+        span = Matrix.from_columns(full, nrows=window.n)
+        if window.A.apply(z) != (0,) * window.m or span.solve(z) is not None:
+            raise ValidationError(("greedy_independence",))
+        actual = (
+            sum(w for w, bit in zip(window.weights, z) if bit),
+            sum(bit << j for j, bit in enumerate(z)),
+        )
+        minimum = min(
+            (cost, sum(bit << j for j, bit in enumerate(x)))
+            for x, cost in inputs
+            if span.solve(x) is None
+        )
+        if actual != minimum:
+            raise ValidationError(("greedy_minimum_or_tie_break",))
+        full.append(z)
+    basis = Matrix.from_columns(full, nrows=window.n)
+    coordinates = Matrix.from_columns(
+        (basis.solve(z) for z in R.transpose().rows), nrows=len(full)
+    )
+    section = Matrix.from_columns(
+        ((0,) * window.n,) * len(boundary_basis) + tuple(selected), nrows=window.n
+    )
+    if section @ coordinates != projection:
+        raise ValidationError(("greedy_section_action",))
+    return beta
 
 
 def _validated_certificate(evidence, checks, level):

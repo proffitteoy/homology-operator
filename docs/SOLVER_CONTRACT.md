@@ -686,7 +686,17 @@ Solver framework 可视为冻结，至少满足：
 
 [solver 回归 corpus](../tests/fixtures/solver_reference.json) 绑定原23个窗口的 input hash：22个精确实例的最优值经固定上游 compressed 搜索核对，16个 n≤6 实例再经 native 搜索核对；浮点实例预期 Unavailable。本仓库另对49个1–3维输入独立枚举全部环境矩阵，检查全局最优值。高秩人工窗口、原 H0–H3/欧氏有理权、空域、零同调、候选计数/极值 witness 篡改、错误并列选择及中断快照均有回归。该有限指数算法不提供一般高效性结论。
 
-## 23. Rank-2 结构求解（S3-04）
+## 23. 带理论界的贪心截面（S3-03）
+
+`GreedyCertifiedSolver` 直接从全部循环按 `(质量, 原坐标 packed 整数)` 排序，依次选择模边界与已选循环独立的生成元；以它们和边界基构造截面，并沿固定 R 延拓成 P。不消费最短类质量表或 PH 结果。当前仅支持精确整数/有理正权、StableBasisOrder、显式一般链窗口以及 Feasible/CertifiedUpperBound/CertifiedInterval 请求；不能保证满足一般 ExactOptimal 请求。排序和循环枚举使它仍是小规模 reference，不是多项式算法。
+
+理论依据是[固定 PROOF 的 T4](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/docs/proof/PROOF.md#T4)：Rossman 贪心回缩论证的加权同调版本。β>0 时，依次最低质量的独立同调生成元给出 Γ≤β；β=0 的算子 Γ=0，与上游截面记账 κ=1 区别处理。`GreedyBasis` 证书记录 F2、严格正权、算术策略、β、选定生成元、R 和理论上界。verifier 不信任排序结果，每步重新扫描所有可选循环，核对质量与并列最小值，再重建完整 P；当前 Γ 与极值 witness 另外穷举验证。
+
+完整输出保存 `objective=U=Γ(P)`、通用下界 L=1（β=0 时0）与 gap；L=U 才报告 ExactOptimal，其余为 CertifiedInterval。理论 β 界独立保存在已验证 proof 中，不能替代实算 objective 或最优性证明。22个精确 fixture 的 Γ 和所选生成元与固定 verify.py `model(optimize=False)` 一致；与 #20 的 optimum 对照均满足 optimum≤Γ≤β。K4 stage 4 的4/3只提供区间[1,4/3]，穷举最优是9/8。
+
+独立重放限制为非零循环数乘 `max(1,β)` 至多100000；构造还受 state/time/matrix-entry 预算，循环表计入保守条目数。资源耗尽时保留可行种子：其 objective 未完成则只有 Feasible，已完成则保留 L=0、U=种子 Γ 的 CertifiedInterval 和 CycleBounds，不携带未完成的贪心理论保证。零同调种子完整求值后已经完成搜索，直接认证0。证书重放成本单独发生，排序/稠密代数检查点之间没有强制抢占或 RSS 保证。回归覆盖所有 state 中断位置、零时间/条目预算、重放上限、假设/并列/action/witness 篡改、身份混用与已查询快照反复往返；族恢复保留已验证的 tracking 历史。
+
+## 24. Rank-2 结构求解（S3-04）
 
 `Rank2ExactSolver` 支持精确整数/有理正权、β=2、显式矩阵和 StableBasisOrder。一般 `GeneralChainWindow` 路径枚举两个固定商生成元的边界修正，共 `4^rank(D)` 个；每个候选按固定理论 T5 消去支撑内非零边界，选择质量最大的成员颜色（并列按1、2、3），直到支撑中没有同调零循环。三类质量逐项不增，仍为同一线性截面。它从循环枚举计算三个商类的最短质量，再只用三个比值评价候选；类标签和最短质量不是外部必需输入，也不写入算子 selected_mass 的语义。
 
