@@ -120,6 +120,13 @@ safe Rust、单线程、每行一个 u64，三个链空间暂限至多64维；�
 
 ## 身份、状态与序列化
 
+S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
+packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
+显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
+默认过滤快照升级为共享边界/基/活动索引的 schema 2，旧 schema 1 可读并原版本重发；
+`to_result(schema_version=1)` 显式输出旧格式，单尺度快照版本保持原契约。
+证明、状态边界及复跑命令见 [S4-07说明](docs/S4_FILTRATION.md)。
+
 `QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。所有记录的 P 均重新经过独立 projection validator；认证还要独立重放支持的证书，不能凭标签或 true 标志接受最优性。
 
 内容身份使用规范 UTF-8 JSON SHA256，projection_id 与 operator_id 不包含每次独立 solver_run UUID。安全缓存包含输入、基、权重、投影、solver 配置、并列策略与 backend semantics，独立 run 仍保存在来源中；同一记录内的查询必须完全匹配六身份。

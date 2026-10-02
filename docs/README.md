@@ -16,6 +16,8 @@
 
 ## 参考材料
 
+- [S4-07 过滤读取](S4_FILTRATION.md)：相邻映射证明、历史 barcode 基、按需查询、共享快照与有限消融。
+
 - [S4/S5 项目与研究材料](S4_S5_PROJECT.md)：9 个同语义性能任务、6 个 GUDHI/测量任务、Project #3 依赖与验收、上传原始材料及独立原型复现。
 
 - [Phase 3 求解与认证联合验收](PHASE3_REPORT.md)：当前支持域、跨solver同调/PH与几何、证书边界、固定源码/hash及剩余门槛。

@@ -49,6 +49,11 @@
 
 ## 过滤与传输
 
+S4-07实际实现、birth前缀证明与成本见 [过滤读取](S4_FILTRATION.md)。普通 `barcode()`
+只消费相邻核坐标映射；`barcode_basis()` 显式读取历史区间基，`rank_table()` 显式读取全部
+区间rank，按真实输出大小计费。`cache_limit=64` 分别限制action/transport/rank的LRU条目，
+0禁用；内部索引嵌入无需物化公共 inclusion。
+
 reference 已提供 `OperatorFamily(scales, windows, operators, weight_policy="Inherited")` 的过滤输入和阶段身份。由三个次数的基标识生成坐标包含，验证两侧链映射相容；可选择显式 `Variable` 变权，但单位与权重语义一致。重复尺度采用 `OrderedStages`，保留不同阶段索引；末端采用 `Constant` 延拓。非空阶段列表允许合法零维窗口；失败算子记录保留为 `Partial` 族，不能用空空间代替。
 
 Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重继承和明确末端延拓规则。`OperatorFamily` 的逻辑入口是 `stage(i)`、`transport(i,j)`、`transport_rank(i,j)`、`barcode()`、类/质量/支撑追踪及 transport 证书。
@@ -63,7 +68,7 @@ Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重�
 
 ## 失败与缺失
 
-跨尺度 `track_class(x,i,j)` 默认只接受源循环并使用已计算 transport 的目标投影；`track_mass`、`track_support`、`track_shared_support`、`track_union_support` 从该代表读取目标原坐标几何。死亡类是合法零链、零质量和空支撑。`endpoint_mass_bound` 使用终点 stretch 乘源选定质量及显式变权因子 `max(w_j/w_i)`，不乘中间 stretch；需计算的终点 stretch 接受 ResourceLimits。浮点只给数值观察，`bound_verified=None`，不称认证上界。
+跨尺度 `track_class(x,i,j)` 默认只接受源循环，按索引嵌入计算目标投影的作用；`track_mass`、`track_support`、`track_shared_support`、`track_union_support` 从该代表读取目标原坐标几何。死亡类是合法零链、零质量和空支撑。`endpoint_mass_bound` 使用终点 stretch 乘源选定质量及显式变权因子 `max(w_j/w_i)`，不乘中间 stretch；需计算的终点 stretch 接受 ResourceLimits。浮点只给数值观察，`bound_verified=None`，不称认证上界。
 
 构造状态、solver 状态、认证等级和可选查询状态是不同字段。`0`、`NotComputed`、`Unavailable`、`ResourceExhausted`、`EmptyDomain`、`NoClass` 按结果契约分别表示。
 

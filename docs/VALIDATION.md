@@ -6,6 +6,11 @@
 
 ## 当前可执行验证
 
+S4-07新增相邻映射/历史基的5689个原corpus对拍、共享快照schema 1/2篡改/往返、受控缓存与
+长过滤读取测试；44个冻结过滤/solver配置继续核对composition、rank、PH、几何及历史基。
+148项本地测试通过（未安装可选扩展时10项native跳过）；命令、归纳证明及有限消融边界见
+[过滤验收](S4_FILTRATION.md)。本地结果不替代远端CI及依赖工作包的native联合验收。
+
 S4-02 可选原型增加7项测试：23个原始窗口的完整P/L、独立同调保持、循环/非循环批查询、全部至多3×3矩阵的稳定广义逆、空形状与64维边界、资源失败、超大有理权/浮点、六身份与批记录JSON恢复。reference测试允许缺少扩展时显式跳过6项native测试；原型CI设置 `HOMOLOGY_NATIVE_REQUIRED=1`，缺少扩展直接失败。真实release构建及Rust fmt/Clippy命令见根README；独立Python validator仍是进入算子的必要边界。后续大尺寸与紧凑表示验收不由这7项替代。
 
 S4-03 另增加4项实际packed代数验证：全部至多3×3矩阵以独立向量枚举核/像/membership并比较reference canonical RREF/solve；矩形、空形状、秩亏与不可解；63/64/65、127/128/129边界的加乘/action与尾部位；0/1/8/64/1024重复RHS、不变分解数、非法形状/非二元输入/污染padding与只读handle。缺少扩展时明确跳过这4项，native CI强制运行。大尺寸性能不从有限测试推断。

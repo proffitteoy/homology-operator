@@ -56,6 +56,8 @@ def main():
             family.track_shared_support((1, 0), (0, 1), i, j)
             family.track_union_support((1, 0), (0, 1), i, j)
             controls.append(family.endpoint_mass_bound((0, 1), i, j, limits).to_dict())
+    # Historical interval generators are an opt-in output, unlike endpoints.
+    family.barcode_basis()
     print(
         json.dumps(
             {

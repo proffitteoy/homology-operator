@@ -558,7 +558,7 @@ ResourceUsage
 
 ## 14. `OperatorFamilyResult`
 
-reference 的 `OperatorFamily.to_result()` 生成不可变 `OperatorFamilyResult` 快照，保存完整阶段结果、scales/policies、族身份、已查询传输与 rank、barcode、已查询 tracking。`to_json/from_json` 使用 schema_version=1；读取时重新验证窗口与投影、族内容身份并重算传输/rank/barcode/tracking，拒绝篡改来源、作用和几何值。`to_family()` 从记录的合法 P 恢复作用，不重新求解。失败阶段完整保留，Partial 不能被当作 Ready；同一合法零链与 ResourceExhausted/Unavailable 不混淆。
+`OperatorFamily.to_result()` 保存阶段结果、scales/policies、族身份、保留的传输/rank查询、barcode和tracking。S4-07默认family schema_version=2，共享末阶段边界/带序基和活动索引，stage_results使用input_ref，另保存显式请求的barcode_basis_readout。schema 1可读并原版本重发；`to_result(schema_version=1)`显式输出旧格式。单尺度schema不变。读取重验窗口/投影/证书/族身份并重算持久化readout，拒绝来源/作用/几何/历史基篡改。`to_family()`从合法P恢复而不重求解。失败阶段保留为Partial，合法零值与缺失严格区分。成本与兼容细节见[S4-07](S4_FILTRATION.md)。
 
 过滤上的顶层结果建议为：
 
