@@ -176,6 +176,53 @@ class TransportTests(unittest.TestCase):
 
 
 class TrackingTests(unittest.TestCase):
+    def test_float_ratio_product_overflow_and_zero_queries(self):
+        first = ChainWindow(
+            1,
+            Matrix.zero(0, 1),
+            Matrix.zero(1, 0),
+            (),
+            ("a",),
+            (),
+            (1e-300,),
+            arithmetic="FloatingPoint",
+        )
+        second = replace(first, weights=(1e300,))
+        family = OperatorFamily(
+            (0, 1), (first, second), (op(first), op(second)), "Variable"
+        )
+        for x in ((0,), (1,)):
+            result = family.endpoint_mass_bound(x, 0, 1)
+            self.assertEqual(result.state, "Unavailable")
+            self.assertIsNone(result.value)
+            self.assertEqual(result.details["reason"], "NumericalFailure")
+        source = ChainWindow(
+            0,
+            Matrix.zero(0, 2),
+            Matrix.zero(2, 0),
+            (),
+            ("a", "b"),
+            (),
+            (1e-100, 1e250),
+            arithmetic="FloatingPoint",
+        )
+        target = replace(
+            source,
+            D=Matrix.from_rows(((1,), (1,))),
+            basis_next=("e",),
+            weights=(1.0, 1e250),
+        )
+        family = OperatorFamily(
+            (0, 1), (source, target), (op(source), op(target)), "Variable"
+        )
+        self.assertEqual(family.stage(1).stretch().state, "Computed")
+        overflow = family.endpoint_mass_bound((0, 1), 0, 1)
+        self.assertEqual(overflow.state, "Unavailable")
+        self.assertEqual(overflow.details["reason"], "NumericalFailure")
+        zero = family.endpoint_mass_bound((0, 0), 0, 1)
+        self.assertEqual(zero.state, "Computed")
+        self.assertEqual(zero.value["mass_bound"], 0)
+
     def test_direct_multistep_death_merger_and_support(self):
         family = merge_family()
         for x in product((0, 1), repeat=2):
