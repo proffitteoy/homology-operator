@@ -2,13 +2,14 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from fractions import Fraction
 from math import fsum, isfinite
 from types import MappingProxyType
 
 from .algebra import Matrix, validate_vector
 from .chain import ChainWindow
 from .result import OperatorResult, QueryResult, make_identity
-from .solver import ProjectionSolution
+from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
 from .validation import ValidationError, validate_projection
 
 THEORY_REVISION = "6143729669902ee875b211b58085e954c76cdf88"
@@ -136,6 +137,107 @@ class HomologyOperator:
     def union_support(self, z, y):
         return tuple(sorted(set(self.support(z)) | set(self.support(y))))
 
+    def minimum_class_mass(self, z):
+        self._cycle(z)
+        result = QueryResult(
+            "Unavailable", identity=self.identity, details={"method": "not implemented"}
+        )
+        self._queries["minimum_class_mass"] = result
+        return result
+
+    def stretch(self, limits=None):
+        """Enumerate nonzero cycles for this P; never certify global optimality."""
+        limits = ResourceLimits() if limits is None else limits
+        if not isinstance(limits, ResourceLimits):
+            raise ValueError("stretch limits must be ResourceLimits")
+        budget = _Budget(limits)
+        exact = self.window.arithmetic != "FloatingPoint"
+        best, witness = Fraction(0) if exact else 0.0, None
+        total = None
+        try:
+            budget.entries(self.window.m * self.window.n + self.window.n**2)
+            budget.step(0)
+            cycles = self.window.A.kernel_basis()
+            budget.step(0)
+            total = (1 << len(cycles)) - 1
+            for mask in range(1, total + 1):
+                budget.step()
+                z = tuple(
+                    sum(basis[i] for j, basis in enumerate(cycles) if mask >> j & 1) % 2
+                    for i in range(self.window.n)
+                )
+                numerator, denominator = self._mass(self.project(z)), self._mass(z)
+                ratio = (
+                    Fraction(numerator, denominator)
+                    if exact
+                    else numerator / denominator
+                )
+                if not exact and not isfinite(ratio):
+                    raise ValueError("NumericalFailure: nonfinite floating stretch")
+                if witness is None or ratio > best:
+                    best, witness = ratio, z
+            budget.step(0)
+            details = {
+                "method": "NonzeroCycleEnumeration",
+                "witness": witness,
+                "domain_empty": total == 0,
+                "total_states": total,
+                "resource_usage": budget.usage(),
+                "current_objective_lower_bound": best if exact else None,
+                "lower_bound_on_optimum": None,
+                "upper_bound_on_optimum": best if exact else None,
+                "optimality_gap": None,
+                "certificate_level": "CertifiedUpperBound" if exact else "Feasible",
+                "arithmetic_policy": self.window.arithmetic,
+            }
+            if not exact:
+                details.update(
+                    {
+                        "rounding_policy": "binary64 fsum/division; nearest-even",
+                        "tolerance": None,
+                        "certified_numeric_bounds": False,
+                    }
+                )
+            result = QueryResult(
+                "EmptyDomain" if total == 0 else "Computed",
+                best,
+                self.identity,
+                exact,
+                details,
+            )
+        except _Exhausted as error:
+            result = QueryResult(
+                "ResourceExhausted",
+                identity=self.identity,
+                details={
+                    "reason": str(error),
+                    "domain_empty": total == 0 if total is not None else None,
+                    "total_states": total,
+                    "resource_usage": budget.usage(),
+                    "current_objective_lower_bound": best
+                    if exact and witness is not None
+                    else None,
+                    "sampled_value": best if witness is not None else None,
+                    "witness": witness,
+                    "upper_bound_on_optimum": None,
+                    "lower_bound_on_optimum": None,
+                    "optimality_gap": None,
+                    "certificate_level": "Feasible",
+                },
+            )
+        except ValueError as error:
+            result = QueryResult(
+                "Unavailable",
+                identity=self.identity,
+                details={
+                    "reason": "NumericalFailure",
+                    "diagnostic": str(error),
+                    "resource_usage": budget.usage(),
+                },
+            )
+        self._queries["stretch"] = result
+        return result
+
     def readout(self, name, *args):
         """Attach the complete identity to a scalar/vector query result."""
         if name not in {
@@ -205,8 +307,8 @@ class HomologyOperator:
         queries["stretch"] = queries.get(
             "stretch", QueryResult("NotComputed", identity=self.identity)
         )
-        queries["minimum_class_mass"] = QueryResult(
-            "NotComputed", identity=self.identity
+        queries["minimum_class_mass"] = queries.get(
+            "minimum_class_mass", QueryResult("NotComputed", identity=self.identity)
         )
         return OperatorResult(
             self.identity,
