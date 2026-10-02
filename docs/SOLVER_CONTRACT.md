@@ -723,3 +723,13 @@ Solver framework 可视为冻结，至少满足：
 来源为固定研究提交 `6143729669902ee875b211b58085e954c76cdf88` 的PROOF T-B1及 `structured/verify_exact.py`（Git blob `21adb77a258a7342312333c3b77d8a8406ce5037`）。循环码幂等、迹和连续零点的Vandermonde核距离机制属原文注明的经典编码论成分；此实现没有声称新的编码构造。当前m上限源自有限独立距离证书的成本，不把一般公式的适用范围冒充已支持参数。
 
 [结构族测试](../tests/test_structured.py) 的输入由独立列公式生成并记录来源：m=2与通用exhaustive对照，m=3额外枚举4096个截面求得真值3，m=4由独立低重量距离证书给出4。三个m的全部列、秩和核距离实际与固定上游纯函数对照。测试覆盖project/L/同调/几何、显式与结构化表示、禁用dense identity时的构造与快照恢复、族transport、反复往返、handle和证书篡改、身份混用、输入识别及资源失败。solver有state/time/matrix-entry检查点；独立生成集与距离证书重放另计，构造中断无完整验证action时不携带可行或最优声明。
+
+## 26. 算术、资源与并列验收（S3-07）
+
+ExactInteger保存任意精度整数权，ExactRational保存int/Fraction；objective以Fraction计算，无浮点转换或容差。FloatingPoint只支持FeasibleSolver的精确F2构造及approximate几何查询，求和用binary64 fsum、除法用binary64最近偶数舍入；tolerance=None表示没有误差区间或近似相等认证。数值非有限时返回Unavailable/NumericalFailure，不填bounds。四个优化solver拒绝浮点权；MixedCertified尚无实现，ChainWindow拒绝该算术，显式solver请求返回Unavailable，不能回退为FloatingPoint。
+
+ResourceLimits实际支持state_limit、wall_time_limit、matrix_entry_limit。node、iteration、memory/RSS及output_size参数未实现，构造参数明确拒绝；matrix-entry只约束保守分配条目，不能称为内存峰值。wall time在checkpoint检查，能力匹配、单步稠密代数及独立后验证没有强制抢占。五个solver以可控单调时钟测试正wall上限的全部检查点；三个搜索solver覆盖中断后无bounds的可行种子、已完整objective的CertifiedInterval及JSON恢复。未完整验证的候选不能进入Ready；完成前不升级ExactOptimal。已有逐solver测试遍历state位置及零条目/时间预算。
+
+相同配置产生相同P与内容身份、不同solver_run；查询仍严格绑定六身份。相同P但不同并列策略改变projection_id；预算改变solver_config_id。cache_key调用者必须传实际solver_config_id、实际并列策略与backend语义版本，不能传固定占位名称代替配置身份。不同P的质量/支撑及cache分开，跨run/action查询混用被拒绝；当前并列策略的适用范围仍分别由各solver声明，不推断代表随权重连续。
+
+[边界测试](../tests/test_solver.py) 复用固定研究PROOF T1/T4的正权前提和T-B1 m=2窗口A=0、D=(1,1,1)ᵀ，跨solver验证大于binary64精确整数范围的等权与有理缩放：当前Γ=2，但选定单坐标质量可随P不同。调度失败保留请求backend的method，返回solution后使用真实内部method，允许测量wrapper；未知GeneralSearch不再误记为FeasibleSolver。[冻结对照](BENCHMARKS.md)保留原源码下的历史记录，不回写为修复后的结果。

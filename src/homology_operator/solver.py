@@ -340,6 +340,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
     """Dispatch a declared solver and independently check any returned action."""
     from .validation import validate_solution
 
+    method = backend if isinstance(backend, str) else type(backend).__name__
     if isinstance(backend, str):
         constructors = {
             "FeasibleSolver": FeasibleSolver,
@@ -353,6 +354,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
                 "Unavailable",
                 str(uuid4()),
                 diagnostics=(f"unknown backend: {backend}",),
+                method=method,
             )
         backend = constructors[backend]()
     if not callable(getattr(backend, "capabilities", None)) or not callable(
@@ -362,16 +364,19 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "Unavailable",
             str(uuid4()),
             diagnostics=("backend has no solver interface",),
+            method=method,
         )
     try:
         rejection = check_solver_request(problem, backend.capabilities())
         if rejection is not None:
             return ProjectionSolution(
-                rejection[0], str(uuid4()), diagnostics=(rejection[1],)
+                rejection[0], str(uuid4()), diagnostics=(rejection[1],), method=method
             )
         solution = backend.solve(problem)
         if not isinstance(solution, ProjectionSolution):
             raise ValueError("backend did not return ProjectionSolution")
+        # A wrapper may return its inner solver's method and configuration.
+        method = solution.method
         expected_config = problem.solver_config(solution.method)
         if solution.solver_config_id != content_id("solver-config", expected_config):
             raise ValueError(
@@ -436,7 +441,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
             raise ValueError("missing action cannot claim feasibility or certification")
     except Exception as error:
         return ProjectionSolution(
-            "InternalError", str(uuid4()), diagnostics=(str(error),)
+            "InternalError", str(uuid4()), diagnostics=(str(error),), method=method
         )
     return solution
 
