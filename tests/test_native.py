@@ -20,6 +20,7 @@ from homology_operator import (
 )
 from homology_operator.chain import matrix_data
 from homology_operator.native import (
+    GeometryWorkspace,
     NativeFeasibleSolver,
     NativeFactorizedSolver,
     PreparedMatrix,
@@ -49,6 +50,9 @@ class NativeAvailabilityTests(unittest.TestCase):
             self.assertIsNone(solution.projection)
             op = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
             self.assertEqual(apply_batch(op, []).state, "Unavailable")
+            before = op.to_result()
+            self.assertEqual(geometry_batch(op, []).state, "Unavailable")
+            self.assertEqual(before, op.to_result())
             compact = solve_projection(
                 ProjectionProblem(w, matrix_free_output=True), NativeFactorizedSolver()
             )
@@ -983,6 +987,259 @@ class CompactActionTests(unittest.TestCase):
                     family.to_result().to_json()
                 ).to_family()
                 self.assertEqual(restored.barcode().value, family.barcode().value)
+
+
+@unittest.skipUnless(extension is not None, "optional native wheel not installed")
+class GeometryWorkspaceTests(unittest.TestCase):
+    def operator(self, n=3, weights=None, arithmetic="ExactInteger"):
+        w = ChainWindow(
+            0,
+            Matrix.zero(0, n),
+            Matrix.zero(n, 0),
+            (),
+            tuple(f"c{i}" for i in range(n)),
+            (),
+            weights or (1,) * n,
+            arithmetic=arithmetic,
+        )
+        return HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+
+    def assert_geometry(self, op, cycles, pairs, workspace=None):
+        query = geometry_batch(op, cycles, pairs, workspace=workspace)
+        self.assertEqual(query.state, "Computed")
+        self.assertEqual(query.identity, op.identity)
+        for name in ("class_representative", "selected_mass", "support"):
+            self.assertEqual(
+                query.value[name], tuple(getattr(op, name)(z) for z in cycles)
+            )
+        for name in ("class_distance", "shared_support", "union_support"):
+            self.assertEqual(
+                query.value[name],
+                tuple(getattr(op, name)(cycles[i], cycles[j]) for i, j in pairs),
+            )
+        # Independent coordinate sums and exact shared-support mass identity.
+        if op.window.arithmetic != "FloatingPoint":
+            for p, (i, j) in enumerate(pairs):
+                shared_mass = sum(
+                    op.window.weights[k] for k in query.value["shared_support"][p]
+                )
+                self.assertEqual(
+                    query.value["selected_mass"][i] + query.value["selected_mass"][j],
+                    query.value["class_distance"][p] + 2 * shared_mass,
+                )
+        return query
+
+    def test_checked_integer_sums_and_individual_overflow_fallback(self):
+        maximum = (1 << 64) - 1
+        for arithmetic in ("ExactInteger", "ExactRational"):
+            op = self.operator(weights=(maximum, 1, 2), arithmetic=arithmetic)
+            cycles = ((1, 0, 0), (1, 1, 0), (0, 0, 0), (0, 0, 1))
+            query = self.assert_geometry(op, cycles, ((1, 2), (0, 1), (2, 2)))
+            self.assertEqual(query.value["selected_mass"][1], 1 << 64)
+            self.assertEqual(query.details["integer_overflow_count"], 2)
+            self.assertEqual(query.details["weight_fallback_count"], 2)
+            self.assertIn("sum overflow", query.details["geometry_fallback"])
+            safe = self.assert_geometry(op, (cycles[0], cycles[2]), ((0, 1),))
+            self.assertIsNone(safe.details["geometry_fallback"])
+            self.assertEqual(safe.details["geometry_fallback_seconds"], 0)
+            # Preserve the reference's int zero vs nonempty Fraction encoding.
+            self.assertIs(type(query.value["selected_mass"][2]), int)
+            if arithmetic == "ExactRational":
+                self.assertIs(type(query.value["selected_mass"][0]), Fraction)
+
+    def test_arbitrary_rationals_big_integers_and_fsum_policy(self):
+        for arithmetic, weights, reason in (
+            (
+                "ExactRational",
+                (Fraction(1, 10**100), Fraction(10**120, 7), Fraction(5, 13)),
+                "Fraction",
+            ),
+            ("ExactInteger", (10**300, 3, 7), "exceeds u64"),
+            (
+                "ExactRational",
+                (Fraction(10**300), Fraction(3), Fraction(7)),
+                "exceeds u64",
+            ),
+            ("FloatingPoint", (1e16, 1.0, 1.0), "fsum"),
+            ("FloatingPoint", (5e-324, 1e-300, 1.0), "fsum"),
+        ):
+            op = self.operator(weights=weights, arithmetic=arithmetic)
+            cycles = tuple(product((0, 1), repeat=3))
+            pairs = tuple(product(range(8), repeat=2))
+            query = self.assert_geometry(op, cycles, pairs)
+            self.assertIn(reason, query.details["geometry_fallback"])
+            self.assertEqual(query.details["weight_fallback_count"], 72)
+            self.assertEqual(query.details["integer_overflow_count"], 0)
+            self.assertEqual(query.exact, arithmetic != "FloatingPoint")
+            restored = OperatorResult.from_json(
+                replace(op.to_result(), query_results={"geometry": query}).to_json()
+            )
+            self.assertEqual(restored.query_results["geometry"], query)
+        op = self.operator(weights=(1e308, 1e308, 1.0), arithmetic="FloatingPoint")
+        workspace = GeometryWorkspace(op)
+        before = op.to_result()
+        with self.assertRaisesRegex(ValueError, "NumericalFailure"):
+            geometry_batch(op, ((1, 1, 0),), workspace=workspace)
+        self.assertEqual(before, op.to_result())
+        self.assert_geometry(op, ((0, 0, 1),), (), workspace)
+
+    def test_workspace_query_counts_reuse_and_snapshot_states(self):
+        op = self.operator(65)
+        before = op.to_result()
+        self.assertEqual(before.query_results["kernel_basis"].state, "NotComputed")
+        workspace = GeometryWorkspace(op)
+        self.assertEqual(op.to_result(), before)
+        for count in (0, 1, 8, 64, 1024, 8, 0):
+            cycles = tuple(
+                tuple(int(i in {0, 63, 64} or i == j % 65) for i in range(65))
+                for j in range(count)
+            )
+            pairs = tuple((i, (i + 1) % count) for i in range(count))
+            first = geometry_batch(op, cycles, pairs, workspace=workspace)
+            stats = workspace.statistics()
+            second = geometry_batch(op, cycles, pairs, workspace=workspace)
+            self.assertEqual(first.value, second.value)
+            self.assertEqual(first.details["projection_applications"], count)
+            self.assertTrue(first.details["workspace_reused"])
+            self.assertEqual(first.details["preparation_seconds"], 0)
+            self.assertEqual(
+                workspace.statistics()["projection_buffer_growths"],
+                stats["projection_buffer_growths"],
+            )
+            self.assertEqual(op.to_result(), before)
+        self.assertEqual(workspace.statistics()["completed_batches"], 14)
+        op.kernel_basis()
+        op.stretch(ResourceLimits(state_limit=0))
+        op.readout("selected_mass", (0,) * 65)
+        computed = op.to_result()
+        geometry_batch(op, ((0,) * 65,), workspace=workspace)
+        self.assertEqual(op.to_result(), computed)
+        self.assertEqual(before.query_results["kernel_basis"].state, "NotComputed")
+        self.assertEqual(computed.query_results["kernel_basis"].state, "Computed")
+
+    def test_workspace_rejects_projection_weight_basis_and_run_mixing(self):
+        from homology_operator.result import QueryResult, make_identity
+        from homology_operator.solver import ProjectionSolution
+
+        w = ChainWindow(
+            0,
+            Matrix.zero(0, 3),
+            Matrix.from_columns(((1, 1, 0),), nrows=3),
+            (),
+            ("x", "y", "z"),
+            ("b",),
+            (1, 2, 3),
+        )
+        op = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+        workspace = GeometryWorkspace(op)
+        alternative = Matrix.from_rows(((0, 0, 0), (1, 1, 0), (0, 0, 1)))
+        identity = make_identity(w, alternative, "alternative-run")
+        alternate_op = HomologyOperator(
+            w,
+            ProjectionSolution(
+                "FeasibleOnly",
+                "alternative-run",
+                alternative,
+                identity,
+                "Feasible",
+                QueryResult("NotComputed", identity=identity),
+            ),
+        )
+        self.assertNotEqual(
+            alternate_op.identity["projection_id"], op.identity["projection_id"]
+        )
+        other_ops = [
+            alternate_op,
+            HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w))),
+        ]
+        for changed in (
+            replace(w, weights=(3, 2, 1)),
+            replace(w, basis_current=("y", "x", "z")),
+        ):
+            other_ops.append(
+                HomologyOperator(
+                    changed, FeasibleSolver().solve(ProjectionProblem(changed))
+                )
+            )
+        query = geometry_batch(op, ((0, 0, 1),), workspace=workspace)
+        for other in other_ops:
+            with self.assertRaisesRegex(ValueError, "identities"):
+                geometry_batch(other, ((0, 0, 1),), workspace=workspace)
+            with self.assertRaises(ValueError):
+                replace(other.to_result(), query_results={"mixed": query})
+        restored = OperatorResult.from_json(op.to_result().to_json())
+        recovered = HomologyOperator(
+            w, replace(op.solution, projection=restored.projection)
+        )
+        self.assertEqual(
+            geometry_batch(recovered, ((0, 0, 1),), workspace=workspace).value,
+            query.value,
+        )
+
+    def test_word_boundaries_explicit_factor_hc_and_original_coordinates(self):
+        for n in (0, 1, 63, 64, 65, 127, 128, 129):
+            # Surviving coordinates cross word edges; a genuine boundary is removed.
+            kept = {j for j in (0, 62, 63, 64, 126, 127, 128) if j < n}
+            removed = tuple(j for j in range(n) if j not in kept)
+            w = ChainWindow(
+                0,
+                Matrix.zero(0, n),
+                Matrix.from_columns(
+                    (tuple(int(i == j) for i in range(n)) for j in removed), nrows=n
+                ),
+                (),
+                tuple(f"c{i}" for i in range(n)),
+                tuple(f"b{i}" for i in removed),
+                tuple(Fraction(i + 1, 131) for i in range(n)),
+            )
+            ref = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+            cycles = ((1,) * n, tuple(int(i % 2 == 0) for i in range(n)), (0,) * n)
+            pairs = ((0, 1), (1, 0), (1, 1))
+            for form in ("Matrix", "Factorized", "HC"):
+                if form == "Matrix":
+                    op = ref
+                else:
+                    solution = solve_projection(
+                        ProjectionProblem(
+                            w,
+                            matrix_free_output=True,
+                            solver_options={"representation": form},
+                        ),
+                        NativeFactorizedSolver(),
+                    )
+                    op = HomologyOperator(w, solution)
+                query = self.assert_geometry(op, cycles, pairs, GeometryWorkspace(op))
+                self.assertEqual(query.value["support"][0], tuple(sorted(kept)))
+                self.assertEqual(
+                    query.value["class_representative"],
+                    tuple(ref.project(z) for z in cycles),
+                )
+
+    def test_native_cycle_and_argument_rejection_and_recovery(self):
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        op = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+        workspace = GeometryWorkspace(op)
+        before = op.to_result()
+        zero = (0,) * w.n
+        with self.assertRaisesRegex(ValueError, "cycle"):
+            geometry_batch(op, (zero, (1,) + (0,) * (w.n - 1)), workspace=workspace)
+        self.assertEqual(workspace.statistics()["completed_batches"], 0)
+        for vector in ((True,) * w.n, (0.0,) * w.n, (2,) * w.n, (0,)):
+            with self.assertRaises(ValueError):
+                geometry_batch(op, (vector,), workspace=workspace)
+        for pairs in (((0, True),), ((0, -1),), ((0, 1),), ((0,),)):
+            with self.assertRaises(ValueError):
+                geometry_batch(op, (zero,), pairs, workspace=workspace)
+        with self.assertRaises(ValueError):
+            workspace._handle.query([[1 << w.n]], [])
+        with self.assertRaises(ValueError):
+            workspace._handle.query([[0]], [(0, 1)])
+        with self.assertRaises(ValueError):
+            extension.GeometryWorkspace([], "Matrix", [[[1]]], [1], [], False, [0])
+        self.assert_geometry(op, (zero,), ((0, 0),), workspace)
+        self.assertEqual(op.to_result(), before)
 
 
 if __name__ == "__main__":

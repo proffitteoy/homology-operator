@@ -220,6 +220,40 @@ Windows x64 / CPython 3.10.11，release wheel与扩展hash保存在
 额外独立安装reference wheel，在没有native扩展时恢复Factorized/HC并实跑2项纯Python边界测试。
 两示例、Ruff、Rustfmt/Clippy、release与reference打包、文档检查另通过；远端CI按PR准确head核验。
 
+## S4-06：几何批查询与 workspace 的有限完整成本协议
+
+复跑入口（安装 release native wheel 后）：
+
+```powershell
+uv run --locked --no-sync python scripts/benchmark_geometry.py --revision <准确HEAD> --output benchmarks/s4_geometry_workspace.json
+```
+
+源码与协议先提交，干净测量源码按 LF SHA256 核对；实际 .pyd/.so 二进制单独 hash。六个输入预先固定：原 K4 stage4 的正整数、互异分母有理数、10^100 大整数、u64 最大值求和溢出与 binary64 权重变体，另 n=65、β=2 的人工坐标边界窗。原 K4 fixture 来源/hash 与派生输入 input_id 均保存；派生权重和人工输入不冒充研究原件。查询量固定0/1/8/64/1024，每批 q 个循环及 q 个相邻循环对（末项连接首项）。
+
+每个输入/查询量的 scalar reference、临时 batch 和复用 workspace 三条路径各运行3个冷进程，共270条时间，seed66 打乱顺序；每个进程连续查询两批，第二批计为 warm。所有路线共用同一个 solver/action/认证/资源：K4 为显式 FeasibleSolver，65维为 NativeFactorizedSolver 的同一 Factorized P；reference 标量作用仍用 Python。认证均为 Feasible、objective=NotComputed。输入/求解与必需验证/算子验证/拓扑与参数/workspace准备/首批/第二批/快照恢复hash为互斥分段，worker和外部process总成本另存；批调用包含 QueryResult 冻结、转换与全部权重后备，子级detail不重复相加。
+
+每个输入/路径另用独立 q1024 新进程测绝对峰值 RSS，共18条，不与计时采样混用；平台接口不可用填 null 并记录原因。每worker上限60秒，timeout/worker failure/库内失败保留原始记录；每完成一项保存可恢复的partial记录。比较相同完整几何、拓扑、内容身份、状态、认证与JSON恢复hash，workspace增容次数/原生投影次数及后备原因/次数/成本可审计。
+
+3次时间、1次RSS只构成 S4-06 有限可重复研究，不能替代 S4-09/S5 正式区组、准入、规模和稳定性验收；保留退化，不按本批数据选择默认表示或扩大 solver 证明范围。R0、S4-02/03/04 历史样本不覆盖。
+
+实际测量源码为干净提交 `294ac10ec0f3b514bfce6fa418afff51ad792c84`，Windows x64、Python3.12.13、Rust1.98.1、release/safe Rust/单线程。[288条原始记录](../benchmarks/s4_geometry_workspace.json)（LF SHA256 `f7abd1562d0f10ccab178741c3f6a0d4e34565382ca33518fb5032d9e480d18c`）全部 Computed、无失败、30个输入/查询量组的三路线完整输出hash一致。实际扩展 .pyd SHA256为 `171d60eae4c0311da6f40d8410834123df56ae60b53ccbd4c212ad3a19aceab4`；源码文件、wheel、派生input_id及原fixture hash保存在报告内。
+
+q1024 的第二批 warm 中位数与完整冷worker中位数（各3次，毫秒；worker包含两批查询与全部准备/恢复）：
+
+| 输入 | warm scalar / batch / workspace | worker scalar / batch / workspace |
+| --- | --- | --- |
+| K4 正整数 | 194.57 / 81.55 / 70.99 | 627.20 / 403.49 / 353.48 |
+| K4 有理数 | 165.09 / 74.06 / 75.71 | 537.87 / 356.23 / 368.03 |
+| K4 大整数 | 164.43 / 76.36 / 76.67 | 542.98 / 375.18 / 377.44 |
+| K4 求和溢出 | 167.88 / 94.76 / 71.70 | 540.42 / 435.53 / 344.41 |
+| K4 浮点 | 176.56 / 69.72 / 82.67 | 597.62 / 333.72 / 411.41 |
+| 人工65维 β=2 | 4039.04 / 350.94 / 404.11 | 11247.13 / 3162.13 / 3448.86 |
+
+有限样本显示批量复用投影降低大批量成本；workspace相对临时batch的增量收益不足以作通用排名，有理/大整数/浮点/65维本组中位数均更慢。q0 的workspace/scalar完整worker中位数比为1.013/1.295/1.044/1.149/1.052/1.071（按表序），准备与固定成本有退化。独立Windows绝对峰值RSS：scalar范围27,930,624–33,169,408 B、workspace范围28,295,168–32,903,168 B；五个K4组workspace更高，65维略低，不宣称普遍内存收益。workspace第二批无新增projection缓冲扩容；原生每批仅q次P作用。q1024有理/大整数/浮点各2048次权重后备，溢出组1705次求和溢出后备，全部计入冷/warm调用；空批没有数值后备。
+
+[158项完整回归与最终release wheel的7项复核日志](../benchmarks/s4_geometry_verification.log) 保存真实本地结果。该轮在独立worktree完成；同步#64的已发布依赖后保留其独立报告与本项几何增量。前置PR/最终PR准确head的CI另核实，不以本地通过代替远端或main退出验收。
+
+
 ## S4-07 长过滤消融
 
 S4-07长过滤完整成本另见 [过滤证明与结果](S4_FILTRATION.md) 和
