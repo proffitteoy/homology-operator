@@ -24,5 +24,6 @@ __all__ = [
     "ResourceLimits",
     "ValidationError",
     "validate_projection",
+    "HomologyOperator",
     "__version__",
 ]

@@ -80,3 +80,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 
 `ResourceLimits` 限制参考构造的 checkpoint/state 数、wall time 和保守矩阵条目数。输入规模先检查，时间在稠密代数步骤之间检查；它不是单步强制抢占或峰值 RSS 上限。不支持的 objective/认证/并列策略返回 Unavailable，非法问题返回 InvalidProblem，超限返回 ResourceExhausted 且不伪造投影。进入算子前仍需独立 validator。
 `validate_projection(window,P)` 与 solver 独立，验证 P²=P、L²=L、AP=0、PD=0，且在 ker(A) 的完整基上验证 z+Pz 属于 im(D)。失败抛带 `InternalValidationFailed` 状态与具体失败项的 `ValidationError`。非零同调上的零投影即便前三项成立也被拒绝；Ready 序列化记录重新执行该验证，输入证书布尔值不作为信任来源。
+## 同一算子的拓扑读取
+
+`HomologyOperator(window,solution)` 在构造边界重新验证投影与六身份，仅接受可行解。`project/apply_operator` 对所有链执行 P/L 作用；`class_representative/same_class` 仅接受循环，非循环明确拒绝。`kernel_basis` 按需计算 ker(L)，`betti` 从其维数读取；空核基和未计算状态在 `to_result()` 中可区分。
+
+`readout(name,*args)` 给原始数学返回值附上六身份与 exact 标记；`metadata/certificate/to_result` 保留同一 P、原基、权重、solver 和实际独立证书。JSON round-trip 会重新检验 P，篡改后的合法性声明不能绕过边界。repository_revision 默认 unknown；正式验收或实验须显式传入源码提交。
