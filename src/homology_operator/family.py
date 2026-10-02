@@ -18,6 +18,7 @@ from .result import (
     _encode,
     _decode,
     _freeze,
+    canonical_json,
 )
 from .solver import ProjectionSolution
 
@@ -397,7 +398,21 @@ class OperatorFamily:
             result = self._query(missing.state, None, i, j, details=missing.details)
         else:
             target = self.stage(j)
-            value = getattr(target, name)(*(x.value for x in chains))
+            try:
+                value = getattr(target, name)(*(x.value for x in chains))
+            except ValueError as error:
+                if name != "selected_mass" or not str(error).startswith(
+                    "NumericalFailure"
+                ):
+                    raise
+                result = self._query(
+                    "Unavailable",
+                    None,
+                    i,
+                    j,
+                    details={"reason": "NumericalFailure", "diagnostic": str(error)},
+                )
+                return self._remember("track_mass", arguments, i, j, result)
             result = self._query(
                 "Computed",
                 value,
@@ -457,22 +472,38 @@ class OperatorFamily:
             source.window.arithmetic != "FloatingPoint"
             and target.window.arithmetic != "FloatingPoint"
         )
-        ratios = (
-            Fraction(target_weights[label]) / Fraction(weight)
-            if exact
-            else target_weights[label] / weight
-            for label, weight in zip(source.window.basis_current, source.window.weights)
-        )
-        factor = max(ratios, default=Fraction(1) if exact else 1.0)
-        mass = target.selected_mass(tracked.value)
-        bound = stretch.value * factor * source.selected_mass(x)
+        try:
+            ratios = (
+                Fraction(target_weights[label]) / Fraction(weight)
+                if exact
+                else target_weights[label] / weight
+                for label, weight in zip(
+                    source.window.basis_current, source.window.weights
+                )
+            )
+            factor = max(ratios, default=Fraction(1) if exact else 1.0)
+            mass = target.selected_mass(tracked.value)
+            source_mass = source.selected_mass(x)
+            bound = stretch.value * factor * source_mass
+            if not exact and any(
+                not isfinite(value) for value in (factor, mass, source_mass, bound)
+            ):
+                raise ValueError("nonfinite weight factor or mass bound")
+        except (OverflowError, ValueError) as error:
+            return self._query(
+                "Unavailable",
+                None,
+                i,
+                j,
+                details={"reason": "NumericalFailure", "diagnostic": str(error)},
+            )
         if exact and mass > bound:
             raise ValueError("endpoint stretch inequality failed")
         return self._query(
             "Computed",
             {
                 "target_mass": mass,
-                "source_selected_mass": source.selected_mass(x),
+                "source_selected_mass": source_mass,
                 "weight_change_factor": factor,
                 "endpoint_stretch": stretch.value,
                 "mass_bound": bound,
@@ -639,16 +670,21 @@ class OperatorFamilyResult:
             json.dumps(data, allow_nan=False)
         except (TypeError, ValueError) as error:
             raise ValueError("family snapshot must be finite JSON wire data") from error
-        family, records = _restore_family(data)
+        try:
+            family, records = _restore_family(data)
+        except (TypeError, KeyError, AttributeError) as error:
+            raise ValueError("malformed family stages or inputs") from error
         if data["identity"] != family.identity or data["status"] != family.status:
             raise ValueError(
                 "family result content does not match its identity or status"
             )
-        if data["provenance"] != {
-            "rank_invariant_source": "operator_family",
-            "oracle_used_for_result": False,
-            "theory_revision": THEORY_REVISION,
-        }:
+        if canonical_json(data["provenance"]) != canonical_json(
+            {
+                "rank_invariant_source": "operator_family",
+                "oracle_used_for_result": False,
+                "theory_revision": THEORY_REVISION,
+            }
+        ):
             raise ValueError(
                 "barcode provenance must reference the current operator family"
             )
@@ -663,11 +699,17 @@ class OperatorFamilyResult:
                     i, j = map(int, key.split(":"))
                 except (AttributeError, TypeError, ValueError) as error:
                     raise ValueError("invalid interval key") from error
-                if key != f"{i}:{j}" or QueryResult.from_dict(wire) != method(i, j):
+                QueryResult.from_dict(wire)
+                if key != f"{i}:{j}" or canonical_json(wire) != canonical_json(
+                    method(i, j).to_dict()
+                ):
                     raise ValueError(
                         "persisted transport or rank differs from its operator family"
                     )
-        if QueryResult.from_dict(data["barcode_readout"]) != family.barcode():
+        QueryResult.from_dict(data["barcode_readout"])
+        if canonical_json(data["barcode_readout"]) != canonical_json(
+            family.barcode().to_dict()
+        ):
             raise ValueError("persisted barcode differs from current transport ranks")
         if not isinstance(data["tracking_readout"], Mapping):
             raise ValueError("tracking readouts must be a mapping")
@@ -692,7 +734,7 @@ class OperatorFamilyResult:
                 expected = getattr(family, name)(*arguments, i, j)
             except TypeError as error:
                 raise ValueError("invalid tracking arguments") from error
-            if query != expected:
+            if canonical_json(wire) != canonical_json(expected.to_dict()):
                 raise ValueError("persisted tracking differs from its family")
         object.__setattr__(self, "data", _freeze(data))
         object.__setattr__(self, "identity", _freeze(data["identity"]))
