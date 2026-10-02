@@ -5,7 +5,7 @@
 > 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 当前状态：Phase 1–3 全部 PR 已合入 main `54ce78b`，该提交 CI 通过；129项 reference 数学测试与支持域历史证据见 [README](README.md) 和 [文档索引](docs/README.md)。Phase 4–7、未出现的源码树与版本里程碑仍是目标。私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 继续管理 [S4/S5](docs/S4_S5_PROJECT.md)：S4 同语义高性能开发、S5 GUDHI 对拍与真实性能报告，细化本路线的 Phase 4；不覆盖历史 Phase 3 的 solver/certification 或旧 S3 编号。
+> 本文是阶段目标与退出条件，不是安装说明或当前 API 清单。Phase 1–3 的 `54ce78b` / 129 项数学测试保留为历史验收基线；S4-01–03 已合并，当前 main/CI 与本地开发边界见 [文档索引](docs/README.md)。Phase 4 完整集成和验收、Phase 5–7 仍有未完成目标。私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理 [S4/S5](docs/S4_S5_PROJECT.md)：S4 同语义高性能开发、S5 GUDHI 对拍与真实性能报告，细化本路线的 Phase 4；不覆盖历史 Phase 3 的 solver/certification 或旧 S3 编号。
 
 ## 1. 文档目的
 
@@ -876,9 +876,9 @@ Integrations
 
 ---
 
-# 11. 推荐代码架构
+# 11. 历史目录建议（非当前源码结构）
 
-在真正实现前，建议以“数学职责”而不是“输出名字”组织源码：
+以下保留实现前的目录设计建议，不要求按图拆分文件或预建目录。当前 Python 包采用 `src/homology_operator/` 的现有模块，可选 Rust 位于 `native/`；实际职责和路径见 [ARCHITECTURE](docs/ARCHITECTURE.md)。目录调整仍以实际数学需求和最小修改为准。
 
 ```text
 homology-operator/
@@ -989,6 +989,8 @@ OperatorFamily
 ---
 
 # 13. 版本里程碑建议
+
+以下是开发目标，不是已发布版本清单。当前包元数据仍为 `0.0.2.dev0`，已包含后续阶段功能；阶段完成不自动改包版本或创建发行。公开发行前需另行确定 LICENSE、API/schema 兼容政策与发布流程。
 
 ## v0.0.1 — Contract Freeze
 

@@ -3,6 +3,26 @@
 > 文档角色：定义投影求解问题、统一 solver 接口、返回状态、认证等级、资源约束和可比较性规则。  
 > 依赖：`ARCHITECTURE.md`、`RESULT_MODEL.md`。
 
+## 当前实现与阅读入口
+
+调用和构造参数见 [Python API](INTERFACE.md)，main/CI 与开发中状态见 [文档索引](README.md)。
+本文 §1–20 保留语言无关数学契约；其中扩展资源、算术与算法选项是契约允许的目标，
+实际支持域以下表、`capabilities()` 和 §21–26 的实现说明为准，不因逻辑模型中出现名称就视为实现。
+
+| solver / 入口 | 实际输出与支持域 | 认证与限制 |
+| --- | --- | --- |
+| `FeasibleSolver` | 一般链窗口、显式 Matrix；整数/有理/浮点权 | Feasible；objective 初始 NotComputed，不优化 stretch |
+| `ExhaustiveExactSolver` | 精确权、小规模完整截面搜索 | 完成才认证全局最优；枚举/独立重放有上限 |
+| `GreedyCertifiedSolver` | 精确权、穷举循环上的确定性贪心截面 | 理论 β 界与实算 Γ 分开；等界验证后才 ExactOptimal |
+| `Rank2ExactSolver` | 精确权、β=2；实际验证的一般/图/三终端结构 | 完整支持搜索/证书；不凭几何名称启用归约 |
+| `StructuredFamilySolver` | 明确 CyclicTrace，m=2/3/4、等精确正权；Matrix 或 CyclicAction | 固定公式与独立最优证书，不接受任意结构族 |
+| `NativeFeasibleSolver`（对象调用） | 可选 Rust，三个链空间最多 64 维；同 reference G/U/P | Feasible，独立 Python 验证；缺扩展/超范围为 Unavailable |
+| `NativeFactorizedSolver`（[PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 待合并） | matrix_free_output=True；Factorized / HC | Feasible，紧凑作用经独立验证；尚未完成阶段验收 |
+
+`PreparedMatrix` 是原生代数分解工具，不是 projection solver。
+GeneralSearchSolver 未注册为公共后端；冻结局部搜索 no-go 见 [性能协议](BENCHMARKS.md)。
+合法投影、当前 objective 精确计算与最优认证始终分别报告。
+
 ## 1. Solver 的职责
 
 Solver 只负责回答：
@@ -40,19 +60,19 @@ C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},
 \qquad w_i>0.
 \]
 
-推荐模型：
+实际 Python 请求模型（输入与权重由 window 保存）：
 
 ```text
 ProjectionProblem
-├── input_identity
-├── A
-├── D
-├── weights
-├── objective
-├── arithmetic_policy
-├── tie_break_policy
+├── window
 ├── resource_limits
+├── objective
 ├── requested_certificate_level
+├── tie_break_policy
+├── arithmetic_policy
+├── input_structure
+├── matrix_free_output
+├── deterministic
 └── solver_options
 ```
 
@@ -141,17 +161,21 @@ ProjectionSolver
         -> ProjectionSolution
 ```
 
-建议 solver 自身声明 capability：
+solver 自身用 `capabilities()` 返回不可变或普通 mapping，调度实际读取：
 
 ```text
-SolverCapabilities
-├── exact
-├── certified_bounds
-├── heuristic
-├── supported_dimensions?
-├── supported_betti_range?
+capabilities()
+├── arithmetic_policies
+├── input_structures
+├── objectives
+├── certificate_levels
+├── tie_break_policies
+├── resource_limits
+├── supported_dimensions
+├── supported_betti_range
 ├── matrix_free_output
-└── deterministic
+├── deterministic
+└── solver_options
 ```
 
 这允许调度层在运行前判断请求是否可满足。
@@ -160,20 +184,27 @@ SolverCapabilities
 
 ## 6. `ProjectionSolution`
 
-推荐模型：
+实际 Python 解模型：
 
 ```text
 ProjectionSolution
 ├── status
+├── solver_run_id
 ├── projection
-├── objective_value
+├── identity
+├── certificate_level
+├── objective               # QueryResult
 ├── lower_bound
 ├── upper_bound
-├── optimality_gap
+├── optimality_gap          # 派生属性
 ├── certificate
 ├── method
-├── solver_run_id
-├── tie_break_result
+├── tie_break_policy
+├── arithmetic_policy
+├── solver_config
+├── solver_config_id        # 内容身份属性
+├── generalized_inverse_a  # 可选
+├── generalized_inverse_d  # 可选
 ├── resource_usage
 └── diagnostics
 ```
@@ -181,9 +212,9 @@ ProjectionSolution
 其中 `projection` 可以是：
 
 ```text
-ExplicitMatrix
-MatrixFreeAction
-StructuredAction
+Matrix
+CyclicAction
+CompactAction      # S4-04 / PR #80 待合并
 ```
 
 ---
@@ -666,7 +697,7 @@ Solver framework 可视为冻结，至少满足：
 
 ## 21. 当前 reference 支持范围（S3-01）
 
-`FeasibleSolver.capabilities()` 与 `solve_projection` 已实现运行前能力匹配，无隐藏 fallback；当前构造只支持显式 Matrix、StableBasisOrder、ExactInteger/ExactRational/FloatingPoint 及 state/time/matrix-entry 三种实际资源限制。其他 solver 和 matrix-free 输出随后续 issue 实现。
+`FeasibleSolver.capabilities()` 与 `solve_projection` 已实现运行前能力匹配，无隐藏 fallback；FeasibleSolver 本身支持显式 Matrix、StableBasisOrder、ExactInteger/ExactRational/FloatingPoint 及 state/time/matrix-entry 三种实际资源限制。其他四个 reference solver 与结构族 matrix-free 输出已实现，支持域见 §22–26 和本页入口表，不能把 S3-01 的初始边界当作全部当前能力。
 
 统一 ProjectionSolution 已保留 lower/upper、gap、不可变 solver_config 和内容配置身份。ResourceExhausted 可保留经独立验证的 action 和证书；HomologyOperator 的 Ready 与 solver 的停止状态分开。Heuristic 的 action 同样须经完整投影验证。
 
@@ -674,7 +705,7 @@ Solver framework 可视为冻结，至少满足：
 
 独立证书 verifier 当前支持 `optimization={kind: "CycleBounds", nonzero_cycles: N, lower_bound_method: "UniversalHomology"}`。它枚举所有非零循环重算当前 Γ（重放上限100000个循环），校验精确 objective、U≥Γ，以及 L≤0（β=0）或 L≤1（β>0）。通用下界来自固定理论 T1/T4；非零合法投影在其非零像向量上恒等，所以扩张至少1。仅 L=U=Γ 且证书有效时接受 ExactOptimal；等界仍标 CertifiedInterval 则拒绝，须改用 ExactOptimal。空循环域的0与非空循环域的零同调0保留不同状态。
 
-该证书不宣称完整最优搜索，不能认证大于1的全局下界。未知证明类型、篡改计数/objective/gap/配置身份、浮点等界或未经验证的 action 均拒绝。完整搜索证书属于 #20；证书重放是独立检查成本，不纳入 solver 构造时的 checkpoint 预算，尚无抢占式时间/RSS保证。固定研究提交的 native_operator、compressed_native_operator 和 T1 已逐项阅读，并在线核对缓存的 Git blob hash；它们的完整搜索成绩不作为本项实现成绩。
+该证书不宣称完整最优搜索，不能认证大于1的全局下界。未知证明类型、篡改计数/objective/gap/配置身份、浮点等界或未经验证的 action 均拒绝。完整搜索证书已由 #20 实现，见 §22；证书重放是独立检查成本，不纳入 solver 构造时的 checkpoint 预算，尚无抢占式时间/RSS保证。固定研究提交的 native_operator、compressed_native_operator 和 T1 的历史阅读与 Git blob 核对是来源记录；其完整搜索成绩不作为本库实现成绩。
 
 ## 22. 小规模完整搜索（S3-02）
 

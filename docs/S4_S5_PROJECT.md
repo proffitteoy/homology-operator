@@ -1,9 +1,21 @@
 # S4/S5 Project：同语义高性能开发与 GUDHI 对拍
 
 日期：2026-10-02。管理入口：[GitHub Project #3](https://github.com/users/proffitteoy/projects/3)。
-实现/调研基线：`main @ 54ce78bccdcba619ffa2a4d76aeb450bfd24270e`；历史 Phase 3 的 #49–#58 已合并，
+规划时的实现/调研基线：`main @ 54ce78bccdcba619ffa2a4d76aeb450bfd24270e`；历史 Phase 3 的 #49–#58 已合并，
 该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788) 已通过。
-本次交付是研究材料整合与可执行任务规划，未实现 Rust 后端、未运行正式 GUDHI 对拍或性能 benchmark。
+本文保留工作包、依赖、验收条件与规划来源。规划建立时尚无 Rust 后端；此后 S4-01–03 已交付并合并，不能继续把整轮描述为“未实现”。正式 GUDHI 对拍和 S4/S5 总验收仍待后续工作。
+
+## 当前进展与阅读方式
+
+2026-10-02 核对：S4-01（PR #77）、S4-02（PR #78）与 S4-03（PR #79）已合并；
+当前 main 的 reference/native CI 与精确 SHA 集中在 [文档索引](README.md)。
+R0、单字宽原型、多字 packed / PreparedMatrix 和有限复用实验见 [性能协议](BENCHMARKS.md)。
+S4-04 的因子/HC action、测试与有限测量在 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 中，尚未合入 main。
+API 与限制见 [INTERFACE](INTERFACE.md)；原生几何/workspace、完整集成与阶段验收仍按独立工作包推进。
+其余工作包仍按依赖与验收推进，不从前三项有限实验推断全后端性能或 S4/S5 完成。
+
+下方工作包清单保留原始交付要求；复选框是规划清单，不是实时 GitHub Status。
+初始 Todo/Ready/Blocked 状态与 §5 的“本次”核验均指规划整合时的记录。
 
 ## 1. 名称、范围与已有证据
 
@@ -38,8 +50,8 @@ Git 对此归档目录关闭换行规范化，并保留归档 Markdown 原有换
 阶段总任务：[S4 #59](https://github.com/proffitteoy/homology-operator/issues/59)、[S5 #60](https://github.com/proffitteoy/homology-operator/issues/60)。
 沿用 Project #3 的 Status、Stage、Kind、Area、Priority、Readiness 和原生 parent/sub-issue、blocked-by 关系；
 历史 29 项及其状态保持不变。新增 2 个 Epic、15 个 Task。
-所有新增项初始为 **Todo**；能开始规划/实现不表示功能完成。
-S4-01、S5-01 为 Ready；其余 Task 按未完成前置为 Blocked；Epic 为 Gated。
+规划建立时所有新增项为 **Todo**；能开始规划/实现不表示功能完成。
+当时 S4-01、S5-01 为 Ready，其余 Task 按未完成前置为 Blocked；Epic 为 Gated。实际后续完成状态见本页进展与文档索引，不把初始状态当成当前阻塞。
 只增加新阶段选项和标签，不复用历史 `stage:S3`。
 父 Epic 统计各子任务，实际开发依赖直接写在 Task 上；不虚构负责人、排期或收益数字。
 
@@ -411,11 +423,11 @@ git diff --check
 其日期字段固定为研究日期，不代表每次复跑的真实运行日期。
 原始记录的 corpus/script hash 应随上述比较完全一致；研究脚本保持原字节内容。
 
-本次研究包整合只新增规划与归档材料，并更新文档入口/归档 Ruff 范围。
+规划整合时的交付只新增规划与归档材料，并更新文档入口/归档 Ruff 范围。
 本项目的原生实现、GUDHI 依赖安装、正式测量入口与实际报告由对应工作包交付；
 原研究计划建议的空报告、空 benchmark 目录和未来类型不提前建立。
 
-本次本地核验：129 项既有 reference 数学测试及两个示例通过，Ruff lint/format、
+规划整合时的本地核验：129 项既有 reference 数学测试及两个示例通过，Ruff lint/format、
 文档检查（22 个 Markdown、108 个本地链接）和 `git diff --check` 通过。
 独立原型在更正后的目录复跑 5,689 例、0 mismatch，结果 JSON 与归档记录完全相同，
 四份上传文件的 SHA256 保持不变。上述成绩不是 Rust、GUDHI 或正式性能验收。

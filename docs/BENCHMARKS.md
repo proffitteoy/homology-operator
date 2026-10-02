@@ -1,8 +1,8 @@
 # Solver 对照与性能协议
 
-本协议回答同一ProjectionProblem下各solver支持什么、保留什么认证、付出了哪些成本，供#24的一般搜索go/no-go使用。不把单次reference耗时当作性能排名，也不宣称PH加速。
+本页保存已执行的 Phase 3 solver 对照、S4-01 R0、S4-02 原型和 S4-03 packed 复用协议与冻结结果。Phase 3 的同问题/认证/预算对照用于 #24 一般搜索 go/no-go；后续实验按各节声明的完整成本口径解释。不把单次 reference 耗时当作性能排名，也不宣称 PH 加速。
 
-下一轮正式性能协议与工作包见 [S4/S5 项目计划](S4_S5_PROJECT.md)。本文件及冻结记录保留历史口径；后续无 profiler 的重复计时、操作系统峰值 RSS、GUDHI 同输入基线与联合信息成本另行报告。
+正式全后端/GUDHI 验收见 [S4/S5 项目计划](S4_S5_PROJECT.md)，当前实现状态见 [文档索引](README.md)。本页及冻结数据保留各次实验的源码、输入、输出、测量范围与不利结果；S4-01 已有独立计时/RSS 基线，但原型/人工代数收益不替代 S4-09/S5 的冻结负载与正式统计。
 
 ## S4-01：main reference R0
 
@@ -184,6 +184,17 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 24×65的96个输入非零位在消元中峰值188、RREF170，持有120个u64；24×129的96个位峰值/RREF124，持有168个u64。它们只统计Rust系数/RREF/行变换payload，排除allocator、pivots、Python、RHS与结果分配，不能冒充峰值RSS。有限人工代数实验显示复用收益，不能推广为真实算子收益；S4-02真实窗口的退化记录继续保留。
 
 [144项完整回归日志](../benchmarks/s4_packed_verification.log) 保存本地数学/测量/native全通过证据；release构建、Clippy/fmt、Ruff、文档另实际通过。远端native与reference CI按PR准确head核验。
+
+## S4-04：同 P 的显式、因子与 HC 时间/RSS协议（PR #80 待合并）
+
+本节来自 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 的实现与测量；main 尚不包含本节脚本/产物。
+复跑需检出该 PR 对应的源码和扩展，核对测量记录声明的准确 revision。
+
+运行 `uv run --locked --no-sync python scripts/benchmark_compact.py --revision <准确HEAD> --output benchmarks/s4_compact_action.json`。冻结后运行原K4 stage4（β/n=2/6）、H0 interval stage0（2/2），另两个人工坐标边界窗n=65、β=2/64；人工输入标明来源，不冒充迁移研究。三路线explicit reference / NativeFactorizedSolver Factorized / HC全部为Feasible、同权重、稳定并列、objective未计算及原默认资源上限。Factorized成功states与reference相同，HC额外2n个构造checkpoint，预算单位差异显式记录，完整认证等级不降低。
+
+每配置3个冷timing worker，顺序seed64，共36条时间；之后每配置独立一个RSS worker，共12条，只报告真实绝对PeakWorkingSetSize/ru_maxrss与不可用原因，不与timing互相污染。成本包含输入、求解/独立验证、算子验证、拓扑、8个几何联合查询、快照序列化、恢复重验及流式完整生成元hash，外部process时间另报。绑定、Python后备与验证没有省略；validator分段诊断是父阶段子项，不能重复相加。四个输入的全部P/L生成元、核基、Betti、几何与恢复hash须跨三表示一致，projection身份按版本内容保持不同。
+
+保存源码/输入/二进制hash、β/n、实际状态/认证/预算、序列化字节与factor条目，保留全部不利结果。HC在β接近n时H/C输出可大于dense P，Factorized包含A/D和逆非零行，消元有平方行变换workspace；这些成本与完整进程RSS一并报告。有限3次时间与1次RSS不足以推断S4准入或稳健速度排名，不据此自动选择默认表示，不改写R0或S4-02/03原始证据。
 
 ## 一般搜索准入实验（S3-06）：冻结协议
 
