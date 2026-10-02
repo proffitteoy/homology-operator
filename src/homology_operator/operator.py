@@ -8,9 +8,9 @@ from types import MappingProxyType
 
 from .algebra import Matrix, validate_vector
 from .chain import ChainWindow
-from .result import OperatorResult, QueryResult, make_identity
+from .result import OperatorResult, QueryResult, _freeze, make_identity
 from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
-from .validation import ValidationError, validate_projection
+from .validation import _validated_certificate, validate_solution
 
 THEORY_REVISION = "6143729669902ee875b211b58085e954c76cdf88"
 
@@ -33,22 +33,13 @@ class HomologyOperator:
             not in {"Solved", "FeasibleOnly", "ResourceExhausted"}
         ):
             raise ValueError("SolverFailed: no feasible projection")
-        if self.solution.certificate_level != "Feasible":
-            raise ValueError("Unavailable: this reference accepts Feasible solutions")
-        certificate = validate_projection(self.window, self.solution.projection)
+        certificate = validate_solution(self.window, self.solution)
         identity = make_identity(
             self.window,
             self.solution.projection,
             self.solution.solver_run_id,
             self.solution.tie_break_policy,
         )
-        if self.solution.identity != identity:
-            raise ValidationError(("solution_identity",))
-        if (
-            not isinstance(self.solution.objective, QueryResult)
-            or self.solution.objective.identity != identity
-        ):
-            raise ValidationError(("objective_identity",))
         if (
             not isinstance(self.repository_revision, str)
             or not self.repository_revision
@@ -57,7 +48,17 @@ class HomologyOperator:
         object.__setattr__(self, "P", self.solution.projection)
         object.__setattr__(self, "L", Matrix.identity(self.window.n) + self.P)
         object.__setattr__(self, "identity", MappingProxyType(identity))
-        object.__setattr__(self, "_certificate", MappingProxyType(certificate))
+        object.__setattr__(
+            self,
+            "_certificate",
+            _freeze(
+                _validated_certificate(
+                    self.solution.certificate,
+                    certificate,
+                    self.solution.certificate_level,
+                )
+            ),
+        )
         object.__setattr__(
             self,
             "_provenance",
@@ -71,6 +72,7 @@ class HomologyOperator:
                     "solver_version": "0.0.2.dev0",
                     "arithmetic_mode": self.window.arithmetic,
                     "tie_break_policy": self.solution.tie_break_policy,
+                    "solver_config_id": self.solution.solver_config_id,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                 }
             ),

@@ -4,11 +4,11 @@ import subprocess
 
 from homology_operator import (
     ChainWindow,
-    FeasibleSolver,
     HomologyOperator,
     Matrix,
     ProjectionProblem,
     ResourceLimits,
+    solve_projection,
 )
 
 
@@ -31,7 +31,7 @@ def main():
     limits = ResourceLimits(
         state_limit=100, wall_time_limit=10, matrix_entry_limit=1000
     )
-    solution = FeasibleSolver().solve(ProjectionProblem(window, limits))
+    solution = solve_projection(ProjectionProblem(window, limits))
     op = HomologyOperator(window, solution, repository_revision=revision)
     for name, args in (
         ("betti", ()),

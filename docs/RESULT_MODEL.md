@@ -26,7 +26,7 @@
 
 Phase 1 reference 的 `OperatorResult` 支持无投影失败记录：`projection=None` 时只能使用匹配的失败状态，认证为空，不能携带算子查询或生成算子缓存键。已验证输入可保留 input/basis/weight 与 solver_run 的部分身份，尚无合法输入时身份和输入均可为空；不生成 projection/operator 身份。嵌套 solver objective 也必须与有投影记录的完整六身份一致。
 
-reference JSON 将 Fraction 编码为 `$fraction` 标签，普通单键 `$fraction` / `$mapping` 字典通过 `$mapping` 转义，避免用户数据与数值标签冲突。Phase 1 仅接受 `Feasible` 认证；bounds 检查有限、非负及顺序，不凭标签接受尚无独立 verifier 的最优或区间认证。
+reference JSON 将 Fraction 编码为 `$fraction` 标签，普通单键 `$fraction` / `$mapping` 字典通过 `$mapping` 转义，避免用户数据与数值标签冲突。Phase 3 #19 已扩展统一认证记录：所有 P 重新验证合法性，已支持的 `CycleBounds` 在精确权重上独立重放当前 objective 和通用全局下界；没有支持证书的最优或区间标签仍拒绝。上下界与 gap、solver_config/config_id、诊断在单尺度和族恢复时均保留；无投影失败记录不携带算子 bounds。具体支持域见 [solver 契约](SOLVER_CONTRACT.md)。
 
 建议所有主要对象使用不可混淆的稳定身份。
 

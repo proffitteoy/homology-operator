@@ -10,8 +10,9 @@ from .solver import (
     ProjectionProblem,
     ProjectionSolution,
     ResourceLimits,
+    solve_projection,
 )
-from .validation import ValidationError, validate_projection
+from .validation import ValidationError, validate_projection, validate_solution
 from .operator import HomologyOperator
 from .family import OperatorFamily, OperatorFamilyResult
 
@@ -25,8 +26,10 @@ __all__ = [
     "ProjectionProblem",
     "ProjectionSolution",
     "ResourceLimits",
+    "solve_projection",
     "ValidationError",
     "validate_projection",
+    "validate_solution",
     "HomologyOperator",
     "OperatorFamily",
     "OperatorFamilyResult",

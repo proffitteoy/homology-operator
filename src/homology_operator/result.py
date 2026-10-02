@@ -274,6 +274,9 @@ class OperatorResult:
         if not isinstance(self.solver, Mapping):
             raise ValueError("solver data must be a mapping")
         solver = _freeze(self.solver)
+        from .validation import validate_solver_config
+
+        validate_solver_config(window, solver)
         if solver.get("status") not in {
             "Solved",
             "FeasibleOnly",
@@ -317,6 +320,9 @@ class OperatorResult:
                 solver.get("certificate_level") is not None
                 or certificate
                 or self.query_results
+                or lower is not None
+                or upper is not None
+                or solver.get("optimality_gap") is not None
             ):
                 raise ValueError(
                     "missing projection cannot carry certification or operator queries"
@@ -370,27 +376,27 @@ class OperatorResult:
                     )
             else:
                 require_same_identity(identity, objective.identity)
-        if solver.get("certificate_level") == "ExactOptimal":
-            raise ValueError(
-                "ExactOptimal is unavailable until an independent optimality verifier exists"
+        if projection is not None:
+            from .validation import (
+                _validated_certificate,
+                validate_projection,
+                validate_solver_certificate,
             )
-        if projection is not None and solver.get("certificate_level") != "Feasible":
-            raise ValueError(
-                "Phase 1 result records accept only independently validated Feasible solutions"
+
+            checks = validate_projection(window, projection)
+            checks.update(
+                validate_solver_certificate(
+                    window, projection, solver, certificate, identity
+                )
+            )
+            certificate = _validated_certificate(
+                certificate, checks, solver["certificate_level"]
             )
         if self.status == "Ready":
             if solver["status"] not in {"Solved", "FeasibleOnly", "ResourceExhausted"}:
                 raise ValueError(
                     "Ready requires a solver status that can retain a feasible projection"
                 )
-            # Persisted true flags are never accepted as evidence of a legal action.
-            try:
-                from .validation import validate_projection
-            except ModuleNotFoundError as error:
-                raise ValueError(
-                    "Ready results require the independent projection validator"
-                ) from error
-            certificate.update(validate_projection(window, projection))
         if not isinstance(self.query_results, Mapping):
             raise ValueError("query_results must be a mapping")
         queries = {}
