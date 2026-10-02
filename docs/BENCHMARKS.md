@@ -1,8 +1,8 @@
 # Solver 对照与性能协议
 
-本协议回答同一ProjectionProblem下各solver支持什么、保留什么认证、付出了哪些成本，供#24的一般搜索go/no-go使用。不把单次reference耗时当作性能排名，也不宣称PH加速。
+本页保存已执行的 Phase 3 solver 对照、S4-01 R0、S4-02 原型、S4-03 packed 复用、S4-04 紧凑 action 与 S4-05 限定 solver 协议与冻结结果。Phase 3 的同问题/认证/预算对照用于 #24 一般搜索 go/no-go；后续实验按各节声明的完整成本口径解释。不把单次 reference 耗时当作性能排名，也不宣称 PH 加速。
 
-下一轮正式性能协议与工作包见 [S4/S5 项目计划](S4_S5_PROJECT.md)。本文件及冻结记录保留历史口径；后续无 profiler 的重复计时、操作系统峰值 RSS、GUDHI 同输入基线与联合信息成本另行报告。
+正式全后端/GUDHI 验收见 [S4/S5 项目计划](S4_S5_PROJECT.md)，当前实现状态见 [文档索引](README.md)。本页及冻结数据保留各次实验的源码、输入、输出、测量范围与不利结果；S4-01 已有独立计时/RSS 基线，但原型/人工代数收益不替代 S4-09/S5 的冻结负载与正式统计。
 
 ## S4-01：main reference R0
 
@@ -346,4 +346,7 @@ Rank2 的构造 median 为3.582/3.697ms，配对比0.979、区间[0.920,1.098]�
 的完整数学/测量回归；Rust比值单测、fmt/Clippy、Ruff、文档与git diff检查通过。
 reference sdist/wheel构建及真实无扩展的隔离wheel安装通过，四种reference请求完成、
 四种native请求Unavailable，native快照经完整reference重放恢复。
-原工作区的S4-04修改保留；本实现位于基于S4-03的隔离分支，尚无本分支远端CI/合并证据。
+上述性能与151项回归证据冻结于 S4-03 基线上的测量提交；原始样本及 hash 保持不变。
+本分支后续普通 merge 同步已合并 S4-04 的 main `520ecc9`，保留双方实现并重新构建验证；
+这次整合验证不替代上述源码的性能测量，也不证明认证 solver 已改为输出 CompactAction。
+远端 CI 与合并状态按 PR 精确 head 的实际 checks 另行核验。
