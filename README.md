@@ -109,7 +109,7 @@ geometry = geometry_batch(op, cycles, pairs=[(0, 1)])
 record = OperatorResult.from_json(op.to_result().to_json())
 ```
 
-safe Rust、单线程、每行一个 u64，三个链空间暂限至多64维；超出范围或缺少扩展明确返回 Unavailable。只提供 StableBasisOrder/Feasible 构造，P/G/U 与 reference 完整相同，仍通过独立 Python 广义逆和同调保持验证。现有标量入口使用显式 Matrix，拓扑、stretch、身份和恢复沿用 reference。批量 P/L 与支撑在 Rust 中计算；质量、距离及支撑交并暂由 Python 对同一 Pz 计算，任意精确有理数和浮点 fsum 政策不变，成本后备可见。批查询返回六身份的 QueryResult，默认不改变原算子的查询历史；需要保存时可在 `OperatorResult.query_results` 中显式加入该记录。
+safe Rust、单线程、每行一个 u64，原型构造的三个链空间暂限至多64维；超出范围或缺少扩展明确返回 Unavailable。只提供 StableBasisOrder/Feasible 构造，P/G/U 与 reference 完整相同，仍通过独立 Python 广义逆和同调保持验证。现有标量入口使用显式 Matrix，拓扑、stretch、身份和恢复沿用 reference。批量 P/L 与支撑在 Rust 中计算；S4-06 几何批查询另支持多字显式/紧凑 action，见下文。批查询返回六身份的 QueryResult，默认不改变原算子的查询历史；需要保存时可在 `OperatorResult.query_results` 中显式加入该记录。
 
 资源 states 沿用 feasible 的 checkpoint 单位（成功为5+m+n），matrix_entry_limit 是保守逻辑条目上限，wall_time 在阶段间检查，独立 projection validator/恢复成本在构造预算外。没有抢占、RSS硬上限或优化认证。更大尺寸分解、紧凑action、原生几何和全面集成由后续工作包实现。[最小完整成本协议](docs/BENCHMARKS.md) 保留有限采样与未获收益结果。
 
@@ -186,6 +186,23 @@ assert solution.objective.value == 2
 同一对象提供 `selected_mass(z)=m_w(Pz)`、`class_distance(z,y)=m_w(P(z+y))` 以及原基索引上的 `support/shared_support/union_support`。循环域检查适用于全部几何类查询。精确权重求和保留 Fraction；浮点用 binary64 fsum，readout 标为 approximate 并记录舍入，不制造误差证书；非有限数值明确失败。
 
 例如 A=0、D=(1,1)ᵀ、权重(10,1)时，当前确定性构造选择第一坐标代表，类质量为10，而同类第二坐标代表质量为1。selected_mass 不能用作 minimum_class_mass；后者在快照中仍为 NotComputed。独立坐标测试验证交并支撑、质量恒等式及距离非负、对称、零距离同类和三角不等式。
+
+### 几何批查询与 workspace（S4-06）
+
+```python
+from homology_operator.native import GeometryWorkspace, geometry_batch
+
+workspace = GeometryWorkspace(op)
+query = geometry_batch(op, cycles, pairs=[(0, 1)], workspace=workspace)
+again = geometry_batch(op, cycles, pairs=[(0, 1)], workspace=workspace)
+assert query.value == again.value
+```
+
+`geometry_batch` 仅接受循环，支持显式 Matrix 与 #64 的 Factorized/HC action；显式几何查询也支持超过64维。每批每条循环只投影一次，Rust 对同一 packed Pz 用 XOR/AND/OR 计算距离支撑、共享/并集，索引保持原基顺序。正整数（含分母为1的 Fraction）使用 u64 检查求和；单项超界或单次求和溢出改用 Python 任意精度，非整数有理数保留 Fraction，浮点仍用原坐标顺序的 binary64 fsum，数值溢出明确抛 NumericalFailure。`exact` 描述几何算术，不升级 solver 认证。
+
+workspace 持有 action/边界/权重与私有缓冲区，按六身份拒绝投影、权重、基或 run 混用；它是进程内准备对象，准备和查询均不改变算子或既有快照的查询历史。省略 workspace 时每次调用创建临时准备对象；重复批量需显式复用。缓冲区保留最大已用容量，输出记录仍独立不可变，workspace 不序列化。它不提供并发共享保证或 RSS 硬限制；CyclicAction 原生几何和缺少扩展返回 Unavailable，reference 标量查询保持可用。
+
+QueryResult.details 分开记录准备、输入转换、原生计算、绑定、decode 与权重后备成本/次数/原因；准备成本含其转换，不与子项重复相加。QueryResult 冻结成本计入调用者完整计时。`statistics()` 的 completed_batches 统计原生调用完成次数，投影缓冲扩容数可验证复用；浮点后备失败仍可能已完成原生步骤。预声明负载和真实复跑入口见 [性能协议](docs/BENCHMARKS.md)。
 
 ## 当前 stretch 与资源状态
 
