@@ -12,7 +12,7 @@
 6. [SOLVER_CONTRACT](SOLVER_CONTRACT.md)：合法投影、认证等级与资源约束。
 7. [VALIDATION](VALIDATION.md)：当前检查入口及后续数学验证。
 
-接口均为逻辑契约，尚无语言绑定或实现。`BENCHMARKS.md`、fixture corpus 和运行时测试留待对应阶段创建，不能把路线图的推荐树当作当前目录清单。
+单尺度接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1 验收报告](PHASE1_REPORT.md) 记录49项本地测试、隔离wheel运行与范围限制。过滤、优化认证和性能仍是后续目标，不能把路线图推荐树当作当前能力。
 
 ## 参考材料
 
@@ -39,4 +39,4 @@
 
 修正了冷启动计划中指向缺失 `docs/AGENTS.md` 的链接、路线图的本地基线与已有文档描述，并将 solver 状态和认证等级统一到 solver 契约。在结果模型中补明固定理论提交的空循环域 stretch=0 约定；已有核心数学设计保留。
 
-当前检查命令及其范围见验证说明；检查通过只确认文档完整性，不代表 Phase 1 的数学验收通过。下一步是首次 reference 实现、工具链选型及独立 fixture/validator 验证；许可证、CI、性能协议与发行仍属待办。
+以上是2026-10-01冷启动历史记录。2026-10-02已建立Python/uv reference、最小CI及独立单尺度数学验收；具体证据见验收报告。文档检查仍只证明文档完整性；Phase 2、性能、许可证和发行仍待办。
