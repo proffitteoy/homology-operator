@@ -12,7 +12,7 @@
 6. [SOLVER_CONTRACT](SOLVER_CONTRACT.md)：合法投影、认证等级与资源约束。
 7. [VALIDATION](VALIDATION.md)：当前检查入口及后续数学验证。
 
-单尺度接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1 验收报告](PHASE1_REPORT.md) 记录57项本地测试、隔离wheel运行与范围限制。过滤、优化认证和性能仍是后续目标，不能把路线图推荐树当作当前能力。
+单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。优化认证和性能仍是后续目标。
 
 ## 参考材料
 
@@ -39,4 +39,4 @@
 
 修正了冷启动计划中指向缺失 `docs/AGENTS.md` 的链接、路线图的本地基线与已有文档描述，并将 solver 状态和认证等级统一到 solver 契约。在结果模型中补明固定理论提交的空循环域 stretch=0 约定；已有核心数学设计保留。
 
-以上是2026-10-01冷启动历史记录。2026-10-02已建立Python/uv reference、最小CI及独立单尺度数学验收；具体证据见验收报告。文档检查仍只证明文档完整性；Phase 2、性能、许可证和发行仍待办。
+以上是2026-10-01冷启动历史记录。2026-10-02 Phase 1 已合入 main；Phase 2 有限过滤 reference 已实现并通过81项本地测试，逐 issue PR 待全部合入 main 并验证后才进入 Phase 3，具体证据见验收报告。文档检查仍只证明文档完整性；优化认证、性能、许可证和发行仍待办。

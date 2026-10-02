@@ -8,13 +8,13 @@ Phase 1 已通过 PR #30–#41 合入 main `2a8c0f07b70d48e47c32c335fc3642319302
 
 主路径由 `P_j J_ij|ker(L_i)` 给 kernel 坐标矩阵与目标原链作用，复核恒等、composition、目标核和同调保持；barcode 仅从 transport rank 差分恢复。半开阶段区间保存重数，None 末端表示常量延拓下存活，重复尺度的零尺度长度明确标注。未存储的阶段内部瞬时事件不属于输入可恢复的信息。
 
-几何追踪使用同一 P 族，死亡为合法零链/零质量/空支撑。終点质量界只使用目标当前 stretch 和源选定质量；变权因子显式为 max(w_j/w_i)，不乘中间 stretch。有理/整数核验精确；浮点只报告数值观察，溢出为 Unavailable/NumericalFailure。stretch 受单尺度 ResourceLimits 限制。
+几何追踪使用同一 P 族，死亡为合法零链/零质量/空支撑。终点质量界只使用目标当前 stretch 和源选定质量；变权因子显式为 max(w_j/w_i)，不乘中间 stretch。有理/整数核验精确；浮点只报告数值观察，溢出为 Unavailable/NumericalFailure。stretch 受单尺度 ResourceLimits 限制。
 
 `OperatorFamilyResult` 保留完整阶段及传输身份、认证/失败、rank/barcode/tracking 和来源。读取时复核内容身份并重算派生结果，拒绝篡改、混用及 bool 冒充整数 rank。`to_family` 从记录的 P 恢复作用，不重新运行 solver。
 
 ## 实际验证
 
-本地 Windows、CPython 3.10.11、uv 0.11.5、Ruff 0.11.13、PowerShell 7.6.5，运行时仅标准库。79 项 unittest 通过：Phase 1 的 57 项及族输入 4、transport 3、barcode 3、tracking 3、序列化 4、独立族联合验收 5。
+本地 Windows、CPython 3.10.11、uv 0.11.5、Ruff 0.11.13、PowerShell 7.6.5，运行时仅标准库。81 项 unittest 通过：Phase 1 的 57 项及族输入 4、transport 3、barcode 3、tracking 4、序列化 5、独立族联合验收 5。审查补充了 ratio/product 浮点溢出及零链查询、五种失败阶段各带/不带部分身份的传输/rank 快照回归。
 
 - 四个多阶段 H0–H3 过滤、五个单阶段边界、K4 存活前缀和基重排变体，共 11 个族/变体，覆盖全部 23 份冻结 fixture。
 - 独立全局边界列约化恢复 barcode，循环像商空间枚举核对所有区间 rank；均不导入生产源码。区间表重建 rank 与原传输一致。
@@ -43,16 +43,22 @@ git diff --check
 
 | 生产文件 | SHA256 |
 | --- | --- |
-| `src/homology_operator/__init__.py` | `5ab49ce80cebb843985510c3c89cb072d71867b2e37541e42300a1158e2c8d2b` |
+| `src/homology_operator/__init__.py` | `9dddd52bbedd6718f5d077f5e59da27c62cceb59afb9436b216a77629343f1e5` |
 | `src/homology_operator/algebra.py` | `0a85de257bd25c6595d6bcfd1b08729713213c2dd187bf1181790d5285e604b5` |
 | `src/homology_operator/chain.py` | `2b38886cf4df56504bd28ee383b7e61c29965a375298fff67b7a46e7a67c3517` |
-| `src/homology_operator/family.py` | `b7344801b54fc810528a7b7a1e2e455a621587de0890b280177b94715a86c554` |
+| `src/homology_operator/family.py` | `74f412f0e8e56edb8449fea2adfcacfef18aba05d7a28ad61e3265665dce6b01` |
 | `src/homology_operator/operator.py` | `ed035183561e9546f3712a057c39c6ce8a36b487ffee739edef8506c9dba9a4d` |
 | `src/homology_operator/result.py` | `575d1b2b81e99e0421604b5c1f1d20951969a816ce757bb5914643236277fc01` |
 | `src/homology_operator/solver.py` | `73de16dff7c8248774cc54ef1ba7d5c4b0f97d1a66c72bbd2460cc347d7a1d0d` |
 | `src/homology_operator/validation.py` | `9c91a941a98a51ced479a3ff6d8b53fd3695320ea03e25d68ee5fe7a130f8791` |
 
-聚合 SHA256：`bfdda2f060c646565b6a91cbe63b7d0b1f0bd0e2c86def8f87b382b31e22e1a8`。23 份 fixture 的 LF 文件 SHA256 为 `593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2`；理论固定于 [指定研究提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)。迁移来源见 [FIXTURES](FIXTURES.md)。
+聚合 SHA256：`399e48c8ac10e2025a84b6fa939677840fbf18327e47b7a7e0f0159f03981192`。23 份 fixture 的 LF 文件 SHA256 为 `593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2`；理论固定于 [指定研究提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)。迁移来源见 [FIXTURES](FIXTURES.md)。
+
+## 与固定上游实现的对照
+
+对照了固定研究提交的 [native_operator 与 filtration_example](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/verify.py)、[compressed_native_operator](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/highdim/verify_highdim.py)、[joint_filtration](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/highdim/verify_joint_outputs.py) 和 [T3](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/docs/proof/PROOF.md#T3)。当前 P=(I+DU)(I+GA)、目标 P 的核传输、rank 差分、同一 P 的几何与终点控制按这些定义实现；PH oracle 只在测试中事后对拍。
+
+本地只读取并运行上游两个纯数学函数，不调用其写文件的验证 main。16 个≤6维精确 fixture 的两套投影合法性、Betti 及 objective 关系通过；K4 八阶段 Betti、36 个区间 rank 和 barcode 相同。具体差异保留：上游 native_operator 枚举回缩求精确最小 Γ，本库当前 FeasibleSolver 只选合法解，K4 stage 4 的 Γ 为 4/3，上游最优为 9/8。Project S1/S2 的可行 reference 不据此声称已完成 S3-02 最优求解。这个有限对照不替代上游整套验证或理论证明。
 
 ## 剩余限制
 

@@ -5,7 +5,7 @@
 > 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 当前状态：Phase 1 单尺度 Python reference 已实现并通过本地独立验收，逐 issue PR 待全部合并。Phase 2–7、未出现的源码树与版本里程碑仍是目标，不能当作已实现能力。实际入口与冷启动结论见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
+> 当前状态：Phase 1 单尺度 Python reference 已合入 main。Phase 2 有限过滤 reference 已实现并通过81项本地测试，逐 issue PR 待全部合入 main 并验证后才进入 Phase 3。Phase 3–7、未出现的源码树与版本里程碑仍是目标，不能当作已实现能力。实际入口与验收证据见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
 
 ## 1. 文档目的
 
