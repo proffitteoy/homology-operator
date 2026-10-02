@@ -166,6 +166,12 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 [实际完整回归日志](../benchmarks/s4_native_verification.log) 记录140项全部通过（历史129项数学+4项测量+7项原型），另本地Ruff、Rust fmt/Clippy、两示例、文档、reference构建及隔离无扩展安装通过；这些不代替远端CI。采样与历史R0数据不覆盖，结果中的fixture/source/output/扩展二进制hash可逐项核验。
 
+## S4-03：packed 分解复用完整成本消融
+
+运行 `uv run --locked --no-sync python scripts/benchmark_native.py --prepared --revision <准确HEAD> --output benchmarks/s4_packed_ablation.json`。预先固定人工F2矩阵24×65/129、每行4个不同非零位（seed=6300+width）、8/64个相同生成规则RHS，3次独立冷worker，每个配置比较reference、native每次重新分解、native一次prepared，共36条，顺序seed=63。两条native路线是同一个内核的复用消融，非新增后端。
+
+完整成本包含导入、Matrix/RHS准备、rank/核/像/solve/membership/action的转换/原生计算/decode，以及序列化恢复/hash；外部process时间单独记录。reference实际统计RREF调用，native统计实际handle构造，counter开销计入成本。prepared只分解一次，另两条为3+2q次；记录原矩阵、RREF和消元峰值非零位数及持有word量，fill-in不等同RSS。匹配完整原坐标输出hash，保存源码与release二进制hash，不将人工有限矩阵代数消融当作算子端到端或S4准入收益；本项不重新采集或覆盖R0/S4-02历史数据。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。

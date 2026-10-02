@@ -148,15 +148,117 @@ def worker(backend, count, revision):
     }
 
 
+def prepared_worker(backend, count, width, revision):
+    started = perf_counter()
+    from homology_operator import Matrix
+    from homology_operator.native import PreparedMatrix
+    from homology_operator.result import content_id
+
+    imported = perf_counter()
+    rng = random.Random(6300 + width)
+    positions = [set(rng.sample(range(width), 4)) for _ in range(24)]
+    matrix = Matrix.from_rows(
+        (tuple(int(j in row) for j in range(width)) for row in positions)
+    )
+    vectors = tuple(
+        tuple(int((j + i) % 5 == 0) for j in range(width)) for i in range(count)
+    )
+    rhs = tuple(matrix.apply(x) for x in vectors)
+    ready = perf_counter()
+    decompositions = 0
+
+    def prepare():
+        nonlocal decompositions
+        decompositions += 1
+        return PreparedMatrix(matrix)
+
+    stats = None
+    if backend == "reference":
+        # Observe actual rref calls, including membership's solve.
+        original_rref = Matrix.rref
+
+        def counted_rref(self):
+            nonlocal decompositions
+            decompositions += 1
+            return original_rref(self)
+
+        Matrix.rref = counted_rref
+        rank, kernel, image = matrix.rank(), matrix.kernel_basis(), matrix.image_basis()
+        solutions = tuple(matrix.solve(x) for x in rhs)
+        membership = tuple(matrix.solve(x) is not None for x in rhs)
+        actions = tuple(matrix.apply(x) for x in vectors)
+        Matrix.rref = original_rref
+    elif backend == "prepared":
+        handle = prepare()
+        rank, kernel, image = handle.rank(), handle.kernel_basis(), handle.image_basis()
+        solutions, membership, actions = (
+            handle.solve_many(rhs),
+            handle.membership_many(rhs),
+            handle.apply_many(vectors),
+        )
+        stats = handle.statistics()
+    else:
+        handle = prepare()
+        rank, kernel, image = (
+            handle.rank(),
+            prepare().kernel_basis(),
+            prepare().image_basis(),
+        )
+        solutions = tuple(prepare().solve(x) for x in rhs)
+        membership = tuple(prepare().membership_many((x,))[0] for x in rhs)
+        actions = handle.apply_many(vectors)
+        stats = handle.statistics()
+    calculated = perf_counter()
+    output = {
+        "rank": rank,
+        "kernel": kernel,
+        "image": image,
+        "solutions": solutions,
+        "membership": membership,
+        "actions": actions,
+    }
+    from homology_operator.result import canonical_json
+
+    restored = json.loads(canonical_json(output))
+    result_hash = content_id("packed-output", restored)
+    encoded = perf_counter()
+    return {
+        "backend": backend,
+        "queries": count,
+        "width": width,
+        "shape": [24, width],
+        "source_revision": revision,
+        "fixture_hash": content_id("packed-fixture", matrix.rows),
+        "output_hash": result_hash,
+        "decomposition_count": decompositions,
+        "statistics": stats,
+        "phases_seconds": {
+            "imports": imported - started,
+            "input_and_rhs": ready - imported,
+            "algebra_including_conversion_decode": calculated - ready,
+            "serialization_restore_hash": encoded - calculated,
+        },
+        "worker_seconds": encoded - started,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--worker", choices=("native", "reference"))
+    parser.add_argument(
+        "--worker", choices=("native", "reference", "prepared", "repeated")
+    )
+    parser.add_argument("--prepared", action="store_true")
+    parser.add_argument("--width", type=int, default=65)
     parser.add_argument("--queries", type=int, default=8)
     parser.add_argument("--revision", required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.worker:
-        result = worker(args.worker, args.queries, args.revision)
+        result = (
+            prepared_worker(args.worker, args.queries, args.width, args.revision)
+            if args.prepared
+            else worker(args.worker, args.queries, args.revision)
+        )
         from homology_operator.result import canonical_json
 
         print(canonical_json(result))
@@ -198,8 +300,18 @@ def main():
         for backend in ("reference", "native")
     ]
     random.Random(62).shuffle(schedule)
+    if args.prepared:
+        schedule = [
+            (backend, count, repeat, width)
+            for repeat in range(3)
+            for count in (8, 64)
+            for width in (65, 129)
+            for backend in ("reference", "prepared", "repeated")
+        ]
+        random.Random(63).shuffle(schedule)
     records = []
-    for backend, count, repeat in schedule:
+    for job in schedule:
+        backend, count, repeat = job[:3]
         started = perf_counter()
         completed = subprocess.run(
             [
@@ -211,7 +323,8 @@ def main():
                 str(count),
                 "--revision",
                 head,
-            ],
+            ]
+            + (["--prepared", "--width", str(job[3])] if args.prepared else []),
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -220,12 +333,35 @@ def main():
         record = json.loads(completed.stdout)
         record.update(repeat=repeat, process_seconds=perf_counter() - started)
         records.append(record)
-    for count in (0, 8, 64):
+    for count in (8, 64) if args.prepared else (0, 8, 64):
+        if args.prepared:
+            for width in (65, 129):
+                if (
+                    len(
+                        {
+                            r["output_hash"]
+                            for r in records
+                            if r["queries"] == count and r["width"] == width
+                        }
+                    )
+                    != 1
+                ):
+                    raise ValueError("prepared/repeated/reference outputs differ")
+            continue
         if len({r["output_hash"] for r in records if r["queries"] == count}) != 1:
             raise ValueError("reference/native semantic outputs differ")
     import _homology_native
 
-    binaries = list((ROOT / ".task-artifacts/native-wheels").glob("*.whl"))
+    binaries = list(
+        (
+            ROOT
+            / (
+                ".task-artifacts/native-s4-63-wheels"
+                if args.prepared
+                else ".task-artifacts/native-wheels"
+            )
+        ).glob("*.whl")
+    )
     report = {
         "schema_version": 1,
         "scope": "S4-02 finite vertical prototype; not S4/S5 performance acceptance",
@@ -250,11 +386,29 @@ def main():
         },
         "records": records,
     }
+    if args.prepared:
+        report.update(
+            scope="S4-03 sparse prepared algebra ablation; not operator/S4 performance acceptance",
+            protocol={
+                "query_counts": [8, 64],
+                "widths": [65, 129],
+                "rows": 24,
+                "repeats": 3,
+                "seed": 63,
+                "fixture_seed": "6300+width; 4 random distinct bits per row",
+                "cold_workers": True,
+                "rss": "not measured; stored words/fill-in recorded",
+                "reference_counter": "actual Matrix.rref calls; counter overhead included",
+                "native_counter": "actual PreparedMatrix constructions; immutable handle count=1",
+            },
+        )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
-    print(f"{len(records)} cold workers; 3 matching output hashes; {args.output}")
+    print(
+        f"{len(records)} cold workers; matching semantic output hashes; {args.output}"
+    )
 
 
 if __name__ == "__main__":

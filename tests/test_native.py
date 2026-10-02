@@ -18,7 +18,14 @@ from homology_operator import (
     solve_projection,
 )
 from homology_operator.chain import matrix_data
-from homology_operator.native import NativeFeasibleSolver, apply_batch, geometry_batch
+from homology_operator.native import (
+    NativeFeasibleSolver,
+    PreparedMatrix,
+    apply_batch,
+    geometry_batch,
+    packed_add,
+    packed_multiply,
+)
 from homology_operator.result import require_same_identity
 from homology_operator.validation import ValidationError, validate_projection
 from test_joint import oracle, window
@@ -248,6 +255,143 @@ class NativeTests(unittest.TestCase):
             self.assertEqual(
                 result.value["class_distance"], (op.class_distance((1, 1), (1, 0)),)
             )
+
+
+@unittest.skipUnless(extension is not None, "optional native wheel not installed")
+class PackedAlgebraTests(unittest.TestCase):
+    def test_exhaustive_small_canonical_results_and_independent_enumeration(self):
+        from test_algebra import multiply_rows, span, vectors
+
+        for m, n in product(range(4), repeat=2):
+            for entries in product((0, 1), repeat=m * n):
+                matrix = Matrix(
+                    m, n, tuple(entries[i * n : (i + 1) * n] for i in range(m))
+                )
+                prepared = PreparedMatrix(matrix)
+                self.assertEqual(prepared.rref(), matrix.rref())
+                self.assertEqual(prepared.rank(), matrix.rank())
+                self.assertEqual(prepared.kernel_basis(), matrix.kernel_basis())
+                self.assertEqual(prepared.image_basis(), matrix.image_basis())
+                inputs, rhs = vectors(n), vectors(m)
+                image = {multiply_rows(matrix.rows, x) for x in inputs}
+                kernel = {
+                    x for x in inputs if multiply_rows(matrix.rows, x) == (0,) * m
+                }
+                self.assertEqual(span(prepared.image_basis(), m), image)
+                self.assertEqual(span(prepared.kernel_basis(), n), kernel)
+                self.assertEqual(
+                    prepared.apply_many(inputs),
+                    tuple(multiply_rows(matrix.rows, x) for x in inputs),
+                )
+                expected = tuple(matrix.solve(x) for x in rhs)
+                self.assertEqual(prepared.solve_many(rhs), expected)
+                self.assertEqual(
+                    prepared.membership_many(rhs), tuple(x in image for x in rhs)
+                )
+                self.assertEqual(prepared.solve_many(rhs * 2), expected * 2)
+                self.assertEqual(prepared.statistics()["decomposition_count"], 1)
+
+    def test_multiword_boundaries_products_padding_and_original_coordinates(self):
+        for n in (63, 64, 65, 127, 128, 129):
+            for matrix in (
+                Matrix.from_rows(
+                    (
+                        tuple(int((j + 3 * i) % 7 == 0) for j in range(n))
+                        for i in range(7)
+                    )
+                ),
+                Matrix.from_rows(
+                    (tuple(int((i + j) % 5 == 0) for j in range(7)) for i in range(n))
+                ),
+                Matrix.identity(n),
+                Matrix.zero(0, n),
+                Matrix.zero(n, 0),
+            ):
+                prepared = PreparedMatrix(matrix)
+                self.assertEqual(prepared.rref(), matrix.rref())
+                self.assertEqual(prepared.kernel_basis(), matrix.kernel_basis())
+                self.assertEqual(prepared.image_basis(), matrix.image_basis())
+                vectors = tuple(
+                    tuple(int((j + i) % 3 == 0) for j in range(matrix.ncols))
+                    for i in range(3)
+                )
+                self.assertEqual(
+                    prepared.apply_many(vectors),
+                    tuple(matrix.apply(x) for x in vectors),
+                )
+                rhs = tuple(matrix.apply(x) for x in vectors) + (
+                    tuple(int(j == matrix.nrows - 1) for j in range(matrix.nrows)),
+                )
+                self.assertEqual(
+                    prepared.solve_many(rhs), tuple(matrix.solve(x) for x in rhs)
+                )
+                self.assertEqual(
+                    prepared.membership_many(rhs),
+                    tuple(matrix.solve(x) is not None for x in rhs),
+                )
+                self.assertEqual(
+                    packed_add(matrix, matrix), Matrix.zero(matrix.nrows, matrix.ncols)
+                )
+                for row in prepared._handle.rref():
+                    if matrix.ncols % 64:
+                        self.assertEqual(row[-1] >> (matrix.ncols % 64), 0)
+            left = Matrix.from_rows(
+                (tuple(int((j + i) % 4 == 0) for j in range(n)) for i in range(3))
+            )
+            right = Matrix.from_rows(
+                (tuple(int((j + i) % 7 == 0) for j in range(n + 1)) for i in range(n))
+            )
+            self.assertEqual(packed_multiply(left, right), left @ right)
+            self.assertEqual(
+                packed_multiply(Matrix.zero(3, 0), Matrix.zero(0, n)), Matrix.zero(3, n)
+            )
+
+    def test_immutable_reuse_no_weight_or_projection_selection(self):
+        from dataclasses import FrozenInstanceError
+
+        matrix = Matrix.from_rows(((0, 1, 1), (0, 1, 0), (0, 0, 0)))
+        prepared = PreparedMatrix(matrix)
+        initial = prepared.statistics()
+        for count in (0, 1, 8, 64, 1024):
+            rhs = ((1, 0, 0),) * count
+            self.assertEqual(
+                prepared.solve_many(rhs), (matrix.solve((1, 0, 0)),) * count
+            )
+            self.assertEqual(prepared.statistics(), initial)
+        with self.assertRaises(FrozenInstanceError):
+            prepared.matrix = Matrix.zero(3, 3)
+        with self.assertRaises(AttributeError):
+            prepared._handle.ncols = 9
+        self.assertGreaterEqual(
+            initial["peak_nonzero_bits"], initial["source_nonzero_bits"]
+        )
+        self.assertGreaterEqual(
+            initial["peak_nonzero_bits"], initial["reduced_nonzero_bits"]
+        )
+        # 2 copies of coefficient words plus the independent row transform.
+        self.assertEqual(initial["stored_words"], 9)
+
+    def test_invalid_shapes_rhs_padding_and_unavailable_extension(self):
+        with patch("homology_operator.native._extension", side_effect=ImportError):
+            with self.assertRaises(ImportError):
+                PreparedMatrix(Matrix.zero(0, 0))
+        with self.assertRaises(ValueError):
+            PreparedMatrix(((1, 0),))
+        for operation in (
+            lambda: packed_add(Matrix.zero(2, 3), Matrix.zero(3, 2)),
+            lambda: packed_multiply(Matrix.zero(2, 3), Matrix.zero(2, 3)),
+            lambda: PreparedMatrix(Matrix.identity(2)).solve((True, 0)),
+            lambda: PreparedMatrix(Matrix.identity(2)).apply_many([(0,)]),
+            lambda: PreparedMatrix(Matrix.identity(2)).membership_many([(2, 0)]),
+            lambda: extension.PreparedMatrix([[2]], 1),
+            lambda: extension.PreparedMatrix([[]], 1),
+            lambda: extension.PreparedMatrix([[0]], 0),
+            lambda: extension.PreparedMatrix([[0, 2]], 65),
+            lambda: extension.PreparedMatrix([[0, 0]], 65).apply_many([[0, 2]]),
+            lambda: extension.PreparedMatrix([[1]], 1).solve_many([[2]]),
+        ):
+            with self.assertRaises(ValueError):
+                operation()
 
 
 if __name__ == "__main__":

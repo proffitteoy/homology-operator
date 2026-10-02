@@ -159,6 +159,12 @@ assert solution.objective.value == 2
 
 ## 同一算子的拓扑读取
 
+### 可选多字 packed F2 分解（S4-03）
+
+`from homology_operator.native import PreparedMatrix, packed_add, packed_multiply` 在现有不可变 `Matrix` 边界上提供任意字数的 packed 加乘，以及一份不可变 stable RREF。`prepared = PreparedMatrix(matrix)` 后，`rank/rref/kernel_basis/image_basis/solve/solve_many/membership_many/apply_many` 复用同一份分解；`solve_many` 按输入RHS顺序返回tuple，不可解为None，空解为tuple。原列不交换，自由变量置零，所有输出与reference canonical结果相同。
+
+分解只存链代数，不能共享权重、投影选择或solver身份。`statistics()` 给出实际分解数1、输入/RREF/消元中峰值非零位数及持有u64字数（原矩阵、RREF、行变换）；不是进程RSS或包含Python对象/输出的内存上限。查询输出按实际大小分配，batch仍含转换/decode。缺少扩展抛ImportError，不自动转reference；原型Feasible构造的64维支持限制保持到后续factorized工作包。当前使用普通packed单线程消元，没有M4RI/SIMD或并行承诺。
+
 `HomologyOperator(window,solution)` 在构造边界重新验证投影与六身份，仅接受可行解。`project/apply_operator` 对所有链执行 P/L 作用；`class_representative/same_class` 仅接受循环，非循环明确拒绝。`kernel_basis` 按需计算 ker(L)，`betti` 从其维数读取；空核基和未计算状态在 `to_result()` 中可区分。
 
 `readout(name,*args)` 给原始数学返回值附上六身份与 exact 标记；`metadata/certificate/to_result` 保留同一 P、原基、权重、solver 和实际独立证书。JSON round-trip 会重新检验 P，篡改后的合法性声明不能绕过边界。repository_revision 默认 unknown；正式验收或实验须显式传入源码提交。

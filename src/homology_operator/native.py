@@ -5,7 +5,7 @@ Unavailable, without silently calling a different solver. Geometry uses exact
 Python weights on native Pz; its cost is reported as a visible fallback.
 """
 
-from dataclasses import asdict
+from dataclasses import asdict, dataclass, field
 from time import perf_counter
 from uuid import uuid4
 
@@ -28,6 +28,112 @@ def _pack(vector):
 def _matrix(rows, ncols):
     return Matrix.from_rows(
         (tuple((row >> j) & 1 for j in range(ncols)) for row in rows), ncols=ncols
+    )
+
+
+def _words(vector):
+    return tuple(_pack(vector[i : i + 64]) for i in range(0, len(vector), 64))
+
+
+def _unwords(words, size):
+    return tuple((words[i // 64] >> (i % 64)) & 1 for i in range(size))
+
+
+@dataclass(frozen=True)
+class PreparedMatrix:
+    """One immutable native RREF reused for canonical algebra, without weights."""
+
+    matrix: Matrix
+    _handle: object = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        if not isinstance(self.matrix, Matrix):
+            raise ValueError("prepare requires a validated Matrix")
+        object.__setattr__(
+            self,
+            "_handle",
+            _extension().PreparedMatrix(
+                tuple(map(_words, self.matrix.rows)), self.matrix.ncols
+            ),
+        )
+
+    def rank(self):
+        return self._handle.rank()
+
+    def rref(self):
+        return Matrix.from_rows(
+            (_unwords(row, self.matrix.ncols) for row in self._handle.rref()),
+            ncols=self.matrix.ncols,
+        ), tuple(self._handle.pivots)
+
+    def kernel_basis(self):
+        return tuple(
+            _unwords(row, self.matrix.ncols) for row in self._handle.kernel_basis()
+        )
+
+    def image_basis(self):
+        return tuple(
+            _unwords(row, self.matrix.nrows) for row in self._handle.image_basis()
+        )
+
+    def apply_many(self, vectors):
+        vectors = tuple(_words(validate_vector(x, self.matrix.ncols)) for x in vectors)
+        return tuple(
+            _unwords(row, self.matrix.nrows) for row in self._handle.apply_many(vectors)
+        )
+
+    def solve_many(self, vectors):
+        vectors = tuple(_words(validate_vector(x, self.matrix.nrows)) for x in vectors)
+        return tuple(
+            None if row is None else _unwords(row, self.matrix.ncols)
+            for row in self._handle.solve_many(vectors)
+        )
+
+    def solve(self, vector):
+        return self.solve_many((vector,))[0]
+
+    def membership_many(self, vectors):
+        vectors = tuple(_words(validate_vector(x, self.matrix.nrows)) for x in vectors)
+        return tuple(self._handle.membership_many(vectors))
+
+    def statistics(self):
+        return {
+            name: getattr(self._handle, name)
+            for name in (
+                "decomposition_count",
+                "source_nonzero_bits",
+                "reduced_nonzero_bits",
+                "peak_nonzero_bits",
+                "stored_words",
+            )
+        }
+
+
+def packed_add(left, right):
+    if not isinstance(left, Matrix) or not isinstance(right, Matrix):
+        raise ValueError("packed addition requires validated matrices")
+    rows = _extension().packed_add(
+        tuple(map(_words, left.rows)),
+        left.ncols,
+        tuple(map(_words, right.rows)),
+        right.ncols,
+    )
+    return Matrix.from_rows(
+        (_unwords(row, left.ncols) for row in rows), ncols=left.ncols
+    )
+
+
+def packed_multiply(left, right):
+    if not isinstance(left, Matrix) or not isinstance(right, Matrix):
+        raise ValueError("packed product requires validated matrices")
+    rows = _extension().packed_product(
+        tuple(map(_words, left.rows)),
+        left.ncols,
+        tuple(map(_words, right.rows)),
+        right.ncols,
+    )
+    return Matrix.from_rows(
+        (_unwords(row, right.ncols) for row in rows), ncols=right.ncols
     )
 
 
