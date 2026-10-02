@@ -90,3 +90,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 同一对象提供 `selected_mass(z)=m_w(Pz)`、`class_distance(z,y)=m_w(P(z+y))` 以及原基索引上的 `support/shared_support/union_support`。循环域检查适用于全部几何类查询。精确权重求和保留 Fraction；浮点用 binary64 fsum，readout 标为 approximate 并记录舍入，不制造误差证书；非有限数值明确失败。
 
 例如 A=0、D=(1,1)ᵀ、权重(10,1)时，当前确定性构造选择第一坐标代表，类质量为10，而同类第二坐标代表质量为1。selected_mass 不能用作 minimum_class_mass；后者在快照中仍为 NotComputed。独立坐标测试验证交并支撑、质量恒等式及距离非负、对称、零距离同类和三角不等式。
+## 当前 stretch 与资源状态
+
+`stretch(ResourceLimits(...))` 穷举非零循环，返回当前 Γ_w(P) 及见证；默认最多100000个状态、10秒、1000000个矩阵条目。有限有理/整数权给精确 Fraction objective 和全局 optimum 的合法上界，仍无最优性或 gap 认证。浮点 objective 标近似，不返回未经舍入认证的 optimum 上界。超限结果为 ResourceExhausted，无精确 value；已见有理比值仅是当前 objective 的下界，不能充当全局最优上界。
+
+空循环空间按理论约定返回 EmptyDomain(value=0)；存在循环但 Betti=0 时返回 Computed(value=0)，两者与未查询区别。浮点溢出以 Unavailable/NumericalFailure 诊断报告。`minimum_class_mass(z)` 当前后端明确 Unavailable，未调用时快照为 NotComputed；不会填入选定质量。
