@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成项目规则、文档入口和验证工具初始化。2026-10-02 已实现 Phase 1 单尺度 reference，并通过本地 49 项测试；23 份 H0–H3/加权 fixture 有固定来源和独立 oracle。变更按 issue 提交 PR，全部合并进 main 后才推进 Phase 2。OperatorFamily/filtration、一般最优 solver 和高性能核心尚未实现，没有已发布版本。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成项目规则、文档入口和验证工具初始化。2026-10-02 已实现 Phase 1 单尺度 reference，并通过本地 57 项测试；23 份 H0–H3/加权 fixture 有固定来源和独立 oracle。变更按 issue 提交 PR，全部合并进 main 后才推进 Phase 2。OperatorFamily/filtration、一般最优 solver 和高性能核心尚未实现，没有已发布版本。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -47,7 +47,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；49 项单尺度数学/边界/身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；57 项单尺度数学/边界/身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
@@ -107,7 +107,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 空循环空间按理论约定返回 EmptyDomain(value=0)；存在循环但 Betti=0 时返回 Computed(value=0)，两者与未查询区别。浮点溢出以 Unavailable/NumericalFailure 诊断报告。`minimum_class_mass(z)` 当前后端明确 Unavailable，未调用时快照为 NotComputed；不会填入选定质量。
 ## Phase 1 PR 与合并顺序
 
-各PR只展示对应issue增量。前置合并后将后继PR转向main，保留原PR；全部Phase 1合并并在main验证后才开始Phase 2。用户负责审核与合并，监测不会自动合并。
+各PR只展示对应issue增量。前置合并后将后继PR转向main，保留原PR；全部Phase 1合并并在main验证后才开始Phase 2。本批 Phase 1 已获用户授权直接合并；后续阶段由用户审核合并，监测不会自动合并。
 
 | Issue | 增量 PR |
 | --- | --- |

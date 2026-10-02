@@ -6,7 +6,7 @@
 
 ## 当前可执行验证
 
-reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前49项测试包含独立数学联合验收，具体环境、源码身份和 fixture 见 [验收报告](PHASE1_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
+reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前57项测试包含独立数学联合验收，具体环境、源码身份和 fixture 见 [验收报告](PHASE1_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
 
 ```powershell
 pwsh -NoProfile -File ./scripts/check_docs.ps1
@@ -51,7 +51,7 @@ git diff --check
 
 ## 阶段结论边界
 
-Phase 0 逻辑契约已具备；Phase 1 Python reference、运行时结果模型、23份固定fixture及49项本地验收已完成并提交逐issue PR。全部PR由用户合并进入main后才能跨阶段；公开API及发行版本仍未冻结。
+Phase 0 逻辑契约已具备；Phase 1 Python reference、运行时结果模型、23份固定fixture及57项本地验收已完成并提交逐issue PR。全部PR按用户授权合并进入main后才能跨阶段；公开API及发行版本仍未冻结。
 
 Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
 
