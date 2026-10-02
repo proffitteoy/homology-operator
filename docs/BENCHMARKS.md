@@ -63,6 +63,46 @@ uv run --locked python scripts/benchmark_reference.py --source-root .task-artifa
 全新worker使用同一锁定Python，显式导入归档main的源码；不修改主包、依赖或历史Phase 3记录。
 用`--create-manifest --source-revision <SHA>`可以生成新manifest，但不是本次冻结证据的复跑入口。
 
+### 首次冻结结果
+
+实际被测源码为上述main，harness为干净提交`81056a652814c27f86f7501104bc1ba9aac8c3e2`；
+Windows 10 build 26100 / AMD64 / Python 3.10.11 / 单线程。
+[main与实现验证日志](../benchmarks/s4_r0_validation.json)保留main的129项数学测试、
+两示例、Ruff/format、构建、隔离wheel导入和19份/90链接文档检查；
+实现分支131项回归及其示例、静态、打包和22份/112链接检查另列，不混作main证据。
+main的准确SHA/远端CI任务结果也在记录中，当前实现PR的CI须另查。
+
+[pilot](../benchmarks/s4_r0_pilot.json)有46条计时及46条RSS；
+[R0原始样本](../benchmarks/s4_r0_samples.json)有138条计时和46条RSS；
+[独立profiling](../benchmarks/s4_r0_profile.json)保存K4 exact窗口和完整K4过滤的函数累计成本摘要。
+全部worker执行成功，无外部timeout、异常或退出失败；46份RSS均有操作系统读数。
+每配置的语义输出hash在计时/RSSworker间稳定。
+三类库内失败配置仍保留Unavailable或ResourceExhausted和实际认证状态，
+不进入成功负载的summary；“worker完成”不等于solver完成或返回最优解。
+profiling的累计时间包含嵌套调用，不能相加或混入无profiler计时。
+
+| 固定请求 | 冷进程median | 流水线median | 独立worker绝对峰值RSS |
+| --- | --- | --- | --- |
+| K4 stage 4，ExhaustiveExact / ExactOptimal，8次查询 | 138.85 ms | 16.62 ms | 21,725,184 B |
+| K4完整过滤，Feasible，8次查询 | 434.63 ms | 299.93 ms | 24,637,440 B |
+| T-B1 m=4，Structured / ExactOptimal，8次查询 | 195.97 ms | 72.06 ms | 21,766,144 B |
+
+各行仅3个开发进程样本，RSS每配置1次；不作solver间排名或收益认证。
+K4过滤的序列化/恢复分段median分别约126.07/113.22 ms，solver约6.08 ms；
+m=4结构化构造约1.03 ms，dispatch与算子验证分别约16.84/17.26 ms，
+序列化/恢复又分别约17.04/17.70 ms。
+这些结果指向完整路径的实际瓶颈，不能只报构造时间。
+各分段median不保证相加等于总成本median；原始单次分段严格互斥且和等于流水线总成本。
+冷进程还包含导入与退出，未测Rust、GUDHI、一般规模效率或正式S5置信区间。
+
+| 冻结文件 | SHA256（UTF-8/LF文件） |
+| --- | --- |
+| s4_r0_manifest.json | 5b7461fa18eab56e9c5457f8395755b6c82f77587738ef199d5965a561d53e31 |
+| s4_r0_pilot.json | 6fc7698cc1e4c7c12370a5a8eb18d79475edde3f85ac6b67043887602765ba42 |
+| s4_r0_samples.json | 614e6ec1edec3342fbb84785b7fb78f3fc8c96fd88b0ae2fca5aca3fa31c7a99 |
+| s4_r0_validation.json | 0e888c6d0da7f27537564c8516bfdb70001bf33e9b6bcf73fc0ac84cd1d1a66b |
+| s4_r0_profile.json | 1111f609bafae07ecf20b4928c649902e0c64ed763ebc97328a9ab85c2d7ec02 |
+
 ## Phase 3 solver 对照（历史协议）
 
 运行：
