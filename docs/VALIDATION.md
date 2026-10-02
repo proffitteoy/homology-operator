@@ -116,6 +116,18 @@ GUDHI 同输入 F2 正式对拍属于 S5，不把现有独立 reduction 或归�
 | [S4-03 回归日志](../benchmarks/s4_packed_verification.log) | 144 项历史全回归，另增 4 packed 差分/枚举与复用测试；详细源码/成本见 BENCHMARKS |
 | [S4-04 回归日志](../benchmarks/s4_compact_verification.log) | 152 项历史全回归与无扩展 wheel 恢复；源码及有限 time/RSS 记录见 BENCHMARKS |
 
+### S4-06 几何与工作区
+
+S4-06 增加6项几何 workspace 回归：显式/Factorized/HC 在 0/1/63/64/65/127/128/129 维上的原坐标输出；u64 最大值、单次求和溢出与超大整数/任意正有理权；binary64 fsum、subnormal 与浮点溢出；0/1/8/64/1024 两次批查询和真实缓冲扩容复用；非循环/非法坐标/索引拒绝；projection/weight/basis/run 混用、查询 JSON 往返和 NotComputed/Computed 快照历史。既有23个冻结窗口的几何对拍继续经过新入口，独立原坐标质量与共享质量恒等式同时核对。缺少扩展显式返回 Unavailable，native CI 强制这些测试实际运行；有限性能采样另见 [BENCHMARKS](BENCHMARKS.md)，不替代 S4/S5 准入。
+
+### S4-04–07 联合回归
+
+`tests/test_s4_integration.py` 在同一过滤中组合四种限定 solver 与 CyclicAction、
+HC、Factorized，检查几何 workspace、全部区间传输、历史基、schema 1/2 与无扩展恢复。
+原生组合测试要求重建后的当前扩展；reference-only 测试不把跳过解释为 native 通过。
+整合前 main `f0c15265` 的163项以及各工作包历史日志保持原记录；本次候选的实际测试数、
+命令与最终 CI 另按准确 head 记录，不用旧分支成绩替代。
+
 ### S4-07 过滤验收
 
 S4-07 新增相邻映射/历史基的5689个原 corpus 对拍、共享快照 schema 1/2 篡改/往返、
@@ -158,7 +170,7 @@ Rust 单测/fmt/Clippy、Ruff、文档检查、reference sdist/wheel、真实无
 [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 新增 8 项验收（其中 2 项不依赖 Rust），覆盖23窗口的因子/HC 全链作用与几何、
 11过滤族的区间 transport/rank/barcode/恢复、完整增广逆及小窗口、字边界、
 阻断完整 P/展开 G/U 路径、非法因子/零投影/身份版本篡改与资源失败。
-这些新增实现尚不能引用上述历史 main CI 作认证；原生几何/workspace 仍需对应支持域和独立验收。
+这些历史记录不替代当前整合 head 的回归；原生几何/workspace 已纳入上述联合测试。
 全后端性能、GUDHI、采样稳定性、应用收益与发行依各自门槛验收；有限检查不推出一般证明或通用加速。
 阶段报告和原始实验保留当时状态、失败和不利结果。
 

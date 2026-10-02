@@ -3,7 +3,7 @@
 日期：2026-10-02。管理入口：[GitHub Project #3](https://github.com/users/proffitteoy/projects/3)。
 规划时的实现/调研基线：`main @ 54ce78bccdcba619ffa2a4d76aeb450bfd24270e`；历史 Phase 3 的 #49–#58 已合并，
 该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788) 已通过。
-本文保留工作包、依赖、验收条件与规划来源。规划建立时尚无 Rust 后端；此后 S4-01–04 已交付并合并，不能继续把整轮描述为“未实现”。正式 GUDHI 对拍和 S4/S5 总验收仍待后续工作。
+本文保留工作包、依赖、验收条件与规划来源。规划建立时尚无 Rust 后端；此后 S4-01–04 已交付并合并，不能继续把整轮描述为“未实现”。S4-05/07 也已进入整合前 main `f0c15265`；S4-06 原 PR 只合入依赖分支，本次整合补齐其几何工作区增量。正式 GUDHI 对拍和 S4/S5 总验收仍待后续工作。
 
 ## 当前进展与阅读方式
 
@@ -11,7 +11,7 @@
 当前 main 的 reference/native CI 与精确 SHA 集中在 [文档索引](README.md)。
 R0、单字宽原型、多字 packed / PreparedMatrix 和有限复用实验见 [性能协议](BENCHMARKS.md)。
 S4-04 的因子/HC action、测试与有限测量已由 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 合入 main。
-API 与限制见 [INTERFACE](INTERFACE.md)；原生几何/workspace、完整集成与阶段验收仍按独立工作包推进。
+API 与限制见 [INTERFACE](INTERFACE.md)；本次源代码整合纳入几何/workspace，S4-08 的完整后端支持、资源取消和阶段验收仍按独立工作包推进。
 其余工作包仍按依赖与验收推进，不从前三项有限实验推断全后端性能或 S4/S5 完成。
 
 下方工作包清单保留原始交付要求；复选框是规划清单，不是实时 GitHub Status。

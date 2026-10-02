@@ -161,6 +161,12 @@ JSON 将 Fraction 编码为 `$fraction` 标签；普通单键 `$fraction` / `$ma
 读取和算子构造均重新验证投影；优化认证额外重放证书。规范编码与容器冻结不替代数学验证。
 破坏格式/语义的变化需版本化；保留旧 Matrix 与受支持 handle 的明确恢复边界。
 
+## 原生几何批查询与进程内准备
+
+S4-06 的 `geometry_batch` 在一个 QueryResult 中保存代表、selected_mass、距离及原坐标支撑交并，六身份来自传入的算子。`GeometryWorkspace` 持有同一 P/基/权重的原生准备与私有缓冲，复用时核对完整身份（含 solver_run_id）；准备对象不进入 OperatorResult，也不把 kernel/stretch 或未查询几何标为 Computed。批记录只有被调用者显式加入 query_results 时才进入快照，恢复继续复核身份与合法投影。
+
+质量算术由 window.arithmetic 决定：u64 逐项检查求和，超界整数/溢出总和及非整数 Fraction 使用任意精度后备，浮点保留 binary64 fsum。details 保存准备/转换/原生/绑定/decode/后备分段、后备次数和原因；准备子项不得与准备总成本重复相加，结果冻结计入完整调用。后备不更换 P 或认证等级。空批为 Computed 空 tuple；合法零质量仍为0；缺少扩展或不支持的 action 为 Unavailable；非循环/混用拒绝，浮点溢出明确 NumericalFailure。
+
 ## OperatorFamilyResult
 
 `family.to_result()` 返回不可变族快照，默认 schema_version=2。两个版本共有字段包括：

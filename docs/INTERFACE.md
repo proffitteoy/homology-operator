@@ -314,3 +314,36 @@ solution = solve_projection(problem, "NativeExhaustiveExactSolver")
 
 [S4-05 有限同 solver 协议](BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
 它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。
+
+
+### 几何批查询与 workspace（S4-06）
+
+`geometry_batch` 只接受循环，支持多字显式 Matrix 和 Factorized/HC；每批每条循环只投影一次，
+由同一 packed Pz 的 XOR/AND/OR 计算距离与支撑交并，索引保持原基顺序。
+沿用上方的 `op`，安装匹配当前源码的扩展后：
+
+```python
+from homology_operator.native import GeometryWorkspace, geometry_batch
+
+cycles = ((1, 0), (0, 1))
+workspace = GeometryWorkspace(op)
+first = geometry_batch(op, cycles, pairs=((0, 1),), workspace=workspace)
+second = geometry_batch(op, cycles, pairs=((0, 1),), workspace=workspace)
+assert first.state == "Computed"
+assert first.value == second.value
+assert first.value["class_distance"] == (op.class_distance(*cycles),)
+```
+
+workspace 持有同一 action/边界/权重及私有缓冲，核对全部六身份，包括 solver_run_id；
+准备和查询不改变算子或既有快照历史。省略 workspace 时每次建立临时准备对象；
+输出记录独立不可变，准备对象不序列化。缓冲保留最大已用容量，不提供并发共享保证或 RSS 硬上限。
+CyclicAction 的原生几何和缺少扩展返回 Unavailable，标量读取与过滤 tracking 仍可使用。
+
+正整数及分母为1的 Fraction 使用检查溢出的 u64 求和；单项超界、求和溢出或非整数有理数
+显式使用 Python 任意精度后备，浮点保持原坐标顺序的 binary64 fsum。浮点溢出抛出带
+NumericalFailure 的 ValueError。exact 只描述几何算术，不升级 solver 认证。
+
+QueryResult.details 分开记录准备/输入转换/原生/绑定/decode/权重后备成本、次数与原因；
+准备子项不与准备总量重复相加，结果冻结计入调用者完整计时。statistics() 的 completed_batches
+是原生步骤完成数，Python 浮点后备失败后也可能增加；projection_buffer_growths 用于检查复用。
+0/1/8/64/1024 的历史完整成本与退化见 [性能协议](BENCHMARKS.md)。
