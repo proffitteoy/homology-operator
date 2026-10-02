@@ -403,6 +403,8 @@ tests/oracle/
 
 ## 8. 显式矩阵与 Matrix-Free 后端
 
+当前 reference 除 Matrix 外已接入 `CyclicAction(m, complement)`，实现固定T-B1族的P或L，m限定2、3、4。handle只存参数和表示版本；生成集validator、project/L、身份和快照恢复无需物化完整P。核基读取流式选择像空间基；transport先把源核嵌入目标链，再应用目标action，避免先形成P乘整个包含矩阵。A/D及输出核基、transport矩阵仍是显式对象，不提供全流程稀疏或高性能承诺。具体支持域见 [solver契约](SOLVER_CONTRACT.md)。
+
 公共语义不应依赖实现是否显式存储 \(P\) 或 \(L\)。
 
 统一抽象建议为：

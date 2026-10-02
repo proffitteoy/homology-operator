@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支增加 Rank2ExactSolver，当前109项本地测试通过。贪心 solver 已经 PR #51 合入 main，其余专用 solver、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支含 Rank2ExactSolver 与限定循环族的 StructuredFamilySolver，当前116项本地测试通过。贪心 solver 已经 PR #51 合入 main；阶段联合验收、高性能核心与发行尚未完成。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -48,7 +48,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；109 项单尺度/过滤数学、solver 边界与身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；116 项单尺度/过滤数学、solver 边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
@@ -97,7 +97,23 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 
 `solve_projection(ProjectionProblem(window, requested_certificate_level="ExactOptimal"), "Rank2ExactSolver")` 仅支持精确正权且 β=2。一般链窗口枚举两个生成元的边界修正，用 T5 的三色 Pareto 消去减少支撑，以三个类的精确最短质量计算 objective；独立 verifier 仍用全部循环与完整截面搜索核对最优性。`GraphCycle` 额外验证 k=1 与图关联矩阵。`ThreeTerminalCut` 要求 solver_options 中明确给出 `dual_vertex_count`、按原链坐标排序的 `dual_edges` 和三个有序 `terminals`，验证 ker(A)=对偶割空间、im(D)=内部顶点割空间后，按 T-A3 搜索三标签划分。此代数证书不声称识别平面嵌入；无几何假设的平面/欧氏环面请求明确不支持。支持域、证书、确定性及有限资源限制见 [solver 契约](docs/SOLVER_CONTRACT.md)。
 
-`validate_projection(window,P)` 与 solver 独立，验证 P²=P、L²=L、AP=0、PD=0，且在 ker(A) 的完整基上验证 z+Pz 属于 im(D)。失败抛带 `InternalValidationFailed` 状态与具体失败项的 `ValidationError`。非零同调上的零投影即便前三项成立也被拒绝；Ready 序列化记录重新执行该验证，输入证书布尔值不作为信任来源。
+`StructuredFamilySolver` 仅识别固定 T-B1 的循环族：n=2^m−1、m=2/3/4、A=0、im(D)=ker(P_m)，且所有权重相同且精确。P_m为移位1、2、…、2^(m−1)的异或；理论来源的循环码、迹和Vandermonde论证保留经典编码论归属。`matrix_free_output=True` 返回版本化 CyclicAction handle，直接project/L/身份/序列化不物化完整P。独立生成集验证合法性，再以列质量与低重量核向量穷举认证 Γ*=m；不将研究定理标签当成验证标志。
+
+```python
+window = ChainWindow(1, Matrix.zero(0, 3),
+                     Matrix.from_columns(((1, 1, 1),), nrows=3),
+                     (), ("x", "y", "z"), ("b",), (1, 1, 1))
+solution = solve_projection(ProjectionProblem(
+    window, input_structure="CyclicTrace", matrix_free_output=True,
+    requested_certificate_level="ExactOptimal"), "StructuredFamilySolver")
+op = HomologyOperator(window, solution)
+assert op.project((1, 0, 0)) == (0, 1, 1)
+assert solution.objective.value == 2
+```
+
+输入A/D仍是显式矩阵，核基和transport输出可分配矩阵；matrix-free只描述P/L的存储与作用。结构化handle与显式矩阵采用不同表示身份，跨表示查询混用会被拒绝；同一handle往返身份稳定。未声明此结构、非等权、浮点或m≥5的请求明确不支持。
+
+`validate_projection(window,P)` 与 solver 独立，验证 P²=P、L²=L、AP=0、PD=0，且在 ker(A) 的完整基上验证 z+Pz 属于 im(D)。Matrix使用显式代数，CyclicAction使用完整坐标生成集。失败抛带 `InternalValidationFailed` 状态与具体失败项的 `ValidationError`。非零同调上的零投影即便前三项成立也被拒绝；Ready 序列化记录重新执行该验证，输入证书布尔值不作为信任来源。
 
 ## 同一算子的拓扑读取
 

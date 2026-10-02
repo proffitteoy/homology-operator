@@ -6,7 +6,7 @@ from fractions import Fraction
 from math import fsum, isfinite
 from types import MappingProxyType
 
-from .algebra import Matrix, validate_vector
+from .algebra import Matrix, CyclicAction, validate_vector
 from .chain import ChainWindow
 from .result import OperatorResult, QueryResult, _freeze, make_identity
 from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
@@ -46,7 +46,13 @@ class HomologyOperator:
         ):
             raise ValueError("repository_revision must be a nonempty string")
         object.__setattr__(self, "P", self.solution.projection)
-        object.__setattr__(self, "L", Matrix.identity(self.window.n) + self.P)
+        object.__setattr__(
+            self,
+            "L",
+            CyclicAction(self.P.m, not self.P.complement)
+            if isinstance(self.P, CyclicAction)
+            else Matrix.identity(self.window.n) + self.P,
+        )
         object.__setattr__(self, "identity", MappingProxyType(identity))
         object.__setattr__(
             self,
@@ -66,7 +72,9 @@ class HomologyOperator:
                 {
                     "repository_revision": self.repository_revision,
                     "theory_revision": THEORY_REVISION,
-                    "backend": "python-dense-reference",
+                    "backend": "python-structured-reference"
+                    if isinstance(self.P, CyclicAction)
+                    else "python-dense-reference",
                     "backend_version": "0.0.2.dev0",
                     "solver": self.solution.method,
                     "solver_version": "0.0.2.dev0",

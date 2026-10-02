@@ -8,7 +8,7 @@ from math import isfinite
 from time import perf_counter
 from uuid import uuid4
 
-from .algebra import Matrix
+from .algebra import Matrix, CyclicAction
 from .chain import ChainWindow, matrix_data
 from .result import QueryResult, _freeze, content_id, make_identity
 
@@ -121,7 +121,7 @@ class ProjectionProblem:
 class ProjectionSolution:
     status: str
     solver_run_id: str
-    projection: Matrix | None = None
+    projection: Matrix | CyclicAction | None = None
     identity: object = None
     certificate_level: str | None = None
     objective: QueryResult = field(default_factory=lambda: QueryResult("NotComputed"))
@@ -345,6 +345,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "FeasibleSolver": FeasibleSolver,
             "ExhaustiveExactSolver": ExhaustiveExactSolver,
             "Rank2ExactSolver": Rank2ExactSolver,
+            "StructuredFamilySolver": StructuredFamilySolver,
             "GreedyCertifiedSolver": GreedyCertifiedSolver,
         }
         if backend not in constructors:
@@ -916,6 +917,121 @@ class Rank2ExactSolver:
             arithmetic_policy=window.arithmetic,
             lower_bound=lower,
             upper_bound=value,
+            solver_config=config,
+        )
+
+
+class StructuredFamilySolver:
+    """Pinned T-B1 cyclic trace family, with explicit recognition and a small cap."""
+
+    def capabilities(self):
+        return _freeze(
+            {
+                **FeasibleSolver().capabilities(),
+                "arithmetic_policies": ("ExactInteger", "ExactRational"),
+                "input_structures": ("CyclicTrace",),
+                "certificate_levels": (
+                    "Feasible",
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                    "ExactOptimal",
+                ),
+                "tie_break_policies": ("StableBasisOrder", "StructuredCanonical"),
+                "matrix_free_output": True,
+            }
+        )
+
+    def solve(self, problem):
+        run_id = str(uuid4())
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(
+                rejection[0],
+                run_id,
+                method="StructuredFamilySolver",
+                diagnostics=(rejection[1],),
+            )
+        window = problem.window
+        config = problem.solver_config("StructuredFamilySolver")
+        budget = _Budget(problem.resource_limits)
+        failure = None
+        try:
+            budget.step()
+            m = (window.n + 1).bit_length() - 1
+            if not 2 <= m <= 4 or window.n != (1 << m) - 1:
+                failure = "CyclicTrace supports n=2^m-1 for m=2,3,4"
+            else:
+                action = CyclicAction(m)
+                budget.entries(
+                    window.m * window.n
+                    + window.n * window.p
+                    + window.n * m
+                    + (0 if problem.matrix_free_output else window.n**2)
+                )
+                if (
+                    window.A.rank() != 0
+                    or len(set(window.weights)) != 1
+                    or window.D.rank() != window.n - (1 << (m - 1))
+                    or any(any(action.apply(z)) for z in window.D.transpose().rows)
+                ):
+                    failure = "CyclicTrace requires A=0, uniform exact weights, and im(D)=ker(P_m)"
+                budget.step()
+            if failure is not None:
+                return ProjectionSolution(
+                    "Unavailable",
+                    run_id,
+                    method="StructuredFamilySolver",
+                    arithmetic_policy=window.arithmetic,
+                    tie_break_policy=problem.tie_break_policy,
+                    solver_config=config,
+                    resource_usage=budget.usage(),
+                    diagnostics=(failure,),
+                )
+            projection = (
+                action
+                if problem.matrix_free_output
+                else Matrix.from_columns(
+                    (
+                        action.apply(tuple(int(i == j) for i in range(window.n)))
+                        for j in range(window.n)
+                    ),
+                    nrows=window.n,
+                )
+            )
+            budget.step()
+        except _Exhausted as error:
+            return ProjectionSolution(
+                "ResourceExhausted",
+                run_id,
+                method="StructuredFamilySolver",
+                arithmetic_policy=window.arithmetic,
+                tie_break_policy=problem.tie_break_policy,
+                solver_config=config,
+                resource_usage=budget.usage(),
+                diagnostics=(str(error),),
+            )
+        identity = make_identity(window, projection, run_id, problem.tie_break_policy)
+        return ProjectionSolution(
+            "Solved",
+            run_id,
+            projection,
+            identity,
+            "ExactOptimal",
+            QueryResult(
+                "Computed",
+                Fraction(m),
+                identity,
+                True,
+                {"witness": (1,) + (0,) * (window.n - 1)},
+            ),
+            {"optimization": {"kind": "CyclicTrace", "m": m, "kernel_distance": m + 1}},
+            budget.usage(),
+            (),
+            problem.tie_break_policy,
+            method="StructuredFamilySolver",
+            arithmetic_policy=window.arithmetic,
+            lower_bound=Fraction(m),
+            upper_bound=Fraction(m),
             solver_config=config,
         )
 

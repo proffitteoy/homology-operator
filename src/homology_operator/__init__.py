@@ -2,13 +2,14 @@
 
 __version__ = "0.0.2.dev0"
 
-from .algebra import Matrix
+from .algebra import Matrix, CyclicAction
 from .chain import ChainWindow, InvalidInput
 from .result import OperatorResult, QueryResult
 from .solver import (
     FeasibleSolver,
     ExhaustiveExactSolver,
     Rank2ExactSolver,
+    StructuredFamilySolver,
     GreedyCertifiedSolver,
     ProjectionProblem,
     ProjectionSolution,
@@ -21,6 +22,7 @@ from .family import OperatorFamily, OperatorFamilyResult
 
 __all__ = [
     "Matrix",
+    "CyclicAction",
     "ChainWindow",
     "InvalidInput",
     "OperatorResult",
@@ -28,6 +30,7 @@ __all__ = [
     "FeasibleSolver",
     "ExhaustiveExactSolver",
     "Rank2ExactSolver",
+    "StructuredFamilySolver",
     "GreedyCertifiedSolver",
     "ProjectionProblem",
     "ProjectionSolution",
