@@ -289,16 +289,41 @@ def main():
             cwd=ROOT,
             text=True,
             capture_output=True,
-            check=True,
+            check=False,
         )
+        if completed.returncode:
+            records.append(
+                {
+                    "backend": backend,
+                    "case": name,
+                    "repeat": repeat,
+                    "mode": "rss" if rss else "timing",
+                    "status": "WorkerFailed",
+                    "returncode": completed.returncode,
+                    "stdout": completed.stdout,
+                    "stderr": completed.stderr,
+                    "failed_process_seconds": perf_counter() - started,
+                }
+            )
+            continue
         record = json.loads(completed.stdout)
+        record["status"] = "Completed"
         record["repeat"] = repeat
         if not rss:
             record["process_seconds"] = perf_counter() - started
         records.append(record)
-    for name in CASES:
-        if len({r["output_hash"] for r in records if r["case"] == name}) != 1:
-            raise ValueError("explicit/factor/HC full-chain semantic outputs differ")
+    mismatched = [
+        name
+        for name in CASES
+        if len(
+            {
+                r["output_hash"]
+                for r in records
+                if r["case"] == name and r["status"] == "Completed"
+            }
+        )
+        != 1
+    ]
     import _homology_native
 
     wheels = list((ROOT / ".task-artifacts/native-s4-64-wheels").glob("*.whl"))
@@ -328,15 +353,19 @@ def main():
             "certification": "all Feasible; objective NotComputed; no PH bypass",
             "limits": "finite size and sampling; RSS is absolute process peak including imports/conversions/validators/restore",
         },
+        "mismatched_cases": mismatched,
         "records": records,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
     )
+    failures = sum(r["status"] != "Completed" for r in records)
     print(
-        f"{len(records)} fresh workers; four matching full-chain hashes; {args.output}"
+        f"{len(records)} fresh workers; failures={failures}; mismatches={mismatched}; {args.output}"
     )
+    if failures or mismatched:
+        raise SystemExit("failed/mismatched evidence preserved; study incomplete")
 
 
 if __name__ == "__main__":

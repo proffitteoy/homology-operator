@@ -193,6 +193,33 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 保存源码/输入/二进制hash、β/n、实际状态/认证/预算、序列化字节与factor条目，保留全部不利结果。HC在β接近n时H/C输出可大于dense P，Factorized包含A/D和逆非零行，消元有平方行变换workspace；这些成本与完整进程RSS一并报告。有限3次时间与1次RSS不足以推断S4准入或稳健速度排名，不据此自动选择默认表示，不改写R0或S4-02/03原始证据。
 
+实际采样源码为干净提交 `c8a2f5bdf5bfa2ab387ac271b56e330205d45cfc`，
+Windows x64 / CPython 3.10.11，release wheel与扩展hash保存在
+[48条原始记录](../benchmarks/s4_compact_action.json)；该JSON的LF SHA256为
+`75b566273ff1980162c51d93803b80f3c757ef1a3cb538ba904d18190153c69f`。
+36个冷timing与12个独立RSS worker全部成功，四组完整语义hash跨三表示一致。
+以下三元组依次为explicit / Factorized / HC；worker包含imports到恢复与生成元hash，
+外部process另含进程启动/退出。每个RSS值仅为一个独立进程的绝对峰值。
+
+| 输入 | 完整worker中位数 ms | 外部process中位数 ms | 绝对RSS MiB | action逻辑条目 |
+| --- | --- | --- | --- | --- |
+| K4 stage4，β/n=2/6 | 49.573 / 51.867 / 50.791 | 199.308 / 200.826 / 200.202 | 19.625 / 19.785 / 19.645 | 36 / 48 / 24 |
+| H0 interval stage0，β/n=2/2 | 43.119 / 45.611 / 45.284 | 179.877 / 180.179 / 186.699 | 19.488 / 19.652 / 19.777 | 4 / 0 / 8 |
+| 人工n65、β2 | 1043.010 / 1856.347 / 403.276 | 1187.412 / 2017.651 / 545.801 | 20.844 / 20.965 / 20.504 | 4225 / 8190 / 260 |
+| 人工n65、β64 | 575.648 / 259.490 / 1484.519 | 715.676 / 406.335 / 1633.926 | 20.387 / 20.504 / 21.145 | 4225 / 130 / 8320 |
+
+真实小窗口未见可靠收益；人工小β时HC较快而Factorized退化，人工高β时结果相反，
+所有退化保留。Factorized在边界秩高时非零U行和D仍可大于dense P，HC在β接近n时H/C同样如此。
+两种紧凑表示解决P/G/U/L的显式展开与身份/恢复语义，不保证任意输入都更省空间或更快。
+这是共享开发主机上的有限样本，未控制主机其他负载，也未采尾分位或置信区间；
+本聊天的性能worker串行，计时与RSS分开。该结果不用于默认路线选择或S4退出收益认定。
+
+[152项完整数学回归与独立wheel恢复日志](../benchmarks/s4_compact_verification.log)
+记录同一源码的实际验证：包含23个窗口、完整非循环生成元、至多3×3全增广逆、
+多字边界、零投影/因子/版本/身份篡改、no-dense guard和11个族的全区间transport/barcode。
+额外独立安装reference wheel，在没有native扩展时恢复Factorized/HC并实跑2项纯Python边界测试。
+两示例、Ruff、Rustfmt/Clippy、release与reference打包、文档检查另通过；远端CI按PR准确head核验。
+
 ## S4-06：几何批查询与 workspace 的有限完整成本协议
 
 复跑入口（安装 release native wheel 后）：
@@ -224,7 +251,7 @@ q1024 的第二批 warm 中位数与完整冷worker中位数（各3次，毫秒�
 
 有限样本显示批量复用投影降低大批量成本；workspace相对临时batch的增量收益不足以作通用排名，有理/大整数/浮点/65维本组中位数均更慢。q0 的workspace/scalar完整worker中位数比为1.013/1.295/1.044/1.149/1.052/1.071（按表序），准备与固定成本有退化。独立Windows绝对峰值RSS：scalar范围27,930,624–33,169,408 B、workspace范围28,295,168–32,903,168 B；五个K4组workspace更高，65维略低，不宣称普遍内存收益。workspace第二批无新增projection缓冲扩容；原生每批仅q次P作用。q1024有理/大整数/浮点各2048次权重后备，溢出组1705次求和溢出后备，全部计入冷/warm调用；空批没有数值后备。
 
-[158项完整回归与最终release wheel的7项复核日志](../benchmarks/s4_geometry_verification.log) 保存真实本地结果。该轮在独立worktree完成；未合并#64的核心几何实现已被共享工作区提交 `3a6c6fa` 收入，其上独立#66增量保存测试、协议与证据。前置PR/最终PR准确head的CI另核实，不以本地通过代替远端或main退出验收。
+[158项完整回归与最终release wheel的7项复核日志](../benchmarks/s4_geometry_verification.log) 保存真实本地结果。该轮在独立worktree完成；同步#64的已发布依赖后保留其独立报告与本项几何增量。前置PR/最终PR准确head的CI另核实，不以本地通过代替远端或main退出验收。
 
 ## 一般搜索准入实验（S3-06）：冻结协议
 
