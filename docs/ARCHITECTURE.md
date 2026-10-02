@@ -98,7 +98,7 @@ Partial 族保留失败阶段，不能以空链空间补齐缺失结果。
 | `Matrix` | reference 的显式 P/L；单字宽 `NativeFeasibleSolver` 也回传显式 G/U/P |
 | `CyclicAction` | 已合并的固定 T-B1 结构族，m∈{2,3,4}；参数 handle，无完整 P 存储 |
 | `PreparedMatrix` | 已合并的不可变多字 packed 消元 handle；复用 rank/kernel/image/membership/solve，独立于权重与投影选择 |
-| `CompactAction` / `NativeFactorizedSolver` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 待合并：广义逆因子或 HC 表示，不物化完整 P/L |
+| `CompactAction` / `NativeFactorizedSolver` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合并：广义逆因子或 HC 表示，不物化完整 P/L |
 
 多字代数已经存在，但 `NativeFeasibleSolver` 和显式 P 的 native 批查询仍有 64 维限制。
 reference 安装无需扩展；扩展缺失或 solver 不支持请求时，solver/批查询返回 Unavailable。

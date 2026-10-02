@@ -114,11 +114,12 @@ GUDHI 同输入 F2 正式对拍属于 S5，不把现有独立 reduction 或归�
 | [Phase 3](PHASE3_REPORT.md) | main 54ce78b、129 项数学测试，五限定 solver/认证、对照/no-go 与联合验收 |
 | [S4-02 回归日志](../benchmarks/s4_native_verification.log) | 140 项历史全回归：129 数学 + 4 测量 + 7 原型；原型尺寸有限 |
 | [S4-03 回归日志](../benchmarks/s4_packed_verification.log) | 144 项历史全回归，另增 4 packed 差分/枚举与复用测试；详细源码/成本见 BENCHMARKS |
+| [S4-04 回归日志](../benchmarks/s4_compact_verification.log) | 152 项历史全回归与无扩展 wheel 恢复；源码及有限 time/RSS 记录见 BENCHMARKS |
 
 [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 新增 8 项验收（其中 2 项不依赖 Rust），覆盖23窗口的因子/HC 全链作用与几何、
 11过滤族的区间 transport/rank/barcode/恢复、完整增广逆及小窗口、字边界、
 阻断完整 P/展开 G/U 路径、非法因子/零投影/身份版本篡改与资源失败。
-这些待合并开发实现尚不能引用上述历史 main CI 作认证；原生几何/workspace 仍需对应支持域和独立验收。
+这些新增实现尚不能引用上述历史 main CI 作认证；原生几何/workspace 仍需对应支持域和独立验收。
 全后端性能、GUDHI、采样稳定性、应用收益与发行依各自门槛验收；有限检查不推出一般证明或通用加速。
 阶段报告和原始实验保留当时状态、失败和不利结果。
 

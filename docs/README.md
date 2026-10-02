@@ -25,11 +25,11 @@ GitHub `main` 为 `d9bdf3bfe7a3fb365929d99d90cb85ca7c367f23`。
 | S4-01 / PR #77 | R0 完整成本基线、采样与 profiling | 有限基线，非 S4/S5 最终验收 |
 | S4-02 / PR #78 | 可选 safe Rust 可行构造及批查询 | 原型三个链空间最多 64 维；真实窗口记录包含退化 |
 | S4-03 / PR #79 | 多字 packed F2、`PreparedMatrix`、多 RHS 与复用消融 | 不解除单字宽 `NativeFeasibleSolver` 的限制；不代表全算子加速 |
-| S4-04 / [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) | `6c40b93` 提供 `CompactAction` / `NativeFactorizedSolver`、因子与 HC 表示、测试和测量记录 | PR 待合并；不能引用 main CI 认证 |
+| S4-04 / [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) | `6c40b93` 提供 `CompactAction` / `NativeFactorizedSolver`、因子与 HC 表示、测试和测量记录 | 已合并；保留同 P 语义与有限测量，非 S4 总验收 |
 | S4 后续 / S5 | 限定 solver 加速、过滤优化、后端集成、GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 private，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
-使用说明以已合并 API 为主；待合并接口明确标记“开发中”并链接实现 PR。
+使用说明以已合并 API 为主；接口与测量链接到对应实现 PR，阶段完成仍需独立验收。
 测试总数以指定 checkout 的实际运行结果为准，历史报告中的计数不作为滚动状态。
 
 ## 开发计划与证据

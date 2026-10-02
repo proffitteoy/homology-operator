@@ -17,7 +17,7 @@
 | `Rank2ExactSolver` | 精确权、β=2；实际验证的一般/图/三终端结构 | 完整支持搜索/证书；不凭几何名称启用归约 |
 | `StructuredFamilySolver` | 明确 CyclicTrace，m=2/3/4、等精确正权；Matrix 或 CyclicAction | 固定公式与独立最优证书，不接受任意结构族 |
 | `NativeFeasibleSolver`（对象调用） | 可选 Rust，三个链空间最多 64 维；同 reference G/U/P | Feasible，独立 Python 验证；缺扩展/超范围为 Unavailable |
-| `NativeFactorizedSolver`（[PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 待合并） | matrix_free_output=True；Factorized / HC | Feasible，紧凑作用经独立验证；尚未完成阶段验收 |
+| `NativeFactorizedSolver`（[PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合并） | matrix_free_output=True；Factorized / HC | Feasible，紧凑作用经独立验证；尚未完成阶段验收 |
 
 `PreparedMatrix` 是原生代数分解工具，不是 projection solver。
 GeneralSearchSolver 未注册为公共后端；冻结局部搜索 no-go 见 [性能协议](BENCHMARKS.md)。
@@ -214,7 +214,7 @@ ProjectionSolution
 ```text
 Matrix
 CyclicAction
-CompactAction      # S4-04 / PR #80 待合并
+CompactAction      # S4-04 / PR #80 已合并
 ```
 
 ---

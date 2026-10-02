@@ -252,10 +252,10 @@ statistics 是分解/非零位/存储 word 的诊断，不是峰值 RSS。
 缺扩展时，native solver/批查询返回 Unavailable；直接创建 PreparedMatrix 或调用 packed 工具抛 ImportError。
 没有隐式 reference fallback。无效矩阵、RHS 或坐标明确拒绝。
 
-### 因子化 action（S4-04 开发中）
+### 因子化 action（S4-04）
 
-[PR #80](https://github.com/proffitteoy/homology-operator/pull/80)（核对 head `6c40b93`）提供 `CompactAction` 和 `NativeFactorizedSolver`，尚未合入 main/发行。
-本节示例要求检出该 PR 的源码并构建匹配的扩展；main 安装不提供这些接口，旧原型 wheel 也不能替代。调用形态为：
+[PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合入 main，提供 `CompactAction` 和 `NativeFactorizedSolver`。
+使用时构建匹配当前源码的扩展；旧原型 wheel 不能替代。调用形态为：
 
 ```python
 from homology_operator.native import NativeFactorizedSolver

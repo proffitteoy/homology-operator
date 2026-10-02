@@ -10,7 +10,7 @@
 2026-10-02 核对：S4-01（PR #77）、S4-02（PR #78）与 S4-03（PR #79）已合并；
 当前 main 的 reference/native CI 与精确 SHA 集中在 [文档索引](README.md)。
 R0、单字宽原型、多字 packed / PreparedMatrix 和有限复用实验见 [性能协议](BENCHMARKS.md)。
-S4-04 的因子/HC action、测试与有限测量在 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 中，尚未合入 main。
+S4-04 的因子/HC action、测试与有限测量已由 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 合入 main。
 API 与限制见 [INTERFACE](INTERFACE.md)；原生几何/workspace、完整集成与阶段验收仍按独立工作包推进。
 其余工作包仍按依赖与验收推进，不从前三项有限实验推断全后端性能或 S4/S5 完成。
 

@@ -185,16 +185,40 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 [144项完整回归日志](../benchmarks/s4_packed_verification.log) 保存本地数学/测量/native全通过证据；release构建、Clippy/fmt、Ruff、文档另实际通过。远端native与reference CI按PR准确head核验。
 
-## S4-04：同 P 的显式、因子与 HC 时间/RSS协议（PR #80 待合并）
-
-本节来自 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 的实现与测量；main 尚不包含本节脚本/产物。
-复跑需检出该 PR 对应的源码和扩展，核对测量记录声明的准确 revision。
+## S4-04：同 P 的显式、因子与 HC 时间/RSS协议
 
 运行 `uv run --locked --no-sync python scripts/benchmark_compact.py --revision <准确HEAD> --output benchmarks/s4_compact_action.json`。冻结后运行原K4 stage4（β/n=2/6）、H0 interval stage0（2/2），另两个人工坐标边界窗n=65、β=2/64；人工输入标明来源，不冒充迁移研究。三路线explicit reference / NativeFactorizedSolver Factorized / HC全部为Feasible、同权重、稳定并列、objective未计算及原默认资源上限。Factorized成功states与reference相同，HC额外2n个构造checkpoint，预算单位差异显式记录，完整认证等级不降低。
 
 每配置3个冷timing worker，顺序seed64，共36条时间；之后每配置独立一个RSS worker，共12条，只报告真实绝对PeakWorkingSetSize/ru_maxrss与不可用原因，不与timing互相污染。成本包含输入、求解/独立验证、算子验证、拓扑、8个几何联合查询、快照序列化、恢复重验及流式完整生成元hash，外部process时间另报。绑定、Python后备与验证没有省略；validator分段诊断是父阶段子项，不能重复相加。四个输入的全部P/L生成元、核基、Betti、几何与恢复hash须跨三表示一致，projection身份按版本内容保持不同。
 
 保存源码/输入/二进制hash、β/n、实际状态/认证/预算、序列化字节与factor条目，保留全部不利结果。HC在β接近n时H/C输出可大于dense P，Factorized包含A/D和逆非零行，消元有平方行变换workspace；这些成本与完整进程RSS一并报告。有限3次时间与1次RSS不足以推断S4准入或稳健速度排名，不据此自动选择默认表示，不改写R0或S4-02/03原始证据。
+
+实际采样源码为干净提交 `c8a2f5bdf5bfa2ab387ac271b56e330205d45cfc`，
+Windows x64 / CPython 3.10.11，release wheel与扩展hash保存在
+[48条原始记录](../benchmarks/s4_compact_action.json)；该JSON的LF SHA256为
+`75b566273ff1980162c51d93803b80f3c757ef1a3cb538ba904d18190153c69f`。
+36个冷timing与12个独立RSS worker全部成功，四组完整语义hash跨三表示一致。
+以下三元组依次为explicit / Factorized / HC；worker包含imports到恢复与生成元hash，
+外部process另含进程启动/退出。每个RSS值仅为一个独立进程的绝对峰值。
+
+| 输入 | 完整worker中位数 ms | 外部process中位数 ms | 绝对RSS MiB | action逻辑条目 |
+| --- | --- | --- | --- | --- |
+| K4 stage4，β/n=2/6 | 49.573 / 51.867 / 50.791 | 199.308 / 200.826 / 200.202 | 19.625 / 19.785 / 19.645 | 36 / 48 / 24 |
+| H0 interval stage0，β/n=2/2 | 43.119 / 45.611 / 45.284 | 179.877 / 180.179 / 186.699 | 19.488 / 19.652 / 19.777 | 4 / 0 / 8 |
+| 人工n65、β2 | 1043.010 / 1856.347 / 403.276 | 1187.412 / 2017.651 / 545.801 | 20.844 / 20.965 / 20.504 | 4225 / 8190 / 260 |
+| 人工n65、β64 | 575.648 / 259.490 / 1484.519 | 715.676 / 406.335 / 1633.926 | 20.387 / 20.504 / 21.145 | 4225 / 130 / 8320 |
+
+真实小窗口未见可靠收益；人工小β时HC较快而Factorized退化，人工高β时结果相反，
+所有退化保留。Factorized在边界秩高时非零U行和D仍可大于dense P，HC在β接近n时H/C同样如此。
+两种紧凑表示解决P/G/U/L的显式展开与身份/恢复语义，不保证任意输入都更省空间或更快。
+这是共享开发主机上的有限样本，未控制主机其他负载，也未采尾分位或置信区间；
+本聊天的性能worker串行，计时与RSS分开。该结果不用于默认路线选择或S4退出收益认定。
+
+[152项完整数学回归与独立wheel恢复日志](../benchmarks/s4_compact_verification.log)
+记录同一源码的实际验证：包含23个窗口、完整非循环生成元、至多3×3全增广逆、
+多字边界、零投影/因子/版本/身份篡改、no-dense guard和11个族的全区间transport/barcode。
+额外独立安装reference wheel，在没有native扩展时恢复Factorized/HC并实跑2项纯Python边界测试。
+两示例、Ruff、Rustfmt/Clippy、release与reference打包、文档检查另通过；远端CI按PR准确head核验。
 
 ## 一般搜索准入实验（S3-06）：冻结协议
 

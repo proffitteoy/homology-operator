@@ -137,7 +137,7 @@ selected_mass 不得命名或序列化为真实最短值。
 | --- | --- |
 | `{nrows, ncols, rows}` | 显式 Matrix；空形状保留 |
 | `{kind: "CyclicTrace", version: 1, m, complement}` | 已合并，m=2/3/4 的固定结构族；P 的 complement=false |
-| `{kind: "CompactF2", version: 1, form, factors, pivots, complement}` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 待合并，GeneralizedInverse / HC 紧凑作用 |
+| `{kind: "CompactF2", version: 1, form, factors, pivots, complement}` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合并，GeneralizedInverse / HC 紧凑作用 |
 
 CyclicTrace handle 由受支持公式决定全部链上的 action；L 使用同参数的补作用。
 未知版本、额外字段、非法形状/参数和身份篡改拒绝；链输入 A/D 始终只接受 Matrix schema。
@@ -146,10 +146,15 @@ CyclicTrace handle 由受支持公式决定全部链上的 action；L 使用同�
 当前 CompactF2 恢复由 Python 从因子/坐标重建作用并独立验证，不要求 Rust 扩展；
 普通 project/L、身份与 handle 保存不展开完整 P。生成集、广义逆或 HC 条件及循环同调保持仍需验证。
 HC 独立检查 AH=0、CD=0、CH=I，并拒绝不保持同调的零投影。
-此项属于 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 的开发能力，尚未合入 main；main 的 CI 不能作为其验收证据。
+Compact action 当前另支持通用 CycleBounds 重放，其他优化 proof 格式明确拒绝；后续 solver 工作包另行实现。
+此项由 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 合入 main；准确源码、回归和测量记录见性能协议。
 Factorized 验证还检查 A/D 与窗口一致、AGA=A、DUD=D；D 的像分解独立建立一次并复用，
 不使用 solver 提供的分解或 true 标签。拓扑的规范核基由 ker(L)=im(P) 流式生成，
-从右向左消元以匹配 reference 自由坐标顺序；所需核基/transport 输出按实际大小分配。
+从最高原坐标向下选 pivot 并清除其他基向量中的该位，按 pivot 升序读取，得到该子空间唯一的右向左 reduced basis。
+reference 左向右 RREF 的 canonical kernel 向量在自己的自由坐标为1，其他自由坐标为0；
+非零 pivot 坐标都在该自由坐标之前，故自由坐标就是最高非零位，同样给出上述唯一 reduced basis。
+因此完整核基与过滤坐标和 reference 一致；该论证依赖独立验证的幂等性，不用于接受非法候选。
+核基/transport 输出本身可能平方大，按实际输出大小分配。
 
 JSON 将 Fraction 编码为 `$fraction` 标签；普通单键 `$fraction` / `$mapping` 字典用 `$mapping` 转义。
 读取拒绝重复 JSON 键、非有限数、未知字段/schema、混用身份和篡改证书/查询。
