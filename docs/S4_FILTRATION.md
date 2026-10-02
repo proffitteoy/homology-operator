@@ -127,3 +127,10 @@ schema 2往返。此smoke不覆盖native因子构造或尚未交付的#66，也�
 设置HOMOLOGY_NATIVE_REQUIRED=1、使用uv --no-sync后[148项完整回归](../benchmarks/s4_filtration_verification.log)
 全部通过，无跳过。Ruff、文档/链接、示例、构建、隔离wheel导入另实际通过。远端CI及
 最终main验收按实际PR/head记录，不以本地日志代替。
+
+随后同步 main 520ecc9 的已合并 S4-04，解决README/BENCHMARKS/VALIDATION的并行文档冲突。
+整合源码9f69cb43696d1a54f8fe1d22d45f0bd3427f63b1重新构建release扩展，强制native的
+[156项完整整合回归](../benchmarks/s4_filtration_integration.log)全部通过，无跳过，包含
+Factorized/HC的11个过滤族全部区间rank/transport/barcode及恢复。Rust fmt/Clippy、Ruff、
+文档/完整PR whitespace、示例与隔离wheel也通过。上述性能样本仍绑定原e0e3183，不回写为
+新整合提交的性能证据；#66及后续全native/GUDHI联合验收仍待后续工作包。
