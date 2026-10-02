@@ -6,6 +6,25 @@
 
 ## 当前可执行验证
 
+S4-05 增加7项 native solver 验证：原23窗口的支持/拒绝、三种搜索的完整 P/objective/
+证书/并列/state 对拍；三终端及 m=2/3/4 两种结构表示；全部 state 中断位置与零时间/
+条目预算；任意精度整数/互素大分母后备与 u128 比值交叉乘积溢出；0/1及63/64/65、
+127/128/129宽度的独立 objective；两条重放路径的证书/action/witness 篡改拒绝；
+缺少扩展的 Unavailable 与 portable reference 恢复。所有合法 native 解另强制由
+原 Python verifier 重新验收；连续 JSON 往返、projection_id 与配置/run 区分有检查。
+Rust 单测独立检查商余比较的全部小比值及 u128 极端边界。
+
+新增测试纳入现有 native CI 的强制入口；Windows Rust 单测命令为：
+
+```powershell
+$env:PYO3_PYTHON = Join-Path (Get-Location) '.venv/Scripts/python.exe'
+cargo +1.98.1 test --manifest-path native/Cargo.toml --locked --lib
+```
+
+Linux 的 PyO3 extension-module 不链接 libpython，Rust 单测须用相应可链接配置；
+CI 已有跨平台 release 构建及 Python differential 入口，Rust 单测另报告实际平台。
+
+
 S4-02 可选原型增加7项测试：23个原始窗口的完整P/L、独立同调保持、循环/非循环批查询、全部至多3×3矩阵的稳定广义逆、空形状与64维边界、资源失败、超大有理权/浮点、六身份与批记录JSON恢复。reference测试允许缺少扩展时显式跳过6项native测试；原型CI设置 `HOMOLOGY_NATIVE_REQUIRED=1`，缺少扩展直接失败。真实release构建及Rust fmt/Clippy命令见根README；独立Python validator仍是进入算子的必要边界。后续大尺寸与紧凑表示验收不由这7项替代。
 
 S4-03 另增加4项实际packed代数验证：全部至多3×3矩阵以独立向量枚举核/像/membership并比较reference canonical RREF/solve；矩形、空形状、秩亏与不可解；63/64/65、127/128/129边界的加乘/action与尾部位；0/1/8/64/1024重复RHS、不变分解数、非法形状/非二元输入/污染padding与只读handle。缺少扩展时明确跳过这4项，native CI强制运行。大尺寸性能不从有限测试推断。

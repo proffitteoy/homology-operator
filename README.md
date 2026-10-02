@@ -78,6 +78,29 @@ S4-01新增[reference R0入口与复跑协议](docs/BENCHMARKS.md)，固定已�
 `selected_mass` 表示当前投影选定代表的质量，不能声称是最短代表。可行投影、精确拓扑、全局最优伸长、稳定性和性能分别需要相应证据，见 [solver 契约](docs/SOLVER_CONTRACT.md) 和 [开发路线](HOMOLOGY_OPERATOR_ROADMAP.md)。
 
 
+## 可选 native 认证求解（S4-05）
+
+沿用下文的可选 release wheel 构建与安装命令。四个限定 solver 保留原支持域，
+显式选择 native 实现，默认 reference 入口不变：
+
+```python
+from homology_operator import ProjectionProblem, solve_projection
+
+problem = ProjectionProblem(window, requested_certificate_level="ExactOptimal")
+solution = solve_projection(problem, "NativeExhaustiveExactSolver")
+# 另有 NativeGreedyCertifiedSolver、NativeRank2ExactSolver、NativeStructuredFamilySolver。
+# Greedy 不接受一般 ExactOptimal 请求；Rank2/Structured 仍要求各自已验证的结构。
+```
+
+也可用既有 solver 类的 `native=True` 参数。原生 packed 循环枚举、精确质量比值、
+共享分解、多 RHS 与独立证书重放保持完整 action、并列和预算 state 语义。
+归一化权重超出 u128 时显式保留任意精度后备；缺少扩展返回 Unavailable。
+可行种子、候选外循环和部分代数仍在 Python，最终投影仍为原显式 Matrix 或
+既有 CyclicAction。支持域、身份与恢复路径见 [solver 契约](docs/SOLVER_CONTRACT.md)。
+
+[S4-05 有限同 solver 协议](docs/BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
+它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。
+
 ## 精确 F2 reference 代数
 
 ### 可选 Rust 纵向原型（S4-02）

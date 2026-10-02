@@ -337,3 +337,115 @@ def geometry_batch(operator, cycles, pairs=()):
             "rounding_policy": None if exact else "binary64 fsum; nearest-even",
         },
     )
+
+
+def _integer_weights(weights):
+    """Normalize exact rationals; return None instead of narrowing large integers."""
+    from fractions import Fraction
+    from math import gcd, lcm
+
+    weights = tuple(map(Fraction, weights))
+    denominator = lcm(*(w.denominator for w in weights))
+    values = tuple(w.numerator * (denominator // w.denominator) for w in weights)
+    divisor = gcd(*values) if values else 1
+    values = tuple(value // divisor for value in values)
+    return (values, Fraction(divisor, denominator)) if sum(values) < 1 << 128 else None
+
+
+def _apply_many(projection, vectors):
+    from .algebra import CyclicAction
+
+    packed = tuple(map(_words, vectors))
+    if isinstance(projection, CyclicAction):
+        output = _extension().cyclic_batch(projection.m, packed)
+        if projection.complement:
+            output = tuple(
+                tuple(a ^ b for a, b in zip(x, y)) for x, y in zip(packed, output)
+            )
+    else:
+        output = _extension().packed_apply(
+            tuple(map(_words, projection.rows)), projection.ncols, packed
+        )
+    return tuple(_unwords(row, projection.nrows) for row in output)
+
+
+def _span_objective(window, projection, basis, budget=None, detail=None):
+    """Algebra-only native kernel; verifier supplies its independently rebuilt basis."""
+    from fractions import Fraction
+
+    detail = detail if detail is not None else budget.native_detail
+    normalized = _integer_weights(window.weights)
+    if normalized is None:
+        detail["exact_mass_fallback_calls"] = (
+            detail.get("exact_mass_fallback_calls", 0) + 1
+        )
+        return None
+    started = perf_counter()
+    weights, _ = normalized
+    images = _apply_many(projection, basis)
+    remaining = (
+        None
+        if budget is None
+        else max(0.0, budget.limits.wall_time_limit - (perf_counter() - budget.started))
+    )
+    quota = (
+        100_000
+        if budget is None
+        else min(100_000, budget.limits.state_limit - budget.states)
+    )
+    a, b, witness, used, reason = _extension().span_objective(
+        tuple(map(_words, basis)), tuple(map(_words, images)), weights, quota, remaining
+    )
+    detail["span_objective_calls"] = detail.get("span_objective_calls", 0) + 1
+    detail["native_kernel_seconds"] = (
+        detail.get("native_kernel_seconds", 0.0) + perf_counter() - started
+    )
+    if budget is not None:
+        budget.states += used
+        if reason:
+            from .solver import _Exhausted
+
+            raise _Exhausted(reason)
+    return Fraction(a, b), None if witness is None else _unwords(witness, window.n)
+
+
+def _span_table(window, basis, budget=None, detail=None):
+    detail = detail if detail is not None else budget.native_detail
+    normalized = _integer_weights(window.weights)
+    if normalized is None:
+        detail["exact_mass_fallback_calls"] = (
+            detail.get("exact_mass_fallback_calls", 0) + 1
+        )
+        return None
+    started = perf_counter()
+    weights, unit = normalized
+    remaining = (
+        None
+        if budget is None
+        else max(0.0, budget.limits.wall_time_limit - (perf_counter() - budget.started))
+    )
+    quota = (
+        100_000
+        if budget is None
+        else min(100_000, budget.limits.state_limit - budget.states)
+    )
+    vectors, masses, used, reason = _extension().span_table(
+        tuple(map(_words, basis)), weights, quota, remaining
+    )
+    detail["span_table_calls"] = detail.get("span_table_calls", 0) + 1
+    detail["native_kernel_seconds"] = (
+        detail.get("native_kernel_seconds", 0.0) + perf_counter() - started
+    )
+    if budget is not None:
+        budget.states += used
+        if reason:
+            from .solver import _Exhausted
+
+            raise _Exhausted(reason)
+    return tuple(
+        (
+            _unwords(z, window.n),
+            int(mass * unit) if window.arithmetic == "ExactInteger" else mass * unit,
+        )
+        for z, mass in zip(vectors, masses)
+    )

@@ -37,7 +37,9 @@ class _Exhausted(Exception):
 
 
 class _Budget:
-    def __init__(self, limits):
+    def __init__(self, limits, native=False):
+        self.native = native
+        self.native_detail = {}
         self.limits = limits
         self.started = perf_counter()
         self.states = 0
@@ -58,6 +60,14 @@ class _Budget:
             "states": self.states,
             "wall_time": perf_counter() - self.started,
             "limits": asdict(self.limits),
+            **(
+                {
+                    "execution_backend": "packed-rust-v1",
+                    "native_detail": self.native_detail,
+                }
+                if self.native
+                else {}
+            ),
         }
 
 
@@ -244,6 +254,18 @@ def check_solver_request(problem, capabilities):
     }
     if requested_limits - set(capabilities.get("resource_limits", ())):
         return "Unavailable", "unsupported resource limits"
+    if capabilities.get("execution_backend") == "packed-rust-v1":
+        from .native import _extension
+
+        try:
+            extension = _extension()
+            if not hasattr(extension, "span_objective"):
+                return (
+                    "Unavailable",
+                    "native extension lacks S4-05 kernels; rebuild the release wheel",
+                )
+        except ImportError:
+            return "Unavailable", "optional native extension is not installed"
     return None
 
 
@@ -348,6 +370,10 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "Rank2ExactSolver": Rank2ExactSolver,
             "StructuredFamilySolver": StructuredFamilySolver,
             "GreedyCertifiedSolver": GreedyCertifiedSolver,
+            "NativeExhaustiveExactSolver": lambda: ExhaustiveExactSolver(native=True),
+            "NativeGreedyCertifiedSolver": lambda: GreedyCertifiedSolver(native=True),
+            "NativeRank2ExactSolver": lambda: Rank2ExactSolver(native=True),
+            "NativeStructuredFamilySolver": lambda: StructuredFamilySolver(native=True),
         }
         if backend not in constructors:
             return ProjectionSolution(
@@ -392,7 +418,20 @@ def solve_projection(problem, backend="FeasibleSolver"):
         ) != content_id("limits", expected_config["resource_limits"]):
             raise ValueError("reported resource limits do not match this request")
         if solution.projection is not None:
-            validate_solution(problem.window, solution)
+            validation_started = perf_counter()
+            checks = validate_solution(problem.window, solution)
+            if getattr(backend, "native", False):
+                solution = replace(
+                    solution,
+                    resource_usage={
+                        **solution.resource_usage,
+                        "independent_validation_seconds": perf_counter()
+                        - validation_started,
+                        "certificate_replay_backend": checks.get(
+                            "certificate_replay_backend", "python-reference"
+                        ),
+                    },
+                )
             acceptable = {
                 "Feasible": {
                     "Feasible",
@@ -447,6 +486,12 @@ def solve_projection(problem, backend="FeasibleSolver"):
 
 
 def _cycle_objective(window, projection, cycles, budget):
+    if budget.native:
+        from .native import _span_objective
+
+        result = _span_objective(window, projection, cycles.transpose().rows, budget)
+        if result is not None:
+            return result
     value, witness = Fraction(0), None
     for coefficients in product((0, 1), repeat=cycles.ncols):
         if not any(coefficients):
@@ -461,6 +506,45 @@ def _cycle_objective(window, projection, cycles, budget):
     return value, witness
 
 
+def _prepare(matrix, budget):
+    if not budget.native:
+        return matrix
+    from .native import PreparedMatrix
+
+    budget.native_detail["prepared_decompositions"] = (
+        budget.native_detail.get("prepared_decompositions", 0) + 1
+    )
+    return PreparedMatrix(matrix)
+
+
+def _multiply(left, right, budget):
+    if not budget.native:
+        return left @ right
+    from .native import packed_multiply
+
+    budget.native_detail["packed_products"] = (
+        budget.native_detail.get("packed_products", 0) + 1
+    )
+    return packed_multiply(left, right)
+
+
+def _cycle_table(window, cycles, budget):
+    if budget.native:
+        from .native import _span_table
+
+        result = _span_table(window, cycles.transpose().rows, budget)
+        if result is not None:
+            return result
+    result = []
+    for bits in product((0, 1), repeat=cycles.ncols):
+        if not any(bits):
+            continue
+        budget.step()
+        z = cycles.apply(bits)
+        result.append((z, sum(w for w, bit in zip(window.weights, z) if bit)))
+    return result
+
+
 class ExhaustiveExactSolver:
     """Search 2^(boundary_rank * beta) cycle retractions, for tiny rational inputs.
 
@@ -469,10 +553,18 @@ class ExhaustiveExactSolver:
     It never uses PH results or shortest-class tables as inputs or intermediates.
     """
 
+    def __init__(self, *, native=False):
+        if type(native) is not bool:
+            raise ValueError("native must be a boolean")
+        self.native = native
+
     def capabilities(self):
         return _freeze(
             {
                 **FeasibleSolver().capabilities(),
+                "execution_backend": "packed-rust-v1"
+                if self.native
+                else "python-reference",
                 "arithmetic_policies": ("ExactInteger", "ExactRational"),
                 "certificate_levels": (
                     "Feasible",
@@ -485,18 +577,21 @@ class ExhaustiveExactSolver:
         )
 
     def solve(self, problem):
+        method = (
+            "NativeExhaustiveExactSolver" if self.native else "ExhaustiveExactSolver"
+        )
         run_id = str(uuid4())
         rejection = check_solver_request(problem, self.capabilities())
         if rejection is not None:
             return ProjectionSolution(
                 rejection[0],
                 run_id,
-                method="ExhaustiveExactSolver",
+                method=method,
                 diagnostics=(rejection[1],),
             )
         window = problem.window
-        config = problem.solver_config("ExhaustiveExactSolver")
-        budget = _Budget(problem.resource_limits)
+        config = problem.solver_config(method)
+        budget = _Budget(problem.resource_limits, self.native)
         seed = FeasibleSolver().solve(
             replace(
                 problem,
@@ -508,7 +603,7 @@ class ExhaustiveExactSolver:
             return replace(
                 seed,
                 solver_run_id=run_id,
-                method="ExhaustiveExactSolver",
+                method=method,
                 solver_config=config,
                 tie_break_policy=problem.tie_break_policy,
                 arithmetic_policy=window.arithmetic,
@@ -521,8 +616,12 @@ class ExhaustiveExactSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            N = Matrix.from_columns(window.A.kernel_basis(), nrows=window.n)
-            F = Matrix.from_columns(window.D.image_basis(), nrows=window.n)
+            N = Matrix.from_columns(
+                _prepare(window.A, budget).kernel_basis(), nrows=window.n
+            )
+            F = Matrix.from_columns(
+                _prepare(window.D, budget).image_basis(), nrows=window.n
+            )
             d, r = N.ncols, F.ncols
             beta = d - r
             count, cycle_count = 1 << (r * beta), (1 << d) - 1
@@ -538,15 +637,26 @@ class ExhaustiveExactSolver:
                 visited = 1
             else:
                 M = Matrix.from_columns(
-                    (N.solve(f) for f in F.transpose().rows), nrows=d
+                    (
+                        _prepare(N, budget).solve_many(F.transpose().rows)
+                        if budget.native
+                        else (N.solve(f) for f in F.transpose().rows)
+                    ),
+                    nrows=d,
                 )
                 constraints = M.transpose()
-                offsets = constraints.kernel_basis()
+                prepared = _prepare(constraints, budget)
+                offsets = prepared.kernel_basis()
                 particulars = tuple(
-                    constraints.solve(unit) for unit in Matrix.identity(r).rows
+                    prepared.solve(unit) for unit in Matrix.identity(r).rows
                 )
                 T = Matrix.from_columns(
-                    (N.solve(z) for z in R.transpose().rows), nrows=d
+                    (
+                        _prepare(N, budget).solve_many(R.transpose().rows)
+                        if budget.native
+                        else (N.solve(z) for z in R.transpose().rows)
+                    ),
+                    nrows=d,
                 )
                 for parameters in product((0, 1), repeat=r * beta):
                     budget.step()
@@ -567,7 +677,7 @@ class ExhaustiveExactSolver:
                         ),
                         ncols=d,
                     )
-                    candidate = R + F @ Y @ T
+                    candidate = R + _multiply(_multiply(F, Y, budget), T, budget)
                     value, witness = _cycle_objective(window, candidate, N, budget)
                     visited += 1
                     key = tuple(
@@ -601,7 +711,7 @@ class ExhaustiveExactSolver:
                 resource_usage=usage,
                 diagnostics=(exhausted,),
                 tie_break_policy=problem.tie_break_policy,
-                method="ExhaustiveExactSolver",
+                method=method,
                 arithmetic_policy=window.arithmetic,
                 solver_config=config,
             )
@@ -631,7 +741,7 @@ class ExhaustiveExactSolver:
                 usage,
                 (exhausted,),
                 problem.tie_break_policy,
-                method="ExhaustiveExactSolver",
+                method=method,
                 arithmetic_policy=window.arithmetic,
                 lower_bound=Fraction(0),
                 upper_bound=best_value,
@@ -654,7 +764,7 @@ class ExhaustiveExactSolver:
             {"optimization": proof},
             usage,
             tie_break_policy=problem.tie_break_policy,
-            method="ExhaustiveExactSolver",
+            method=method,
             arithmetic_policy=window.arithmetic,
             lower_bound=best_value,
             upper_bound=best_value,
@@ -669,10 +779,11 @@ def _pareto_rank2(window, pair, boundaries, budget):
     F = Matrix.from_columns(boundaries, nrows=window.n)
     while True:
         budget.step()
-        outside = Matrix.from_rows(
+        outside_matrix = Matrix.from_rows(
             (row for j, row in enumerate(F.rows) if not (x[j] or y[j])),
             ncols=F.ncols,
-        ).kernel_basis()
+        )
+        outside = _prepare(outside_matrix, budget).kernel_basis()
         if not outside:
             return (x, y), tuple(trace)
         b = F.apply(outside[0])
@@ -697,11 +808,19 @@ class Rank2ExactSolver:
     The cut route requires an explicit chain/cut-space equivalence witness.
     """
 
+    def __init__(self, *, native=False):
+        if type(native) is not bool:
+            raise ValueError("native must be a boolean")
+        self.native = native
+
     def capabilities(self):
         return _freeze(
             {
                 **ExhaustiveExactSolver().capabilities(),
                 "supported_betti_range": (2, 2),
+                "execution_backend": "packed-rust-v1"
+                if self.native
+                else "python-reference",
                 "input_structures": (
                     "GeneralChainWindow",
                     "GraphCycle",
@@ -715,18 +834,19 @@ class Rank2ExactSolver:
     def solve(self, problem):
         from .validation import validate_rank2_structure
 
+        method = "NativeRank2ExactSolver" if self.native else "Rank2ExactSolver"
         run_id = str(uuid4())
         rejection = check_solver_request(problem, self.capabilities())
         if rejection is not None:
             return ProjectionSolution(
                 rejection[0],
                 run_id,
-                method="Rank2ExactSolver",
+                method=method,
                 diagnostics=(rejection[1],),
             )
         window = problem.window
-        config = problem.solver_config("Rank2ExactSolver")
-        budget = _Budget(problem.resource_limits)
+        config = problem.solver_config(method)
+        budget = _Budget(problem.resource_limits, self.native)
         try:
             cut = validate_rank2_structure(
                 window, problem.input_structure, problem.solver_options
@@ -735,7 +855,7 @@ class Rank2ExactSolver:
             return ProjectionSolution(
                 "Unavailable",
                 run_id,
-                method="Rank2ExactSolver",
+                method=method,
                 diagnostics=(str(error),),
                 solver_config=config,
                 arithmetic_policy=window.arithmetic,
@@ -752,7 +872,7 @@ class Rank2ExactSolver:
             return replace(
                 seed,
                 solver_run_id=run_id,
-                method="Rank2ExactSolver",
+                method=method,
                 solver_config=config,
             )
         budget.states = seed.resource_usage["states"]
@@ -762,7 +882,7 @@ class Rank2ExactSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            boundaries = window.D.image_basis()
+            boundaries = _prepare(window.D, budget).image_basis()
             r = len(boundaries)
             cycle_count, count = (1 << (r + 2)) - 1, 1 << (2 * r)
             if count * cycle_count > 100_000:
@@ -771,10 +891,10 @@ class Rank2ExactSolver:
             full = list(boundaries)
             H = []
             if cut is None:
-                for z in window.A.kernel_basis():
-                    if Matrix.from_columns((*full, z), nrows=window.n).rank() > len(
-                        full
-                    ):
+                for z in _prepare(window.A, budget).kernel_basis():
+                    if _prepare(
+                        Matrix.from_columns((*full, z), nrows=window.n), budget
+                    ).rank() > len(full):
                         H.append(z)
                         full.append(z)
             else:
@@ -789,19 +909,21 @@ class Rank2ExactSolver:
                 full.extend(H)
             basis = Matrix.from_columns(full, nrows=window.n)
             coordinates = Matrix.from_columns(
-                (basis.solve(z)[r:] for z in R.transpose().rows), nrows=2
+                (
+                    tuple(
+                        c[r:]
+                        for c in _prepare(basis, budget).solve_many(R.transpose().rows)
+                    )
+                    if budget.native
+                    else (basis.solve(z)[r:] for z in R.transpose().rows)
+                ),
+                nrows=2,
             )
             minima, minimum_witnesses = [None] * 3, [None] * 3
-            for bits in product((0, 1), repeat=r + 2):
-                if not any(bits):
-                    continue
-                budget.step()
-                h = bits[-2] + 2 * bits[-1]
-                if h:
-                    z = basis.apply(bits)
-                    mass = sum(w for w, bit in zip(window.weights, z) if bit)
-                    if minima[h - 1] is None or mass < minima[h - 1]:
-                        minima[h - 1], minimum_witnesses[h - 1] = mass, z
+            for encoded, (z, mass) in enumerate(_cycle_table(window, basis, budget), 1):
+                h = ((encoded >> 1) & 1) + 2 * (encoded & 1)
+                if h and (minima[h - 1] is None or mass < minima[h - 1]):
+                    minima[h - 1], minimum_witnesses[h - 1] = mass, z
 
             def objective(pair):
                 x, y = pair
@@ -847,7 +969,9 @@ class Rank2ExactSolver:
                         for i in range(2)
                     )
                     initial, trace = pair, ()
-                candidate = Matrix.from_columns(pair, nrows=window.n) @ coordinates
+                candidate = _multiply(
+                    Matrix.from_columns(pair, nrows=window.n), coordinates, budget
+                )
                 current, current_witness = objective(pair)
                 key = tuple(
                     sum(bit << j for j, bit in enumerate(z))
@@ -918,7 +1042,7 @@ class Rank2ExactSolver:
             },
             (exhausted,) if exhausted else (),
             problem.tie_break_policy,
-            method="Rank2ExactSolver",
+            method=method,
             arithmetic_policy=window.arithmetic,
             lower_bound=lower,
             upper_bound=value,
@@ -926,13 +1050,32 @@ class Rank2ExactSolver:
         )
 
 
+def _structured_images(action, vectors, budget):
+    if not budget.native:
+        return tuple(action.apply(z) for z in vectors)
+    from .native import _apply_many
+
+    budget.native_detail["cyclic_batch_calls"] = (
+        budget.native_detail.get("cyclic_batch_calls", 0) + 1
+    )
+    return _apply_many(action, vectors)
+
+
 class StructuredFamilySolver:
     """Pinned T-B1 cyclic trace family, with explicit recognition and a small cap."""
+
+    def __init__(self, *, native=False):
+        if type(native) is not bool:
+            raise ValueError("native must be a boolean")
+        self.native = native
 
     def capabilities(self):
         return _freeze(
             {
                 **FeasibleSolver().capabilities(),
+                "execution_backend": "packed-rust-v1"
+                if self.native
+                else "python-reference",
                 "arithmetic_policies": ("ExactInteger", "ExactRational"),
                 "input_structures": ("CyclicTrace",),
                 "certificate_levels": (
@@ -947,18 +1090,21 @@ class StructuredFamilySolver:
         )
 
     def solve(self, problem):
+        method = (
+            "NativeStructuredFamilySolver" if self.native else "StructuredFamilySolver"
+        )
         run_id = str(uuid4())
         rejection = check_solver_request(problem, self.capabilities())
         if rejection is not None:
             return ProjectionSolution(
                 rejection[0],
                 run_id,
-                method="StructuredFamilySolver",
+                method=method,
                 diagnostics=(rejection[1],),
             )
         window = problem.window
-        config = problem.solver_config("StructuredFamilySolver")
-        budget = _Budget(problem.resource_limits)
+        config = problem.solver_config(method)
+        budget = _Budget(problem.resource_limits, self.native)
         failure = None
         try:
             budget.step()
@@ -974,10 +1120,15 @@ class StructuredFamilySolver:
                     + (0 if problem.matrix_free_output else window.n**2)
                 )
                 if (
-                    window.A.rank() != 0
+                    _prepare(window.A, budget).rank() != 0
                     or len(set(window.weights)) != 1
-                    or window.D.rank() != window.n - (1 << (m - 1))
-                    or any(any(action.apply(z)) for z in window.D.transpose().rows)
+                    or _prepare(window.D, budget).rank() != window.n - (1 << (m - 1))
+                    or any(
+                        any(z)
+                        for z in _structured_images(
+                            action, window.D.transpose().rows, budget
+                        )
+                    )
                 ):
                     failure = "CyclicTrace requires A=0, uniform exact weights, and im(D)=ker(P_m)"
                 budget.step()
@@ -985,7 +1136,7 @@ class StructuredFamilySolver:
                 return ProjectionSolution(
                     "Unavailable",
                     run_id,
-                    method="StructuredFamilySolver",
+                    method=method,
                     arithmetic_policy=window.arithmetic,
                     tie_break_policy=problem.tie_break_policy,
                     solver_config=config,
@@ -996,9 +1147,13 @@ class StructuredFamilySolver:
                 action
                 if problem.matrix_free_output
                 else Matrix.from_columns(
-                    (
-                        action.apply(tuple(int(i == j) for i in range(window.n)))
-                        for j in range(window.n)
+                    _structured_images(
+                        action,
+                        tuple(
+                            tuple(int(i == j) for i in range(window.n))
+                            for j in range(window.n)
+                        ),
+                        budget,
                     ),
                     nrows=window.n,
                 )
@@ -1008,7 +1163,7 @@ class StructuredFamilySolver:
             return ProjectionSolution(
                 "ResourceExhausted",
                 run_id,
-                method="StructuredFamilySolver",
+                method=method,
                 arithmetic_policy=window.arithmetic,
                 tie_break_policy=problem.tie_break_policy,
                 solver_config=config,
@@ -1033,7 +1188,7 @@ class StructuredFamilySolver:
             budget.usage(),
             (),
             problem.tie_break_policy,
-            method="StructuredFamilySolver",
+            method=method,
             arithmetic_policy=window.arithmetic,
             lower_bound=Fraction(m),
             upper_bound=Fraction(m),
@@ -1048,10 +1203,18 @@ class GreedyCertifiedSolver:
     Each chosen cycle is independent modulo boundaries and earlier choices.
     """
 
+    def __init__(self, *, native=False):
+        if type(native) is not bool:
+            raise ValueError("native must be a boolean")
+        self.native = native
+
     def capabilities(self):
         return _freeze(
             {
                 **FeasibleSolver().capabilities(),
+                "execution_backend": "packed-rust-v1"
+                if self.native
+                else "python-reference",
                 "arithmetic_policies": ("ExactInteger", "ExactRational"),
                 "certificate_levels": (
                     "Feasible",
@@ -1062,18 +1225,21 @@ class GreedyCertifiedSolver:
         )
 
     def solve(self, problem):
+        method = (
+            "NativeGreedyCertifiedSolver" if self.native else "GreedyCertifiedSolver"
+        )
         run_id = str(uuid4())
         rejection = check_solver_request(problem, self.capabilities())
         if rejection is not None:
             return ProjectionSolution(
                 rejection[0],
                 run_id,
-                method="GreedyCertifiedSolver",
+                method=method,
                 diagnostics=(rejection[1],),
             )
         window = problem.window
-        config = problem.solver_config("GreedyCertifiedSolver")
-        budget = _Budget(problem.resource_limits)
+        config = problem.solver_config(method)
+        budget = _Budget(problem.resource_limits, self.native)
         seed = FeasibleSolver().solve(
             replace(problem, requested_certificate_level="Feasible")
         )
@@ -1081,7 +1247,7 @@ class GreedyCertifiedSolver:
             return replace(
                 seed,
                 solver_run_id=run_id,
-                method="GreedyCertifiedSolver",
+                method=method,
                 solver_config=config,
                 arithmetic_policy=window.arithmetic,
             )
@@ -1092,8 +1258,10 @@ class GreedyCertifiedSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            N = Matrix.from_columns(window.A.kernel_basis(), nrows=window.n)
-            boundaries = window.D.image_basis()
+            N = Matrix.from_columns(
+                _prepare(window.A, budget).kernel_basis(), nrows=window.n
+            )
+            boundaries = _prepare(window.D, budget).image_basis()
             beta = N.ncols - len(boundaries)
             cycle_count = (1 << N.ncols) - 1
             if cycle_count * max(1, beta) > 100_000:
@@ -1101,21 +1269,16 @@ class GreedyCertifiedSolver:
             budget.entries(8 * window.n**2 + (cycle_count * window.n if beta else 0))
             value, witness = _cycle_objective(window, projection, N, budget)
             if beta:
-                candidates = []
-                for bits in product((0, 1), repeat=N.ncols):
-                    if not any(bits):
-                        continue
-                    budget.step()
-                    z = N.apply(bits)
-                    mass = sum(w for w, bit in zip(window.weights, z) if bit)
-                    encoded = sum(bit << j for j, bit in enumerate(z))
-                    candidates.append((mass, encoded, z))
+                candidates = [
+                    (mass, sum(bit << j for j, bit in enumerate(z)), z)
+                    for z, mass in _cycle_table(window, N, budget)
+                ]
                 candidates.sort()
                 span_basis = list(boundaries)
                 for _, _, z in candidates:
                     budget.step()
                     trial = Matrix.from_columns((*span_basis, z), nrows=window.n)
-                    if trial.rank() > len(span_basis):
+                    if _prepare(trial, budget).rank() > len(span_basis):
                         selected.append(z)
                         span_basis.append(z)
                     if len(selected) == beta:
@@ -1124,13 +1287,18 @@ class GreedyCertifiedSolver:
                     raise ValueError("greedy choices did not span homology")
                 basis = Matrix.from_columns(span_basis, nrows=window.n)
                 coordinates = Matrix.from_columns(
-                    (basis.solve(z) for z in R.transpose().rows), nrows=N.ncols
+                    (
+                        _prepare(basis, budget).solve_many(R.transpose().rows)
+                        if budget.native
+                        else (basis.solve(z) for z in R.transpose().rows)
+                    ),
+                    nrows=N.ncols,
                 )
                 section = Matrix.from_columns(
                     ((0,) * window.n,) * len(boundaries) + tuple(selected),
                     nrows=window.n,
                 )
-                candidate = section @ coordinates
+                candidate = _multiply(section, coordinates, budget)
                 candidate_value, candidate_witness = _cycle_objective(
                     window, candidate, N, budget
                 )
@@ -1199,7 +1367,7 @@ class GreedyCertifiedSolver:
             usage,
             (exhausted,) if exhausted is not None else (),
             problem.tie_break_policy,
-            method="GreedyCertifiedSolver",
+            method=method,
             arithmetic_policy=window.arithmetic,
             lower_bound=lower,
             upper_bound=upper,

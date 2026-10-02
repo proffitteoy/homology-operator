@@ -394,5 +394,255 @@ class PackedAlgebraTests(unittest.TestCase):
                 operation()
 
 
+@unittest.skipIf(extension is None, "optional native wheel not installed")
+class NativeSolverTests(unittest.TestCase):
+    def compare(self, problem, method):
+        reference = solve_projection(problem, method)
+        actual = solve_projection(problem, "Native" + method)
+        self.assertEqual(actual.status, reference.status, actual.diagnostics)
+        self.assertEqual(actual.projection, reference.projection)
+        self.assertEqual(actual.certificate_level, reference.certificate_level)
+        self.assertEqual(actual.objective.state, reference.objective.state)
+        self.assertEqual(actual.objective.value, reference.objective.value)
+        self.assertEqual(actual.lower_bound, reference.lower_bound)
+        self.assertEqual(actual.upper_bound, reference.upper_bound)
+        self.assertEqual(actual.certificate, reference.certificate)
+        self.assertEqual(
+            actual.resource_usage.get("states"), reference.resource_usage.get("states")
+        )
+        if actual.projection is not None:
+            self.assertEqual(
+                actual.identity["projection_id"], reference.identity["projection_id"]
+            )
+            # Force the original Python replay independently of the native choice.
+            from homology_operator.validation import validate_solution
+
+            with patch(
+                "homology_operator.validation._replay_native", return_value=False
+            ):
+                validate_solution(problem.window, actual)
+            op = HomologyOperator(problem.window, actual)
+            record = op.to_result()
+            restored = OperatorResult.from_json(record.to_json())
+            self.assertEqual(restored.projection, actual.projection)
+            self.assertEqual(
+                restored.to_json(),
+                OperatorResult.from_json(restored.to_json()).to_json(),
+            )
+        return actual
+
+    def test_sourced_corpus_same_actions_certificates_and_states(self):
+        for fixture in oracle.load_fixtures():
+            w = window(fixture)
+            for method in (
+                "ExhaustiveExactSolver",
+                "GreedyCertifiedSolver",
+                "Rank2ExactSolver",
+            ):
+                with self.subTest(fixture=fixture["id"], method=method):
+                    self.compare(ProjectionProblem(w), method)
+
+    def test_cut_and_structured_supports_remain_exact(self):
+        from test_rank2 import cut_problem
+        from test_structured import cyclic_window
+
+        self.compare(cut_problem(), "Rank2ExactSolver")
+        for m in (2, 3, 4):
+            w, _ = cyclic_window(m)
+            for matrix_free in (False, True):
+                self.compare(
+                    ProjectionProblem(
+                        w,
+                        input_structure="CyclicTrace",
+                        matrix_free_output=matrix_free,
+                        requested_certificate_level="ExactOptimal",
+                    ),
+                    "StructuredFamilySolver",
+                )
+
+    def test_all_state_interruptions_keep_completed_bounds_and_seeds(self):
+        from test_structured import cyclic_window
+
+        w, _ = cyclic_window(2)
+        for method in (
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+        ):
+            problem = ProjectionProblem(
+                w,
+                input_structure="CyclicTrace"
+                if method == "StructuredFamilySolver"
+                else "GeneralChainWindow",
+            )
+            complete = solve_projection(problem, method)
+            for limit in range(complete.resource_usage["states"] + 1):
+                with self.subTest(method=method, state_limit=limit):
+                    self.compare(
+                        replace(
+                            problem, resource_limits=ResourceLimits(state_limit=limit)
+                        ),
+                        method,
+                    )
+            for limits in (
+                ResourceLimits(wall_time_limit=0),
+                ResourceLimits(matrix_entry_limit=0),
+            ):
+                self.compare(replace(problem, resource_limits=limits), method)
+
+    def test_unbounded_weights_visible_fallback_and_cross_product_overflow(self):
+        from test_structured import cyclic_window
+
+        w, _ = cyclic_window(2)
+        for arithmetic, weights in (
+            ("ExactInteger", (2**200 + 1, 2**200 + 3, 2**200 + 7)),
+            (
+                "ExactRational",
+                (Fraction(1, 2**131 - 1), Fraction(1, 2**127 - 1), Fraction(7, 11)),
+            ),
+            ("ExactInteger", (2**126 - 1, 2**125 + 1, 2**124 + 3)),
+        ):
+            problem = ProjectionProblem(
+                replace(w, weights=weights, arithmetic=arithmetic)
+            )
+            for method in (
+                "ExhaustiveExactSolver",
+                "GreedyCertifiedSolver",
+                "Rank2ExactSolver",
+            ):
+                actual = self.compare(problem, method)
+                if sum(weights) > 2**128 or arithmetic == "ExactRational":
+                    self.assertGreater(
+                        actual.resource_usage["native_detail"][
+                            "exact_mass_fallback_calls"
+                        ],
+                        0,
+                    )
+
+    def test_multiword_cycle_objective_matches_independent_finite_vectors(self):
+        from homology_operator.native import _span_objective, _words, _integer_weights
+        from homology_operator.solver import _Budget, _cycle_objective
+
+        for n in (0, 1, 63, 64, 65, 127, 128, 129):
+            basis = Matrix.from_columns(
+                (tuple(int(j == i) for j in range(n)) for i in range(min(3, n))),
+                nrows=n,
+            )
+            w = ChainWindow(
+                1,
+                Matrix.zero(0, n),
+                Matrix.zero(n, 0),
+                (),
+                tuple(f"e{j}" for j in range(n)),
+                (),
+                tuple(Fraction(j + 1, 3) for j in range(n)),
+            )
+            P = Matrix.from_rows(
+                (
+                    tuple(int((i - j) % max(1, n) in (0, 1)) for j in range(n))
+                    for i in range(n)
+                ),
+                ncols=n,
+            )
+            expected = _cycle_objective(w, P, basis, _Budget(ResourceLimits()))
+            self.assertEqual(
+                _span_objective(w, P, basis.transpose().rows, detail={}), expected
+            )
+            weights, _ = _integer_weights(w.weights)
+            vectors, masses, used, reason = extension.span_table(
+                tuple(map(_words, basis.transpose().rows)), weights, 100000, None
+            )
+            self.assertEqual(used, 2**basis.ncols - 1)
+            self.assertIsNone(reason)
+            self.assertEqual(len(vectors), len(masses))
+
+    def test_tampered_proofs_actions_and_witnesses_rejected_by_both_replays(self):
+        from test_rank2 import cut_problem
+        from homology_operator.validation import validate_solution
+
+        problem = cut_problem()
+        solution = solve_projection(problem, "NativeRank2ExactSolver")
+        for key, value in (
+            ("candidate_count", 1),
+            ("class_minima", (1, 1, 1)),
+            ("searched_candidates", 0),
+            ("tie_break_complete", False),
+        ):
+            bad = replace(
+                solution,
+                certificate={
+                    "optimization": {**solution.certificate["optimization"], key: value}
+                },
+            )
+            for native in (True, False):
+                with patch(
+                    "homology_operator.validation._replay_native", return_value=native
+                ):
+                    with self.assertRaises(ValidationError):
+                        validate_solution(problem.window, bad)
+        bad = replace(
+            solution, projection=Matrix.zero(problem.window.n, problem.window.n)
+        )
+        with self.assertRaises(ValidationError):
+            validate_solution(problem.window, bad)
+        bad = replace(
+            solution,
+            objective=replace(
+                solution.objective, details={"witness": (0,) * problem.window.n}
+            ),
+        )
+        with self.assertRaises(ValidationError):
+            validate_solution(problem.window, bad)
+
+    def test_missing_extension_recovery_and_unsupported_requests(self):
+        from test_structured import cyclic_window
+
+        w, _ = cyclic_window(2)
+        for method in (
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+        ):
+            problem = ProjectionProblem(
+                w,
+                input_structure="CyclicTrace"
+                if method == "StructuredFamilySolver"
+                else "GeneralChainWindow",
+            )
+            with patch("homology_operator.native._extension", side_effect=ImportError):
+                result = solve_projection(problem, "Native" + method)
+                self.assertEqual(result.status, "Unavailable")
+                self.assertIsNone(result.projection)
+            floating = replace(
+                problem,
+                window=replace(w, weights=(1.0,) * w.n, arithmetic="FloatingPoint"),
+            )
+            self.assertEqual(
+                solve_projection(floating, "Native" + method).status, "Unavailable"
+            )
+        result = solve_projection(ProjectionProblem(w), "NativeExhaustiveExactSolver")
+        record = HomologyOperator(w, result).to_result()
+        with patch("homology_operator.native._extension", side_effect=ImportError):
+            recovered = OperatorResult.from_json(record.to_json())
+            self.assertEqual(recovered.projection, result.projection)
+            self.assertEqual(
+                recovered.certificate["certificate_replay_backend"], "python-reference"
+            )
+        for operation in (
+            lambda: extension.span_table([[2]], [1], 10, None),
+            lambda: extension.span_table([[1]], [0], 10, None),
+            lambda: extension.span_table([[1]], [2**128 - 1, 1], 10, None),
+            lambda: extension.span_objective([[1]], [], [1], 10, None),
+            lambda: extension.span_table([[1]] * 17, [1], 10, None),
+            lambda: extension.span_table([[1]], [1], 10, -1.0),
+            lambda: extension.span_table([[1], [1]], [1], 10, None),
+            lambda: extension.cyclic_batch(5, [[0]]),
+        ):
+            with self.assertRaises(ValueError):
+                operation()
+
+
 if __name__ == "__main__":
     unittest.main()

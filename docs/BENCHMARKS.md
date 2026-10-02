@@ -200,3 +200,41 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 K4原基/重排两例从4/3改善到9/8，但实验仅认证[1,9/8]，Exhaustive在相同2000状态预算认证9/8最优；人工beta=3例没有改善贪心11/7，实验仍只认证[1,11/7]，Exhaustive在2000状态保留相同上界并中断。另独立放宽到默认100000状态作真值核验，Exhaustive以2090状态认证11/7；此核验不混入2000预算的性能记录。
 
 本轮结论为**no-go：不接入公共GeneralSearchSolver**。实验确有两项质量改善，但都在已有exact支持域，不能证明新的支持域或比现有认证更强；beta=3例没有质量收益。完整成本保留原K4约18.9ms及重排20.5ms，穷举分别约22.2ms及18.2ms；认证等级不同且每配置只有一次，不用这些数作速度排名。state=20/2000中断保留seed和已完成改进，已测中途改善保存；不完整neighbor扫描不标局部完成。该证据只拒绝本轮边界翻转原型的公共准入，不否定其他参数化、branch-and-bound、MILP或SAT未来研究；重新准入需要新需求、预先冻结的比较和独立证明。
+
+
+## S4-05：限定 solver 与证书重放的有限同语义 pilot
+
+使用 `scripts/benchmark_native.py --solvers`，预先固定7个配置：原 K4 窗口的
+Exact exhaustive 与 CertifiedInterval greedy、固定 T-A4 三终端 Rank2、固定 T-B1
+m=4 Structured handle、K4任意精度整数 greedy、state=20 exhaustive 中断及浮点拒绝。
+沿用 `compare_solvers.suite` 的来源/公式与完整输入身份，不改历史 corpus。
+全部 reference/native 比较在同请求、权重、预算、支持域和实际认证等级内进行。
+
+协议先提交再测量：10个独立进程区组，每后端每区组5次重复；worker 启动后导入并
+按配对顺序执行请求，属于已有导入环境的求解/完整操作成本，不能称每样本冷启动。
+后端进程顺序 seed=65，区组内共同顺序 seed=6500+block。计时关闭 profiler/tracemalloc，
+逐条记录构造、含必要独立验证的调度、算子读取/序列化/恢复及合计；原始 solver 状态、
+认证、预算计数、精确质量后备、序列化大小和完整链生成元/proof/几何/恢复输出 hash 保存。
+转换包含在各对应阶段，全部必需重复验证保留；hash计算在计时段外。
+
+内存另用两个新进程，调用既有操作系统绝对 peak RSS 入口；值表示整个7配置 worker，
+不能作为各配置内存或归因某项优化的证据，无可靠结果保存 null。全部失败/拒绝/中断
+保留；进程timeout=120秒。每配置应有100条记录与同一语义输出 hash，任何缺失/不一致
+写入报告并失败。样本是有限 pilot，不以其挑选新的路线或声称 S4/S5 退出通过。
+
+复跑（安装可选 wheel 后，使用测量报告记录的干净精确源码提交）：
+
+```powershell
+$revision = git rev-parse HEAD
+uv run --locked --no-sync python scripts/benchmark_native.py --solvers --revision $revision --output .task-artifacts/s4_solver_rerun.json
+```
+
+报告需同时记录源码 SHA、全部测量文件 LF hash、fixture/request hash、release 二进制与
+wheel hash、Python/Rust/OS/CPU、构建参数和所有原始样本。构造与重放的收益分开解释；
+可行种子、普通几何读取和显式快照仍有 reference 成本，不能称整个算子已原生化。
+
+
+汇总预先约定为各阶段的50样本 median/IQR、每个进程区组5重复的 reference/native
+median比，以及10个配对区组的median比的95% percentile bootstrap区间
+（10000次重采样，seed=65000）。区组为统计单位；拒绝请求无构造计时，不把None填0。
+内存worker也复核同一输出hash，任何库内诊断与实际method/config身份均保留。
