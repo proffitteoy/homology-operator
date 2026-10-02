@@ -12,6 +12,7 @@ from homology_operator import (
     FeasibleSolver,
     HomologyOperator,
     Matrix,
+    CompactAction,
     OperatorResult,
     ProjectionProblem,
     ResourceLimits,
@@ -20,6 +21,7 @@ from homology_operator import (
 from homology_operator.chain import matrix_data
 from homology_operator.native import (
     NativeFeasibleSolver,
+    NativeFactorizedSolver,
     PreparedMatrix,
     apply_batch,
     geometry_batch,
@@ -47,6 +49,10 @@ class NativeAvailabilityTests(unittest.TestCase):
             self.assertIsNone(solution.projection)
             op = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
             self.assertEqual(apply_batch(op, []).state, "Unavailable")
+            compact = solve_projection(
+                ProjectionProblem(w, matrix_free_output=True), NativeFactorizedSolver()
+            )
+            self.assertEqual(compact.status, "Unavailable")
         w = ChainWindow(
             0,
             Matrix.zero(0, 65),
@@ -392,6 +398,341 @@ class PackedAlgebraTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 operation()
+
+
+class CompactValidationTests(unittest.TestCase):
+    def test_reference_only_compact_identity_recovery_and_geometry(self):
+        from homology_operator.result import make_identity, QueryResult
+
+        w = ChainWindow(
+            0,
+            Matrix.zero(0, 2),
+            Matrix.from_rows(((1,), (1,))),
+            (),
+            ("a", "b"),
+            ("e",),
+            (10, 1),
+        )
+        hc = CompactAction(
+            "HC", (Matrix.from_columns(((1, 0),), 2), Matrix.from_rows(((1, 1),)))
+        )
+        seed = FeasibleSolver().solve(ProjectionProblem(w))
+        identity = make_identity(w, hc, seed.solver_run_id)
+        solution = replace(
+            seed,
+            projection=hc,
+            identity=identity,
+            objective=QueryResult("NotComputed", identity=identity),
+        )
+        with patch("homology_operator.native._extension", side_effect=ImportError):
+            op = HomologyOperator(w, solution)
+            self.assertEqual(op.kernel_basis(), ((1, 0),))
+            self.assertEqual(op.selected_mass((0, 1)), 10)
+            self.assertEqual(op.class_distance((1, 0), (0, 1)), 0)
+            restored = OperatorResult.from_json(op.to_result().to_json())
+            self.assertEqual(restored.projection, hc)
+            self.assertEqual(restored.identity, identity)
+            self.assertEqual(restored.projection.apply((1, 1)), (0, 0))
+
+    def test_independent_homology_validation_rejects_zero_and_bad_hc(self):
+        w = ChainWindow(
+            0, Matrix.zero(0, 2), Matrix.zero(2, 0), (), ("a", "b"), (), (1, 1)
+        )
+        zero = CompactAction("HC", (Matrix.zero(2, 0), Matrix.zero(0, 2)))
+        with self.assertRaises(ValidationError) as error:
+            validate_projection(w, zero)
+        self.assertEqual(error.exception.failures, ("cycle_homology_preservation",))
+        bad = CompactAction("HC", (Matrix.identity(2), Matrix.zero(2, 2)))
+        with self.assertRaises(ValidationError) as error:
+            validate_projection(w, bad)
+        self.assertIn("c_h_identity", error.exception.failures)
+
+
+@unittest.skipUnless(extension is not None, "optional native wheel not installed")
+class CompactActionTests(unittest.TestCase):
+    def solution(self, w, form="Factorized", limits=None):
+        request = ProjectionProblem(
+            w,
+            matrix_free_output=True,
+            solver_options={"representation": form},
+            resource_limits=limits or ResourceLimits(),
+        )
+        result = solve_projection(request, NativeFactorizedSolver())
+        self.assertEqual(result.status, "FeasibleOnly", result.diagnostics)
+        return result
+
+    def test_corpus_all_generator_and_cycle_actions_same_p_and_geometry(self):
+        for fixture in oracle.load_fixtures():
+            w = window(fixture)
+            ref = HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+            for form in ("Factorized", "HC"):
+                with self.subTest(fixture=fixture["id"], form=form):
+                    solution = self.solution(w, form)
+                    op = HomologyOperator(w, solution)
+                    self.assertIsNone(solution.generalized_inverse_a)
+                    self.assertIsNone(solution.generalized_inverse_d)
+                    self.assertFalse(hasattr(op.P, "rows"))
+                    self.assertEqual(op.kernel_basis(), ref.kernel_basis())
+                    self.assertEqual(op.betti(), ref.betti())
+                    generators = tuple(
+                        tuple(int(i == j) for i in range(w.n)) for j in range(w.n)
+                    )
+                    vectors = (
+                        tuple(product((0, 1), repeat=w.n)) if w.n <= 8 else generators
+                    )
+                    self.assertEqual(
+                        tuple(op.project(x) for x in vectors),
+                        tuple(ref.project(x) for x in vectors),
+                    )
+                    batch = apply_batch(op, vectors)
+                    self.assertEqual(
+                        batch.value["project"], tuple(ref.project(x) for x in vectors)
+                    )
+                    self.assertEqual(
+                        batch.value["apply_operator"],
+                        tuple(ref.apply_operator(x) for x in vectors),
+                    )
+                    columns = tuple(
+                        sum(bit << i for i, bit in enumerate(op.project(e)))
+                        for e in generators
+                    )
+                    self.assertTrue(oracle.verify_projection(fixture, columns))
+                    cycles = tuple(
+                        tuple((z >> i) & 1 for i in range(w.n))
+                        for z in oracle.cycles(fixture)
+                    )[:8]
+                    pairs = tuple(
+                        (i, (i + 1) % len(cycles)) for i in range(len(cycles))
+                    )
+                    query = geometry_batch(op, cycles, pairs)
+                    for name in ("class_representative", "selected_mass", "support"):
+                        self.assertEqual(
+                            query.value[name],
+                            tuple(getattr(ref, name)(z) for z in cycles),
+                        )
+                    for name in ("class_distance", "shared_support", "union_support"):
+                        self.assertEqual(
+                            query.value[name],
+                            tuple(
+                                getattr(ref, name)(cycles[i], cycles[j])
+                                for i, j in pairs
+                            ),
+                        )
+                    restored = OperatorResult.from_json(op.to_result().to_json())
+                    self.assertEqual(restored.projection, op.P)
+                    self.assertEqual(restored.identity, op.identity)
+                    with self.assertRaises(ValueError):
+                        require_same_identity(op.identity, ref.identity)
+
+    def test_full_augmented_inverse_rows_and_small_chain_windows(self):
+        from homology_operator.solver import generalized_inverse
+
+        for m, n in product(range(4), repeat=2):
+            for entries in product((0, 1), repeat=m * n):
+                a = Matrix(m, n, tuple(entries[i * n : (i + 1) * n] for i in range(m)))
+                handle = PreparedMatrix(a)._handle
+                rows = handle.inverse_rows()
+                expanded = [[0] * m for _ in range(n)]
+                for pivot, row in zip(handle.pivots, rows):
+                    expanded[pivot] = [(row[i // 64] >> (i % 64)) & 1 for i in range(m)]
+                self.assertEqual(
+                    Matrix.from_rows(expanded, ncols=m), generalized_inverse(a)
+                )
+        for m, n in product(range(3), range(4)):
+            for entries in product((0, 1), repeat=m * n):
+                a = Matrix(m, n, tuple(entries[i * n : (i + 1) * n] for i in range(m)))
+                for z in product((0, 1), repeat=n):
+                    if any(a.apply(z)):
+                        continue
+                    d = Matrix.from_columns((z,), nrows=n)
+                    w = ChainWindow(
+                        1,
+                        a,
+                        d,
+                        tuple(f"a{i}" for i in range(m)),
+                        tuple(f"c{i}" for i in range(n)),
+                        ("b",),
+                        (1,) * n,
+                    )
+                    ref = HomologyOperator(
+                        w, FeasibleSolver().solve(ProjectionProblem(w))
+                    )
+                    op = HomologyOperator(w, self.solution(w))
+                    self.assertEqual(op.kernel_basis(), ref.kernel_basis())
+                    self.assertEqual(op.betti(), ref.betti())
+
+    def test_no_dense_projection_inverse_identity_or_rust_required_for_restore(self):
+        fixture = next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        w = window(fixture)
+        with (
+            patch(
+                "homology_operator.solver.generalized_inverse",
+                side_effect=AssertionError("expanded G/U"),
+            ),
+            patch.object(
+                Matrix, "identity", side_effect=AssertionError("dense identity")
+            ),
+        ):
+            # Factorized verifier uses generators, never an n by n identity/P.
+            solution = self.solution(w)
+            op = HomologyOperator(w, solution)
+            op.project((1, 0, 0, 0, 0, 0))
+            record = op.to_result()
+            OperatorResult.from_json(record.to_json())
+        # HC verifier may allocate a beta by beta identity, never n by n P.
+        original_identity = Matrix.identity
+
+        def guarded_identity(size):
+            if size == w.n:
+                raise AssertionError("dense projection identity")
+            return original_identity(size)
+
+        with patch.object(Matrix, "identity", side_effect=guarded_identity):
+            hc = HomologyOperator(w, self.solution(w, "HC"))
+            serialized = hc.to_result().to_json()
+        with patch("homology_operator.native._extension", side_effect=ImportError):
+            restored = OperatorResult.from_json(serialized)
+            restored_op = HomologyOperator(
+                w, replace(hc.solution, projection=restored.projection)
+            )
+            self.assertEqual(
+                restored_op.project((1, 0, 0, 0, 0, 0)), hc.project((1, 0, 0, 0, 0, 0))
+            )
+
+    def test_illegal_factors_hc_zero_projection_and_tampered_version_identity(self):
+        from homology_operator.chain import action_data, action_from_data
+        from homology_operator.result import make_identity
+
+        fixture = next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        w = window(fixture)
+        op = HomologyOperator(w, self.solution(w))
+        a, d, g, u = op.P.factors
+        invalid = CompactAction(
+            op.P.form, (a, d, Matrix.zero(g.nrows, g.ncols), u), op.P.pivots
+        )
+        with self.assertRaises(ValidationError):
+            validate_projection(w, invalid)
+        zero = CompactAction("HC", (Matrix.zero(w.n, 0), Matrix.zero(0, w.n)))
+        with self.assertRaises(ValidationError) as error:
+            validate_projection(w, zero)
+        self.assertIn("cycle_homology_preservation", error.exception.failures)
+        hc = HomologyOperator(w, self.solution(w, "HC"))
+        h, c = hc.P.factors
+        invalid = CompactAction("HC", (h, Matrix.zero(c.nrows, c.ncols)))
+        with self.assertRaises(ValidationError):
+            validate_projection(w, invalid)
+        data = action_data(op.P)
+        for changes in (
+            {"version": 2},
+            {"version": True},
+            {"extra": 0},
+            {"complement": 1},
+            {"form": "Unknown"},
+        ):
+            with self.assertRaises(ValueError):
+                action_from_data({**data, **changes})
+        record = op.to_result().to_dict()
+        record["projection"]["factors"][2]["rows"] = [
+            [0] * g.ncols for _ in range(g.nrows)
+        ]
+        with self.assertRaises(ValueError):
+            OperatorResult.from_dict(record)
+        with self.assertRaises(ValueError):
+            HomologyOperator(
+                w,
+                replace(
+                    op.solution,
+                    projection=hc.P,
+                    identity=make_identity(w, op.P, op.solution.solver_run_id),
+                ),
+            )
+        with self.assertRaises(ValueError):
+            CompactAction("GeneralizedInverse", op.P.factors, ((True,), op.P.pivots[1]))
+        with self.assertRaises(ValueError):
+            extension.compact_actions("HC", [[[0]], [[0]]], [1, 2], [], False, [[1]])
+
+    def test_multiword_factor_hc_resource_and_query_domains(self):
+        for n in (0, 1, 63, 64, 65, 127, 128, 129):
+            # Two surviving coordinates, all remaining coordinates boundaries.
+            d = Matrix.from_columns(
+                (tuple(int(i == j) for i in range(n)) for j in range(2, n)), nrows=n
+            )
+            w = ChainWindow(
+                0,
+                Matrix.zero(0, n),
+                d,
+                (),
+                tuple(map(str, range(n))),
+                tuple(f"b{i}" for i in range(d.ncols)),
+                (1,) * n,
+            )
+            for form in ("Factorized", "HC"):
+                op = HomologyOperator(w, self.solution(w, form))
+                x = (1,) * n
+                expected = tuple(int(i < 2) for i in range(n))
+                self.assertEqual(op.project(x), expected)
+                self.assertEqual(apply_batch(op, [x]).value["project"], (expected,))
+                self.assertEqual(op.betti(), min(n, 2))
+                expected_states = 5 + n + (2 * n if form == "HC" else 0)
+                self.assertEqual(op.solution.resource_usage["states"], expected_states)
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        for limits in (
+            ResourceLimits(state_limit=0),
+            ResourceLimits(wall_time_limit=0),
+            ResourceLimits(matrix_entry_limit=0),
+        ):
+            result = solve_projection(
+                ProjectionProblem(w, matrix_free_output=True, resource_limits=limits),
+                NativeFactorizedSolver(),
+            )
+            self.assertEqual(result.status, "ResourceExhausted", result.diagnostics)
+            self.assertIsNone(result.projection)
+        op = HomologyOperator(w, self.solution(w))
+        with self.assertRaisesRegex(ValueError, "cycle"):
+            geometry_batch(op, [(1, 0, 0, 0, 0, 0)])
+        self.assertEqual(
+            solve_projection(ProjectionProblem(w), NativeFactorizedSolver()).status,
+            "Unavailable",
+        )
+        self.assertEqual(
+            solve_projection(
+                ProjectionProblem(
+                    w,
+                    matrix_free_output=True,
+                    requested_certificate_level="ExactOptimal",
+                ),
+                NativeFactorizedSolver(),
+            ).status,
+            "Unavailable",
+        )
+
+    def test_compact_family_transport_ranks_barcode_and_restore(self):
+        from homology_operator import OperatorFamily, OperatorFamilyResult
+        from test_family_joint import corpus_families, family_from
+
+        for _, fixtures in corpus_families():
+            ref = family_from(fixtures)
+            for form in ("Factorized", "HC"):
+                operators = tuple(
+                    HomologyOperator(w, self.solution(w, form)) for w in ref.windows
+                )
+                family = OperatorFamily(ref.scales, ref.windows, operators)
+                self.assertEqual(family.barcode().value, ref.barcode().value)
+                for i in range(len(operators)):
+                    for j in range(i, len(operators)):
+                        self.assertEqual(
+                            family.transport_rank(i, j).value,
+                            ref.transport_rank(i, j).value,
+                        )
+                        self.assertEqual(
+                            family.transport(i, j).value, ref.transport(i, j).value
+                        )
+                restored = OperatorFamilyResult.from_json(
+                    family.to_result().to_json()
+                ).to_family()
+                self.assertEqual(restored.barcode().value, family.barcode().value)
 
 
 if __name__ == "__main__":

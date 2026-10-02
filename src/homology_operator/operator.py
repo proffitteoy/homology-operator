@@ -6,7 +6,7 @@ from fractions import Fraction
 from math import fsum, isfinite
 from types import MappingProxyType
 
-from .algebra import Matrix, CyclicAction, validate_vector
+from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 from .chain import ChainWindow
 from .result import OperatorResult, QueryResult, _freeze, make_identity
 from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
@@ -49,7 +49,9 @@ class HomologyOperator:
         object.__setattr__(
             self,
             "L",
-            CyclicAction(self.P.m, not self.P.complement)
+            self.P.complemented()
+            if isinstance(self.P, CompactAction)
+            else CyclicAction(self.P.m, not self.P.complement)
             if isinstance(self.P, CyclicAction)
             else Matrix.identity(self.window.n) + self.P,
         )
@@ -72,7 +74,9 @@ class HomologyOperator:
                 {
                     "repository_revision": self.repository_revision,
                     "theory_revision": THEORY_REVISION,
-                    "backend": "python-structured-reference"
+                    "backend": "python-compact-f2"
+                    if isinstance(self.P, CompactAction)
+                    else "python-structured-reference"
                     if isinstance(self.P, CyclicAction)
                     else "python-dense-reference",
                     "backend_version": "0.0.2.dev0",
