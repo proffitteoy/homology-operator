@@ -22,5 +22,7 @@ __all__ = [
     "ProjectionProblem",
     "ProjectionSolution",
     "ResourceLimits",
+    "ValidationError",
+    "validate_projection",
     "__version__",
 ]
