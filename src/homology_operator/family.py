@@ -305,3 +305,74 @@ class OperatorFamily:
             j,
             True,
         )
+
+    def barcode(self):
+        """Read half-open stage intervals from transport ranks only.
+
+        A None death is essential under the constant final-stage extension.
+        Repeated scale labels can yield zero scale length but distinct stage ends.
+        """
+        last = len(self.windows) - 1
+        ranks = {}
+        for i in range(last + 1):
+            for j in range(i, last + 1):
+                result = self.transport_rank(i, j)
+                if result.state != "Computed":
+                    return self._query(
+                        result.state,
+                        None,
+                        0,
+                        last,
+                        details={
+                            "rank_invariant_source": "operator_family",
+                            "oracle_used_for_result": False,
+                            "failed_interval": (i, j),
+                        },
+                    )
+                ranks[i, j] = result.value
+
+        def rank(i, j):
+            return 0 if i < 0 or j > last else ranks[i, j]
+
+        intervals = []
+        for birth in range(last + 1):
+            for death in range(birth + 1, last + 2):
+                multiplicity = (
+                    rank(birth, death - 1)
+                    - rank(birth - 1, death - 1)
+                    - rank(birth, death)
+                    + rank(birth - 1, death)
+                )
+                if multiplicity < 0:
+                    raise ValueError(
+                        "rank invariant has negative interval multiplicity"
+                    )
+                if multiplicity:
+                    essential = death == last + 1
+                    intervals.append(
+                        {
+                            "birth_stage": birth,
+                            "death_stage": None if essential else death,
+                            "birth_scale": self.scales[birth],
+                            "death_scale": None if essential else self.scales[death],
+                            "multiplicity": multiplicity,
+                            "essential": essential,
+                            "zero_scale_length": False
+                            if essential
+                            else self.scales[birth] == self.scales[death],
+                        }
+                    )
+        return self._query(
+            "Computed",
+            intervals,
+            0,
+            last,
+            True,
+            {
+                "rank_invariant_source": "operator_family",
+                "oracle_used_for_result": False,
+                "endpoint_convention": "half-open stage indices",
+                "terminal_extension": self.terminal_extension,
+                "duplicate_policy": self.duplicate_policy,
+            },
+        )

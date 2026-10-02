@@ -59,6 +59,8 @@ Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重�
 
 `T_ij=P_j J_ij|ker(L_i)` 绑定源与目标算子身份，须满足 `T_ii=I` 与 composition。Barcode 从这些传输的 rank invariant 恢复；逐尺度 Betti 和外部 PH 结果不能替代该来源。重复尺度、区间端点与末端存活的编码在 Phase 2 实现前明确并测试。
 
+`barcode()` 返回 `QueryResult`：区间按阶段索引 `[birth_stage, death_stage)` 编码，multiplicity 合并相同端点；`death_stage=None` 表示末端常量延拓下的 essential 区间。重复尺度仍保留阶段端点，同尺度出生/死亡以 `zero_scale_length=True` 明示；仅靠有限阶段数据无法恢复阶段内部未存事件。空 barcode 是 Computed 空 tuple，失败 rank 返回缺失而非空区间表。provenance 固定注明来源为当前 operator_family，oracle_used_for_result=false。
+
 ## 失败与缺失
 
 构造状态、solver 状态、认证等级和可选查询状态是不同字段。`0`、`NotComputed`、`Unavailable`、`ResourceExhausted`、`EmptyDomain`、`NoClass` 按结果契约分别表示。
