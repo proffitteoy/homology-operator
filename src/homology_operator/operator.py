@@ -10,7 +10,7 @@ from .algebra import Matrix, validate_vector
 from .chain import ChainWindow
 from .result import OperatorResult, QueryResult, _freeze, make_identity
 from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
-from .validation import validate_solution
+from .validation import _validated_certificate, validate_solution
 
 THEORY_REVISION = "6143729669902ee875b211b58085e954c76cdf88"
 
@@ -49,7 +49,15 @@ class HomologyOperator:
         object.__setattr__(self, "L", Matrix.identity(self.window.n) + self.P)
         object.__setattr__(self, "identity", MappingProxyType(identity))
         object.__setattr__(
-            self, "_certificate", _freeze({**self.solution.certificate, **certificate})
+            self,
+            "_certificate",
+            _freeze(
+                _validated_certificate(
+                    self.solution.certificate,
+                    certificate,
+                    self.solution.certificate_level,
+                )
+            ),
         )
         object.__setattr__(
             self,

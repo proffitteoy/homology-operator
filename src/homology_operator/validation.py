@@ -169,7 +169,11 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
             or objective.exact is not True
         )
     ):
-        return {}
+        return {
+            "objective_replayed": False,
+            "bounds_verified": False,
+            "optimality_verified": False,
+        }
     if window.arithmetic not in {"ExactInteger", "ExactRational"} or any(
         value is not None and type(value) not in {int, Fraction} for value in bounds
     ):
@@ -341,6 +345,22 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
     if (current, declared_key) != optimum:
         raise ValidationError(("optimal_projection_or_tie_break",))
     return optimum[0]
+
+
+def _validated_certificate(evidence, checks, level):
+    """Keep backend claims separate from the independently generated public checks.
+
+    Re-reading an already normalized record preserves its original evidence without
+    nesting another evidence layer on every round trip. Only a supported, replayed
+    optimization proof is retained at the public certificate's top level.
+    """
+    certificate = {
+        "solver_evidence": evidence.get("solver_evidence", evidence),
+        **checks,
+    }
+    if level in {"CertifiedUpperBound", "CertifiedInterval", "ExactOptimal"}:
+        certificate["optimization"] = evidence["optimization"]
+    return certificate
 
 
 def validate_solution(window, solution):

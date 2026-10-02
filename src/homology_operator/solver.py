@@ -369,6 +369,20 @@ def solve_projection(problem, backend="FeasibleSolver"):
         solution = backend.solve(problem)
         if not isinstance(solution, ProjectionSolution):
             raise ValueError("backend did not return ProjectionSolution")
+        expected_config = problem.solver_config(solution.method)
+        if solution.solver_config_id != content_id("solver-config", expected_config):
+            raise ValueError(
+                "returned solver configuration does not match this request"
+            )
+        if (
+            solution.tie_break_policy != problem.tie_break_policy
+            or solution.arithmetic_policy != expected_config["arithmetic_policy"]
+        ):
+            raise ValueError("returned solver policies do not match this request")
+        if "limits" in solution.resource_usage and content_id(
+            "limits", solution.resource_usage["limits"]
+        ) != content_id("limits", expected_config["resource_limits"]):
+            raise ValueError("reported resource limits do not match this request")
         if solution.projection is not None:
             validate_solution(problem.window, solution)
             acceptable = {
@@ -488,6 +502,8 @@ class ExhaustiveExactSolver:
                 solver_run_id=run_id,
                 method="ExhaustiveExactSolver",
                 solver_config=config,
+                tie_break_policy=problem.tie_break_policy,
+                arithmetic_policy=window.arithmetic,
             )
         budget.states = seed.resource_usage["states"]
         best = seed.projection
