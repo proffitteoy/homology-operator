@@ -4,12 +4,22 @@ from collections.abc import Mapping, Set
 from dataclasses import dataclass, field
 from fractions import Fraction
 from math import isfinite
+import json
 from types import MappingProxyType
 
 from .algebra import Matrix
-from .chain import ChainWindow, matrix_data, matrix_from_data
-from .operator import HomologyOperator
-from .result import OperatorResult, QueryResult, content_id, input_identity
+from .chain import ChainWindow, matrix_data, matrix_from_data, _thaw_metadata
+from .operator import HomologyOperator, THEORY_REVISION
+from .result import (
+    OperatorResult,
+    QueryResult,
+    content_id,
+    input_identity,
+    _encode,
+    _decode,
+    _freeze,
+)
+from .solver import ProjectionSolution
 
 
 def _ordered(value, name):
@@ -308,6 +318,44 @@ class OperatorFamily:
             True,
         )
 
+    def to_result(self):
+        """Immutable snapshot; serialization revalidates persisted derived readouts."""
+        return OperatorFamilyResult(
+            {
+                "schema_version": 1,
+                "identity": dict(self.identity),
+                "status": self.status,
+                "scales": _encode(self.scales),
+                "windows": [w.to_dict() for w in self.windows],
+                "stage_results": [
+                    (
+                        op.to_result() if isinstance(op, HomologyOperator) else op
+                    ).to_dict()
+                    for op in self.operators
+                ],
+                "weight_policy": self.weight_policy,
+                "duplicate_policy": self.duplicate_policy,
+                "terminal_extension": self.terminal_extension,
+                "transports": {
+                    f"{i}:{j}": result.to_dict()
+                    for (i, j), result in self._transports.items()
+                },
+                "rank_readout": {
+                    f"{i}:{j}": self.transport_rank(i, j).to_dict()
+                    for i, j in tuple(self._transports)
+                },
+                "barcode_readout": self.barcode().to_dict(),
+                "tracking_readout": {
+                    key: query.to_dict() for key, query in self._tracking.items()
+                },
+                "provenance": {
+                    "rank_invariant_source": "operator_family",
+                    "oracle_used_for_result": False,
+                    "theory_revision": THEORY_REVISION,
+                },
+            }
+        )
+
     def _remember(self, name, arguments, i, j, result):
         query = self._query(
             result.state,
@@ -510,4 +558,182 @@ class OperatorFamily:
                 "terminal_extension": self.terminal_extension,
                 "duplicate_policy": self.duplicate_policy,
             },
+        )
+
+
+def _restore_family(data):
+    records = tuple(
+        OperatorResult.from_dict(record) for record in data["stage_results"]
+    )
+    stages = []
+    for record in records:
+        if record.status != "Ready":
+            stages.append(record)
+            continue
+        metadata = record.solver
+        solution = ProjectionSolution(
+            metadata["status"],
+            record.identity["solver_run_id"],
+            record.projection,
+            record.identity,
+            metadata["certificate_level"],
+            QueryResult.from_dict(
+                metadata.get(
+                    "objective",
+                    QueryResult("NotComputed", identity=record.identity).to_dict(),
+                )
+            ),
+            record.certificate,
+            metadata.get("resource_usage", {}),
+            tie_break_policy=metadata.get("tie_break_policy", "StableBasisOrder"),
+            method=metadata.get("method", "FeasibleSolver"),
+            arithmetic_policy=metadata.get("arithmetic_policy"),
+        )
+        operator = HomologyOperator(
+            record.input_data,
+            solution,
+            record.provenance.get("repository_revision", "unknown"),
+        )
+        object.__setattr__(operator, "_provenance", record.provenance)
+        stages.append(operator)
+    family = OperatorFamily(
+        _decode(data["scales"]),
+        tuple(ChainWindow.from_dict(w) for w in data["windows"]),
+        tuple(stages),
+        data["weight_policy"],
+        data["duplicate_policy"],
+        data["terminal_extension"],
+    )
+    return family, records
+
+
+@dataclass(frozen=True)
+class OperatorFamilyResult:
+    """Validated immutable JSON snapshot, including full stage failure records."""
+
+    data: Mapping
+
+    def __post_init__(self):
+        fields = {
+            "schema_version",
+            "identity",
+            "status",
+            "scales",
+            "windows",
+            "stage_results",
+            "weight_policy",
+            "duplicate_policy",
+            "terminal_extension",
+            "transports",
+            "rank_readout",
+            "barcode_readout",
+            "tracking_readout",
+            "provenance",
+        }
+        if not isinstance(self.data, Mapping) or set(self.data) != fields:
+            raise ValueError("invalid operator family result fields")
+        data = _thaw_metadata(self.data)
+        if type(data["schema_version"]) is not int or data["schema_version"] != 1:
+            raise ValueError("unsupported family result schema")
+        try:
+            json.dumps(data, allow_nan=False)
+        except (TypeError, ValueError) as error:
+            raise ValueError("family snapshot must be finite JSON wire data") from error
+        family, records = _restore_family(data)
+        if data["identity"] != family.identity or data["status"] != family.status:
+            raise ValueError(
+                "family result content does not match its identity or status"
+            )
+        if data["provenance"] != {
+            "rank_invariant_source": "operator_family",
+            "oracle_used_for_result": False,
+            "theory_revision": THEORY_REVISION,
+        }:
+            raise ValueError(
+                "barcode provenance must reference the current operator family"
+            )
+        for name, method in (
+            ("transports", family.transport),
+            ("rank_readout", family.transport_rank),
+        ):
+            if not isinstance(data[name], Mapping):
+                raise ValueError("family readouts must be mappings")
+            for key, wire in data[name].items():
+                try:
+                    i, j = map(int, key.split(":"))
+                except (AttributeError, TypeError, ValueError) as error:
+                    raise ValueError("invalid interval key") from error
+                if key != f"{i}:{j}" or QueryResult.from_dict(wire) != method(i, j):
+                    raise ValueError(
+                        "persisted transport or rank differs from its operator family"
+                    )
+        if QueryResult.from_dict(data["barcode_readout"]) != family.barcode():
+            raise ValueError("persisted barcode differs from current transport ranks")
+        if not isinstance(data["tracking_readout"], Mapping):
+            raise ValueError("tracking readouts must be a mapping")
+        for key, wire in data["tracking_readout"].items():
+            query = QueryResult.from_dict(wire)
+            name = query.details.get("query")
+            if name not in {
+                "track_class",
+                "track_mass",
+                "track_support",
+                "track_shared_support",
+                "track_union_support",
+            }:
+                raise ValueError("unknown persisted tracking query")
+            arguments = query.details.get("arguments")
+            i, j = query.details.get("source_stage"), query.details.get("target_stage")
+            if not isinstance(arguments, tuple) or key != content_id(
+                name, (arguments, i, j)
+            ):
+                raise ValueError("invalid tracking query key or arguments")
+            try:
+                expected = getattr(family, name)(*arguments, i, j)
+            except TypeError as error:
+                raise ValueError("invalid tracking arguments") from error
+            if query != expected:
+                raise ValueError("persisted tracking differs from its family")
+        object.__setattr__(self, "data", _freeze(data))
+        object.__setattr__(self, "identity", _freeze(data["identity"]))
+        object.__setattr__(self, "status", family.status)
+        object.__setattr__(self, "stage_results", records)
+
+    def to_dict(self):
+        return _thaw_metadata(self.data)
+
+    def to_json(self):
+        return json.dumps(
+            self.to_dict(),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+
+    def to_family(self):
+        """Reconstruct actions from validated stage projections, without re-solving."""
+        return _restore_family(self.to_dict())[0]
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data)
+
+    @classmethod
+    def from_json(cls, text):
+        def unique_object(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError("duplicate JSON keys are not allowed")
+                result[key] = value
+            return result
+
+        def reject_constant(value):
+            raise ValueError(f"nonfinite JSON constant: {value}")
+
+        return cls(
+            json.loads(
+                text, object_pairs_hook=unique_object, parse_constant=reject_constant
+            )
         )
