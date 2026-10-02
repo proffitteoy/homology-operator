@@ -18,4 +18,17 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 构造和独立revalidation分别在tracemalloc启用时计时并记录Python分配峰值；这是带测量开销的时间和Python分配代理，不是原生内存或进程RSS。不可用RSS记录null，没有运行的构造/后验证同样为null，不能当成零耗时。构造预算不覆盖入口校验与独立证书重放；wall/state/matrix-entry语义以solver契约为准。
 
-首次冻结运行在提交程序及测试后执行；结果和环境随后记录在本页。每种组合只运行一次，后续性能研究应另定重复次数、预热和隔离环境，不能从本表挑最好一次或混合认证等级作结论。
+首次冻结运行使用干净源码提交 `fc9219885b6a3f20d6740368c95ca2f7e63e3ee6`，环境为Windows 10 build 26100 / AMD64 / Python 3.10.11。完整记录见 [phase3_reference.json](../benchmarks/phase3_reference.json)，原始文件SHA256为 `9cce89cc0c14eeda7aff4acf7d7e168c5ecfae6361368941e10586ddab871ffa`；其中的LF源码清单与source_snapshot_id绑定实际运行源码，不以之后的提交或CI替换此身份。
+
+54个请求配置探测6个backend，保存324行：88个Solved、23个FeasibleOnly、6个ResourceExhausted、207个Unavailable。实际认证分为84个ExactOptimal、4个CertifiedInterval、26个Feasible（包括3个中断但保留action的运行）；无action的认证缺失。所有114个保留action经独立后验证，测试还从冻结文件重新构造OperatorResult并核对配置身份和JSON往返。
+
+| 保留观察 | 结果与含义 |
+| --- | --- |
+| K4 stage 4，同CertifiedInterval请求 | Exhaustive与Rank2都认证9/8；Greedy为区间[1,4/3]。不能按同请求将不同实际认证混作快慢排名 |
+| K4 state=20 | 三个优化器均中断，保留Feasible action但尚无完整objective/bounds；审计readout不补成solver认证 |
+| T-A4宏观割，一般链窗口 | Exhaustive/Rank2为7/6；Greedy为区间[1,13/8]，保留这项不利质量结果 |
+| K4的两个ExactOptimal运行 | 本次完整测量成本约Exhaustive 21.0ms、Rank2 23.4ms；专用构造没有在该单次样本中减少完整成本 |
+| T-B1 m=4 | Structured构造约2.3ms，额外独立验证约61.9ms，算子构造及穷举审计约1.67s，完整测量约1.75s；不能只报构造时间 |
+| GeneralSearch | 54个请求全部Unavailable，保留未实现事实，不能用已有solver结果填充它 |
+
+这些是单次带tracemalloc测量的有限记录，不提供稳健性能排序。它们说明一般搜索评估必须同时覆盖认证能力、质量与完整成本，而不能仅缩短候选构造；具体go/no-go留给#24。后续性能研究应另定重复次数、预热和隔离环境，不能从本表挑最好一次或混合认证等级作结论。

@@ -2,10 +2,13 @@
 
 from dataclasses import replace
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 
 from homology_operator import ChainWindow, Matrix, ProjectionProblem, ResourceLimits
+from homology_operator import OperatorResult
+from homology_operator.result import _decode, content_id
 
 spec = importlib.util.spec_from_file_location(
     "compare_solvers",
@@ -66,6 +69,37 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual(failed["solver"]["status"], "ResourceExhausted")
         self.assertIsNotNone(failed["costs"]["construction_seconds"])
         self.assertIsNone(failed["audit_current_objective"])
+
+    def test_frozen_report_revalidates_every_retained_action(self):
+        path = Path(__file__).resolve().parents[1] / "benchmarks/phase3_reference.json"
+        report = _decode(json.loads(path.read_text(encoding="utf-8")))
+        self.assertEqual(
+            report["source_snapshot_id"],
+            content_id("source-snapshot", report["source_manifest_sha256_lf"]),
+        )
+        self.assertFalse(report["working_tree_dirty"])
+        self.assertEqual(len(report["rows"]), 324)
+        verified = 0
+        for row in report["rows"]:
+            if row["projection"] is None:
+                self.assertIsNone(row["independent_validation"])
+                continue
+            verified += 1
+            window = ChainWindow.from_dict(report["problem_windows"][row["problem_id"]])
+            record = OperatorResult(
+                row["identity"],
+                window,
+                row["projection"],
+                row["solver"],
+                row["certificate"],
+                {},
+            )
+            self.assertEqual(
+                record.solver["solver_config_id"],
+                content_id("solver-config", row["request"]),
+            )
+            self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+        self.assertEqual(verified, 114)
 
 
 if __name__ == "__main__":
