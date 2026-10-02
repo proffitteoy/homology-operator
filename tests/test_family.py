@@ -10,6 +10,7 @@ from homology_operator import (
     Matrix,
     OperatorFamily,
     OperatorResult,
+    ResourceLimits,
     ProjectionProblem,
 )
 from homology_operator.chain import matrix_from_data
@@ -172,6 +173,71 @@ class TransportTests(unittest.TestCase):
         self.assertIsNone(partial.transport_rank(0, 1).value)
         self.assertEqual(partial.transport(0, 2).state, "Computed")
         self.assertEqual(partial.transport_certificate(0, 2).state, "Unavailable")
+
+
+class TrackingTests(unittest.TestCase):
+    def test_direct_multistep_death_merger_and_support(self):
+        family = merge_family()
+        for x in product((0, 1), repeat=2):
+            first = family.track_class(x, 0, 1).value
+            self.assertEqual(
+                family.track_class(first, 1, 2).value, family.track_class(x, 0, 2).value
+            )
+            self.assertEqual(
+                family.track_class(x, 0, 2).identity, family.stage(2).identity
+            )
+            self.assertEqual(
+                family.track_support(x, 0, 2).value, family.stage(2).support(first)
+            )
+            bound = family.endpoint_mass_bound(x, 0, 2)
+            self.assertTrue(bound.exact)
+            self.assertTrue(bound.value["bound_verified"])
+            self.assertEqual(bound.value["weight_change_factor"], 1)
+            self.assertLessEqual(
+                family.track_mass(x, 0, 2).value, bound.value["mass_bound"]
+            )
+        self.assertEqual(
+            family.track_class((1, 0), 0, 1).value,
+            family.track_class((0, 1), 0, 1).value,
+        )
+        self.assertEqual(family.track_class((1, 1), 0, 1).value, (0, 0))
+        self.assertEqual(family.track_mass((1, 1), 0, 1).value, 0)
+        self.assertEqual(family.track_support((1, 1), 0, 1).value, ())
+        self.assertEqual(family.track_shared_support((1, 0), (0, 1), 0, 1).value, (0,))
+        self.assertEqual(family.track_union_support((1, 0), (0, 1), 0, 1).value, (0,))
+
+    def test_variable_weights_numerical_bounds_and_resource_failure(self):
+        family = merge_family()
+        first, second = family.windows[:2]
+        changed = replace(second, weights=(20, 2))
+        variable = OperatorFamily(
+            (0, 1), (first, changed), (op(first), op(changed)), "Variable"
+        )
+        result = variable.endpoint_mass_bound((0, 1), 0, 1)
+        self.assertEqual(result.value["weight_change_factor"], 2)
+        self.assertEqual(result.value["mass_bound"], 20)
+        self.assertEqual(variable.track_mass((0, 1), 0, 1).value, 20)
+        missing = variable.endpoint_mass_bound(
+            (0, 1), 0, 1, ResourceLimits(state_limit=0)
+        )
+        self.assertEqual(missing.state, "ResourceExhausted")
+        self.assertIsNone(missing.value)
+        floating = replace(changed, weights=(20.0, 2.0), arithmetic="FloatingPoint")
+        numeric = OperatorFamily(
+            (0, 1), (first, floating), (op(first), op(floating)), "Variable"
+        )
+        observed = numeric.endpoint_mass_bound((0, 1), 0, 1)
+        self.assertFalse(observed.exact)
+        self.assertIsNone(observed.value["bound_verified"])
+
+    def test_tracking_rejects_noncycles_and_wrong_coordinates(self):
+        window = ChainWindow(
+            1, Matrix.identity(1), Matrix.zero(1, 0), ("v",), ("e",), (), (1,)
+        )
+        family = OperatorFamily((0,), (window,), (op(window),))
+        for x in ((1,), (), (2,)):
+            with self.subTest(x=x), self.assertRaises(ValueError):
+                family.track_class(x, 0, 0)
 
 
 class BarcodeTests(unittest.TestCase):

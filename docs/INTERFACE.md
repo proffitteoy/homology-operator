@@ -63,6 +63,8 @@ Phase 2 支持有限有序过滤、包含映射 `J_ij`、坐标对应、权重�
 
 ## 失败与缺失
 
+跨尺度 `track_class(x,i,j)` 默认只接受源循环并使用已计算 transport 的目标投影；`track_mass`、`track_support`、`track_shared_support`、`track_union_support` 从该代表读取目标原坐标几何。死亡类是合法零链、零质量和空支撑。`endpoint_mass_bound` 使用终点 stretch 乘源选定质量及显式变权因子 `max(w_j/w_i)`，不乘中间 stretch；需计算的终点 stretch 接受 ResourceLimits。浮点只给数值观察，`bound_verified=None`，不称认证上界。
+
 构造状态、solver 状态、认证等级和可选查询状态是不同字段。`0`、`NotComputed`、`Unavailable`、`ResourceExhausted`、`EmptyDomain`、`NoClass` 按结果契约分别表示。
 
 资源不足不能静默退化为近似 PH；尚未实现的求解后端明确返回 `Unavailable`。精确有理证书、数值上下界和启发式结果分别标识。

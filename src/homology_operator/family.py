@@ -52,6 +52,8 @@ class OperatorFamily:
         init=False, default_factory=dict, repr=False, compare=False
     )
 
+    _tracking: dict = field(init=False, default_factory=dict, repr=False, compare=False)
+
     def __post_init__(self):
         scales = _ordered(self.scales, "scales")
         windows = _ordered(self.windows, "windows")
@@ -304,6 +306,139 @@ class OperatorFamily:
             i,
             j,
             True,
+        )
+
+    def _remember(self, name, arguments, i, j, result):
+        query = self._query(
+            result.state,
+            result.value,
+            i,
+            j,
+            result.exact,
+            {**result.details, "query": name, "arguments": arguments},
+        )
+        self._tracking[content_id(name, (arguments, i, j))] = query
+        return query
+
+    def track_class(self, x, i, j):
+        """Transport a source cycle to the representative selected by the target P."""
+        self._interval(i, j)
+        from .algebra import validate_vector
+
+        x = validate_vector(x, self.windows[i].n)
+        if self.windows[i].A.apply(x) != (0,) * self.windows[i].m:
+            raise ValueError("class tracking requires a source cycle")
+        transport = self.transport(i, j)
+        if transport.state != "Computed":
+            result = self._query(transport.state, None, i, j, details=transport.details)
+        else:
+            source = self.stage(i)
+            kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
+            coordinates = kernel.solve(source.project(x))
+            if coordinates is None:
+                raise ValueError("source representative is outside its kernel")
+            value = matrix_from_data(transport.value["chain_action"]).apply(coordinates)
+            result = self._query("Computed", value, i, j, True)
+        return self._remember("track_class", (x,), i, j, result)
+
+    def _track_geometry(self, name, arguments, i, j):
+        arguments = tuple(tuple(x) for x in arguments)
+        chains = [self.track_class(x, i, j) for x in arguments]
+        missing = next((x for x in chains if x.state != "Computed"), None)
+        if missing is not None:
+            result = self._query(missing.state, None, i, j, details=missing.details)
+        else:
+            target = self.stage(j)
+            value = getattr(target, name)(*(x.value for x in chains))
+            result = self._query(
+                "Computed",
+                value,
+                i,
+                j,
+                name != "selected_mass" or target.window.arithmetic != "FloatingPoint",
+                {
+                    "weight_policy": self.weight_policy,
+                    "coordinate_labels": target.window.basis_current,
+                    "arithmetic_policy": target.window.arithmetic,
+                },
+            )
+        public_name = {
+            "selected_mass": "track_mass",
+            "support": "track_support",
+            "shared_support": "track_shared_support",
+            "union_support": "track_union_support",
+        }[name]
+        return self._remember(public_name, arguments, i, j, result)
+
+    def track_mass(self, x, i, j):
+        return self._track_geometry("selected_mass", (x,), i, j)
+
+    def track_support(self, x, i, j):
+        return self._track_geometry("support", (x,), i, j)
+
+    def track_shared_support(self, x, y, i, j):
+        return self._track_geometry("shared_support", (x, y), i, j)
+
+    def track_union_support(self, x, y, i, j):
+        return self._track_geometry("union_support", (x, y), i, j)
+
+    def endpoint_mass_bound(self, x, i, j, limits=None):
+        """One endpoint stretch times the explicit weight-change factor.
+
+        Floating results are numerical observations, not certified bounds.
+        """
+        x = tuple(x)
+        tracked = self.track_class(x, i, j)
+        if tracked.state != "Computed":
+            return tracked
+        source, target = self.stage(i), self.stage(j)
+        stretch = target.stretch(limits)
+        if stretch.state not in ("Computed", "EmptyDomain"):
+            return self._query(
+                stretch.state,
+                None,
+                i,
+                j,
+                details={
+                    "reason": "endpoint stretch unavailable",
+                    "stretch": stretch.to_dict(),
+                },
+            )
+        target_weights = dict(zip(target.window.basis_current, target.window.weights))
+        exact = (
+            source.window.arithmetic != "FloatingPoint"
+            and target.window.arithmetic != "FloatingPoint"
+        )
+        ratios = (
+            Fraction(target_weights[label]) / Fraction(weight)
+            if exact
+            else target_weights[label] / weight
+            for label, weight in zip(source.window.basis_current, source.window.weights)
+        )
+        factor = max(ratios, default=Fraction(1) if exact else 1.0)
+        mass = target.selected_mass(tracked.value)
+        bound = stretch.value * factor * source.selected_mass(x)
+        if exact and mass > bound:
+            raise ValueError("endpoint stretch inequality failed")
+        return self._query(
+            "Computed",
+            {
+                "target_mass": mass,
+                "source_selected_mass": source.selected_mass(x),
+                "weight_change_factor": factor,
+                "endpoint_stretch": stretch.value,
+                "mass_bound": bound,
+                "bound_verified": True if exact else None,
+            },
+            i,
+            j,
+            exact,
+            {
+                "weight_policy": self.weight_policy,
+                "arithmetic_policy": target.window.arithmetic,
+                "intermediate_stretch_factors_used": False,
+                "stretch": stretch.to_dict(),
+            },
         )
 
     def barcode(self):
