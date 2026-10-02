@@ -4,8 +4,8 @@
 
 ## 项目事实与入口
 
-- 本仓库是边界数据原生的 F2 同调算子库，Phase 1–3 全部 PR 已合并；reference 基线 main `54ce78b` 的 CI 通过，129项数学测试及历史证据见 docs/PHASE3_REPORT.md。后续阶段退出仍以实际实现、验收、全部 PR 合并和 main 数学测试/CI 为据。
-- reference backend 使用 Python 3.10+ 标准库与 uv；文档检查要求 PowerShell 7。[S4/S5 计划](docs/S4_S5_PROJECT.md) 细化原 Phase 4，采用 Rust 高性能路线及 GUDHI 对拍；尚未实现，不覆盖历史 Phase 3/S3 编号或证据。
+- 本仓库是边界数据原生的 F2 同调算子库，Phase 1–3 全部 PR 已合并；129 项数学测试与 main `54ce78b` 是 docs/PHASE3_REPORT.md 的历史基线，不是滚动状态。当前实现与精确 main/CI 身份集中在 docs/README.md。后续阶段退出仍以实际实现、验收、全部 PR 合并和 main 数学测试/CI 为据。
+- reference backend 使用 Python 3.10+ 标准库与 uv；可选 Rust 原型、多字 packed F2、复用分解与因子/HC action 已实现，安装和支持域见 docs/INTERFACE.md。文档检查要求 PowerShell 7。[S4/S5 计划](docs/S4_S5_PROJECT.md) 细化原 Phase 4；后续集成、GUDHI 正式对拍与测量仍需逐项验收，不覆盖历史 Phase 3/S3 编号或证据。
 - 开始任务先读 [README](README.md)、[文档索引](docs/README.md) 和相关契约。路线图中的目录、对象和版本号是开发目标，不能作为已实现的证据。
 - 明确的用户要求优先；仓库的数学契约优先于通用模板和 skills。若以后出现更具体的 `AGENT.md` 或目录级 `AGENTS.md`，还需读取其适用规则。
 
@@ -23,13 +23,13 @@
 ## 目录与命令
 
 - `docs/ARCHITECTURE.md`：对象职责和计算边界。
-- `docs/INTERFACE.md`：输入域与逻辑查询接口。
+- `docs/INTERFACE.md`：实际 Python API、输入域、查询返回类型与 native 安装。
 - `docs/RESULT_MODEL.md`：身份、状态、几何语义与序列化。
 - `docs/SOLVER_CONTRACT.md`：投影合法性、最优性、资源和并列策略。
-- `docs/VALIDATION.md`：当前文档验证与后续数学验收。
+- `docs/VALIDATION.md`：实际开发命令、CI 范围与数学变更的验收要求。
 - `docs/development/`：通用开发参考材料，与项目数学契约分开维护。
 - `scripts/check_docs.ps1`：只读检查根目录和 `docs/` 下的 Markdown 及本地文件链接。
-- 首次实现时按路线图建立实际需要的数学模块和测试；不要预建空的 `src/`、`tests/`、后端、数据库、部署或环境变量目录。
+- 使用现有 `src/homology_operator/`、`native/`、`tests/`、`examples/` 与 `benchmarks/`；路线图的推荐目录与版本是目标，不按模板预建空目录。
 
 在仓库根目录运行：
 
@@ -38,7 +38,7 @@ pwsh -NoProfile -File ./scripts/check_docs.ps1
 git diff --check
 ```
 
-文档检查涵盖未跟踪的 Markdown；`git diff --check` 只补充检查 Git 中已有文件的改动。reference 安装、测试、Ruff 与打包命令见 README；尚无 typecheck 或发布命令。新增实现时必须同时提供真实命令和依赖说明。
+文档检查涵盖未跟踪的 Markdown；`git diff --check` 只补充检查 Git 中已有文件的改动。安装/API 见 README 和 docs/INTERFACE.md；reference/native 测试、Ruff、Rust 检查与打包命令见 docs/VALIDATION.md。尚无独立 typecheck 或发布命令。新增实现时必须同时提供真实命令和依赖说明。
 
 ## 变更与验证
 
