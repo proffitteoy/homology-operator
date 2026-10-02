@@ -1,0 +1,803 @@
+{
+  "schema_version": 1,
+  "phase": "pilot",
+  "created_at": "2026-10-02T12:55:26.407435+00:00",
+  "manifest_sha256": "5b7461fa18eab56e9c5457f8395755b6c82f77587738ef199d5965a561d53e31",
+  "harness_revision": "81056a652814c27f86f7501104bc1ba9aac8c3e2",
+  "harness_tracked_dirty": false,
+  "harness_sha256": "e2cc8e6cfa1f33b20c549fff294a3903b5b66a798f70c853cd77eabc745a846e",
+  "environment": {
+    "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+    "executable": "F:\\homology-operator\\.venv\\Scripts\\python.exe",
+    "platform": "Windows-10-10.0.26100-SP0",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "threads": 1,
+    "timer": "perf_counter; no profiler or tracemalloc in timing/RSS workers",
+    "cold_scope": "process launch, interpreter/imports, manifest parsing, validated pipeline, JSON output and exit; parent aggregation excluded"
+  },
+  "source": {
+    "revision": "54ce78bccdcba619ffa2a4d76aeb450bfd24270e",
+    "lf_sha256": {
+      "src/homology_operator/__init__.py": "ac8e3119f9a6a15b3330769ed18656e84209a59f16a94005b63aea2216549f82",
+      "src/homology_operator/algebra.py": "3289bf88534e072222550d6c387c73851c8177a7c8ca8989f80efab3db605740",
+      "src/homology_operator/chain.py": "6d4c0e09ab5cc943fc0680e66acf715352a695f6aa4b7f4cf635f1522c605015",
+      "src/homology_operator/family.py": "331256ae66316866273978081aead421ab0c77bd2d551d077c42d9bb242a6fd2",
+      "src/homology_operator/operator.py": "57bd463579b168137783ae07b51e58507a4862233672c3dbf0510fd2c417ae11",
+      "src/homology_operator/result.py": "04dbae591a4e3a210d1f4df18e6776aa06030462b0565d0b7d6e3fcc05abd1fe",
+      "src/homology_operator/solver.py": "91e3c0ac665c76ff4529359cb209b8ea4ffc2321e5eacef39def7b1e47fdadb5",
+      "src/homology_operator/validation.py": "5deff7029dfc486e59665fa0f439622ee2406d9a17694e5211d6a952b3a494d3",
+      "tests/fixtures/reference.json": "593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2",
+      "tests/fixtures/solver_reference.json": "1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1",
+      "scripts/compare_solvers.py": "c9a94a24aa78f50a90088617a0f50a26c052b8a0daf1fc134dd9570357ba0553",
+      "pyproject.toml": "1b262e1e5a3298756491ba3669b631affdb6b2eee23c5149f42d91e6cb093e5d",
+      "uv.lock": "0adcbdecc1d7e2ab753224fe6503aaf9ecaf3af6fb8ae68affa10ee0a336dfc8"
+    },
+    "snapshot_sha256": "46294693bd6c26ae5abdcee87f7873c6963541f74e18ec97211136dd301e2d4b"
+  },
+  "samples": [
+    {
+      "state": "Completed",
+      "semantic_output_sha256": "d62f1601886d1151050188a7a977c2602089a986c5f67a38b6e7f752a51e5d9a",
+      "profile": ".task-artifacts\\s4-r0\\window_h1_k4_stage_4_ExhaustiveExactSolver_q8.prof",
+      "timing_excluded": true,
+      "pid": 3108,
+      "mode": "diagnostic",
+      "exit_code": 0,
+      "stderr": "",
+      "case": "window/h1_k4_stage_4/ExhaustiveExactSolver/q8",
+      "block": 0,
+      "repeat": 0,
+      "order": 0,
+      "cold_process_seconds": null,
+      "failure_elapsed_seconds": null,
+      "profile_sha256": "56901f256cb988ac47cc9fccfdb4167d2385c1764f5be750c0a2a30a48639980",
+      "total_calls": 172187,
+      "top_by_cumulative_time": [
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 255,
+          "function": "run_case",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 0.00027570000000000003,
+          "cumulative_seconds": 0.0463779
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 275,
+          "function": "timed",
+          "primitive_calls": 10,
+          "total_calls": 13,
+          "self_seconds": 3.47e-05,
+          "cumulative_seconds": 0.045511600000000006
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 247,
+          "function": "__post_init__",
+          "primitive_calls": 2,
+          "total_calls": 2,
+          "self_seconds": 7.060000000000001e-05,
+          "cumulative_seconds": 0.018507700000000002
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\validation.py",
+          "line": 111,
+          "function": "validate_solver_certificate",
+          "primitive_calls": 4,
+          "total_calls": 4,
+          "self_seconds": 0.00035580000000000003,
+          "cumulative_seconds": 0.0183296
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 327,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 2.7e-06,
+          "cumulative_seconds": 0.014565700000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\solver.py",
+          "line": 339,
+          "function": "solve_projection",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.66e-05,
+          "cumulative_seconds": 0.014561600000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\validation.py",
+          "line": 357,
+          "function": "_replay_exhaustive",
+          "primitive_calls": 4,
+          "total_calls": 4,
+          "self_seconds": 0.00025790000000000003,
+          "cumulative_seconds": 0.0141329
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 33,
+          "function": "_encode",
+          "primitive_calls": 1203,
+          "total_calls": 6327,
+          "self_seconds": 0.003647,
+          "cumulative_seconds": 0.0118285
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 418,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 2.3e-06,
+          "cumulative_seconds": 0.0110194
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 478,
+          "function": "from_json",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 6.8e-06,
+          "cumulative_seconds": 0.0110171
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 451,
+          "function": "from_dict",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 6.6e-06,
+          "cumulative_seconds": 0.010907
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\validation.py",
+          "line": 771,
+          "function": "validate_solution",
+          "primitive_calls": 2,
+          "total_calls": 2,
+          "self_seconds": 3.33e-05,
+          "cumulative_seconds": 0.010822
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 415,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 4.4e-06,
+          "cumulative_seconds": 0.009062
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.sum>",
+          "primitive_calls": 4957,
+          "total_calls": 4957,
+          "self_seconds": 0.0032455,
+          "cumulative_seconds": 0.008854500000000001
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 289,
+          "function": "solve",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.3e-06,
+          "cumulative_seconds": 0.008748500000000001
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 290,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 8.3e-06,
+          "cumulative_seconds": 0.0087431
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\solver.py",
+          "line": 487,
+          "function": "solve",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 8.400000000000001e-05,
+          "cumulative_seconds": 0.008734800000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 77,
+          "function": "_freeze",
+          "primitive_calls": 92,
+          "total_calls": 1105,
+          "self_seconds": 0.000803,
+          "cumulative_seconds": 0.0085495
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\operator.py",
+          "line": 308,
+          "function": "to_result",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 9.3e-06,
+          "cumulative_seconds": 0.0083497
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.isinstance>",
+          "primitive_calls": 30800,
+          "total_calls": 30800,
+          "self_seconds": 0.0042523000000000005,
+          "cumulative_seconds": 0.008348600000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 39,
+          "function": "<dictcomp>",
+          "primitive_calls": 206,
+          "total_calls": 419,
+          "self_seconds": 0.0004693,
+          "cumulative_seconds": 0.0081294
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 341,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 2.5e-06,
+          "cumulative_seconds": 0.0074443
+        },
+        {
+          "file": "<string>",
+          "line": 2,
+          "function": "__init__",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 3.7e-06,
+          "cumulative_seconds": 0.0074418
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\operator.py",
+          "line": 26,
+          "function": "__post_init__",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.9900000000000003e-05,
+          "cumulative_seconds": 0.0074381000000000004
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 78,
+          "function": "from_columns",
+          "primitive_calls": 137,
+          "total_calls": 137,
+          "self_seconds": 0.0005285,
+          "cumulative_seconds": 0.007023000000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 105,
+          "function": "__matmul__",
+          "primitive_calls": 62,
+          "total_calls": 62,
+          "self_seconds": 0.00019380000000000002,
+          "cumulative_seconds": 0.006564400000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 15,
+          "function": "validate_vector",
+          "primitive_calls": 3194,
+          "total_calls": 3194,
+          "self_seconds": 0.0020919000000000003,
+          "cumulative_seconds": 0.006352600000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 44,
+          "function": "<listcomp>",
+          "primitive_calls": 305,
+          "total_calls": 750,
+          "self_seconds": 0.0006587,
+          "cumulative_seconds": 0.0060007
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 81,
+          "function": "<dictcomp>",
+          "primitive_calls": 76,
+          "total_calls": 119,
+          "self_seconds": 0.00015690000000000002,
+          "cumulative_seconds": 0.005750900000000001
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 299,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.3e-06,
+          "cumulative_seconds": 0.0055778
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 300,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 9.000000000000001e-07,
+          "cumulative_seconds": 0.0055715
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 123,
+          "function": "apply",
+          "primitive_calls": 406,
+          "total_calls": 406,
+          "self_seconds": 0.0006281,
+          "cumulative_seconds": 0.0054609
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 37,
+          "function": "__post_init__",
+          "primitive_calls": 376,
+          "total_calls": 376,
+          "self_seconds": 0.0008094,
+          "cumulative_seconds": 0.005419500000000001
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 296,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.0000000000000002e-06,
+          "cumulative_seconds": 0.005256
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 297,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 1.3e-06,
+          "cumulative_seconds": 0.0052527
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.max>",
+          "primitive_calls": 53,
+          "total_calls": 53,
+          "self_seconds": 9.59e-05,
+          "cumulative_seconds": 0.0050938
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitive_calls": 3749,
+          "total_calls": 3761,
+          "self_seconds": 0.0021357,
+          "cumulative_seconds": 0.0047774
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 98,
+          "function": "content_id",
+          "primitive_calls": 56,
+          "total_calls": 56,
+          "self_seconds": 9.2e-05,
+          "cumulative_seconds": 0.0045627
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 41,
+          "function": "<genexpr>",
+          "primitive_calls": 2438,
+          "total_calls": 2438,
+          "self_seconds": 0.0006061,
+          "cumulative_seconds": 0.004478500000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 87,
+          "function": "canonical_json",
+          "primitive_calls": 56,
+          "total_calls": 56,
+          "self_seconds": 7.340000000000001e-05,
+          "cumulative_seconds": 0.0043415
+        }
+      ]
+    },
+    {
+      "state": "Completed",
+      "semantic_output_sha256": "5299b8ab2107af05979db8a9c0a917a923906759f9bd599371419f891958962e",
+      "profile": ".task-artifacts\\s4-r0\\family_h1_k4_all_deaths_feasible_q8.prof",
+      "timing_excluded": true,
+      "pid": 10620,
+      "mode": "diagnostic",
+      "exit_code": 0,
+      "stderr": "",
+      "case": "family/h1_k4_all_deaths/feasible/q8",
+      "block": 0,
+      "repeat": 0,
+      "order": 1,
+      "cold_process_seconds": null,
+      "failure_elapsed_seconds": null,
+      "profile_sha256": "4a68625289433815c2bebe8c5f7737ef63f3b5d5f6c54ec2a2c980e52ed2d522",
+      "total_calls": 3760149,
+      "top_by_cumulative_time": [
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 255,
+          "function": "run_case",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 0.00013230000000000002,
+          "cumulative_seconds": 0.9469056
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 275,
+          "function": "timed",
+          "primitive_calls": 40,
+          "total_calls": 64,
+          "self_seconds": 0.00012550000000000001,
+          "cumulative_seconds": 0.9450547
+        },
+        {
+          "file": "<string>",
+          "line": 2,
+          "function": "__init__",
+          "primitive_calls": 2,
+          "total_calls": 2,
+          "self_seconds": 0.0002388,
+          "cumulative_seconds": 0.7032858000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 661,
+          "function": "__post_init__",
+          "primitive_calls": 2,
+          "total_calls": 2,
+          "self_seconds": 0.0015729000000000001,
+          "cumulative_seconds": 0.7030470000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 33,
+          "function": "_encode",
+          "primitive_calls": 61443,
+          "total_calls": 267337,
+          "self_seconds": 0.1760924,
+          "cumulative_seconds": 0.5851564
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 77,
+          "function": "_freeze",
+          "primitive_calls": 3634,
+          "total_calls": 58871,
+          "self_seconds": 0.044567300000000004,
+          "cumulative_seconds": 0.5378204000000001
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 415,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 9e-05,
+          "cumulative_seconds": 0.40057220000000004
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 39,
+          "function": "<dictcomp>",
+          "primitive_calls": 9519,
+          "total_calls": 23512,
+          "self_seconds": 0.0345462,
+          "cumulative_seconds": 0.39932900000000005
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 324,
+          "function": "to_result",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 8.75e-05,
+          "cumulative_seconds": 0.3888073
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 81,
+          "function": "<dictcomp>",
+          "primitive_calls": 2818,
+          "total_calls": 7184,
+          "self_seconds": 0.0118866,
+          "cumulative_seconds": 0.3839562
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.isinstance>",
+          "primitive_calls": 1314730,
+          "total_calls": 1314730,
+          "self_seconds": 0.187897,
+          "cumulative_seconds": 0.3728731
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 418,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 4.9000000000000005e-06,
+          "cumulative_seconds": 0.36971550000000003
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 785,
+          "function": "from_json",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 9.130000000000001e-05,
+          "cumulative_seconds": 0.3697106
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 183,
+          "function": "__post_init__",
+          "primitive_calls": 1050,
+          "total_calls": 1050,
+          "self_seconds": 0.0032116000000000002,
+          "cumulative_seconds": 0.28309110000000004
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 213,
+          "function": "_query",
+          "primitive_calls": 640,
+          "total_calls": 640,
+          "self_seconds": 0.0020575000000000003,
+          "cumulative_seconds": 0.2020605
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 44,
+          "function": "<listcomp>",
+          "primitive_calls": 11946,
+          "total_calls": 28816,
+          "self_seconds": 0.0202471,
+          "cumulative_seconds": 0.185678
+        },
+        {
+          "file": "C:\\Users\\84025\\AppData\\Local\\Programs\\Python\\Python310\\lib\\abc.py",
+          "line": 117,
+          "function": "__instancecheck__",
+          "primitive_calls": 633202,
+          "total_calls": 633202,
+          "self_seconds": 0.0882516,
+          "cumulative_seconds": 0.1849761
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 87,
+          "function": "canonical_json",
+          "primitive_calls": 1398,
+          "total_calls": 1398,
+          "self_seconds": 0.0019180000000000002,
+          "cumulative_seconds": 0.1277189
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 598,
+          "function": "_restore_family",
+          "primitive_calls": 2,
+          "total_calls": 2,
+          "self_seconds": 0.00024170000000000002,
+          "cumulative_seconds": 0.11902510000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 83,
+          "function": "<genexpr>",
+          "primitive_calls": 6566,
+          "total_calls": 18721,
+          "self_seconds": 0.0047502,
+          "cumulative_seconds": 0.1145829
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 220,
+          "function": "transport",
+          "primitive_calls": 672,
+          "total_calls": 672,
+          "self_seconds": 0.0021196,
+          "cumulative_seconds": 0.1128296
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 211,
+          "function": "from_dict",
+          "primitive_calls": 354,
+          "total_calls": 354,
+          "self_seconds": 0.0011492000000000002,
+          "cumulative_seconds": 0.0979251
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method _abc._abc_instancecheck>",
+          "primitive_calls": 633202,
+          "total_calls": 633202,
+          "self_seconds": 0.08789040000000001,
+          "cumulative_seconds": 0.0967245
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 266,
+          "function": "transport_rank",
+          "primitive_calls": 252,
+          "total_calls": 252,
+          "self_seconds": 0.0003994,
+          "cumulative_seconds": 0.08959170000000001
+        },
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitive_calls": 50465,
+          "total_calls": 50465,
+          "self_seconds": 0.031504500000000005,
+          "cumulative_seconds": 0.0785878
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 98,
+          "function": "content_id",
+          "primitive_calls": 974,
+          "total_calls": 974,
+          "self_seconds": 0.0016604,
+          "cumulative_seconds": 0.0736386
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 247,
+          "function": "__post_init__",
+          "primitive_calls": 24,
+          "total_calls": 24,
+          "self_seconds": 0.0008786000000000001,
+          "cumulative_seconds": 0.0725653
+        },
+        {
+          "file": "F:\\homology-operator\\scripts\\benchmark_reference.py",
+          "line": 376,
+          "function": "transport",
+          "primitive_calls": 1,
+          "total_calls": 1,
+          "self_seconds": 6.16e-05,
+          "cumulative_seconds": 0.07149520000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 396,
+          "function": "_track_geometry",
+          "primitive_calls": 48,
+          "total_calls": 48,
+          "self_seconds": 0.00034060000000000004,
+          "cumulative_seconds": 0.07077800000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 526,
+          "function": "barcode",
+          "primitive_calls": 4,
+          "total_calls": 4,
+          "self_seconds": 0.00030470000000000003,
+          "cumulative_seconds": 0.0697922
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 154,
+          "function": "_identity",
+          "primitive_calls": 1314,
+          "total_calls": 1314,
+          "self_seconds": 0.0029008000000000003,
+          "cumulative_seconds": 0.05994820000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\operator.py",
+          "line": 26,
+          "function": "__post_init__",
+          "primitive_calls": 24,
+          "total_calls": 24,
+          "self_seconds": 0.0003103,
+          "cumulative_seconds": 0.0564949
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 599,
+          "function": "<genexpr>",
+          "primitive_calls": 18,
+          "total_calls": 18,
+          "self_seconds": 3.1400000000000004e-05,
+          "cumulative_seconds": 0.05521330000000001
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 451,
+          "function": "from_dict",
+          "primitive_calls": 16,
+          "total_calls": 16,
+          "self_seconds": 9.31e-05,
+          "cumulative_seconds": 0.055181900000000006
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\family.py",
+          "line": 375,
+          "function": "track_class",
+          "primitive_calls": 72,
+          "total_calls": 72,
+          "self_seconds": 0.0009733000000000001,
+          "cumulative_seconds": 0.0545884
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 123,
+          "function": "make_identity",
+          "primitive_calls": 88,
+          "total_calls": 88,
+          "self_seconds": 0.0005554000000000001,
+          "cumulative_seconds": 0.0524733
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 105,
+          "function": "__matmul__",
+          "primitive_calls": 812,
+          "total_calls": 812,
+          "self_seconds": 0.0022186000000000003,
+          "cumulative_seconds": 0.0519613
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\result.py",
+          "line": 104,
+          "function": "input_identity",
+          "primitive_calls": 112,
+          "total_calls": 112,
+          "self_seconds": 0.00040100000000000004,
+          "cumulative_seconds": 0.050109200000000007
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\validation.py",
+          "line": 771,
+          "function": "validate_solution",
+          "primitive_calls": 32,
+          "total_calls": 32,
+          "self_seconds": 0.0003616,
+          "cumulative_seconds": 0.049178900000000005
+        },
+        {
+          "file": "F:\\homology-operator\\.task-artifacts\\r0-main\\src\\homology_operator\\algebra.py",
+          "line": 37,
+          "function": "__post_init__",
+          "primitive_calls": 4479,
+          "total_calls": 4479,
+          "self_seconds": 0.0089621,
+          "cumulative_seconds": 0.0486482
+        }
+      ]
+    }
+  ],
+  "summary": {},
+  "unstable_output_cases": [],
+  "timings_are_diagnostic_and_overlapping": true
+}

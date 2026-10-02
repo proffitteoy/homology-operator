@@ -2,3 +2,5 @@
 docs/research/s4-s5/* -text
 # Uploaded Markdown has intentional hard breaks and original CRLF whitespace.
 docs/research/s4-s5/*.md whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+# Keep frozen S4 JSON file hashes stable on Windows and Linux.
+benchmarks/s4_r0_*.json text eol=lf
