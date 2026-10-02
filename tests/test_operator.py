@@ -5,7 +5,7 @@ import unittest
 from homology_operator.algebra import Matrix
 from homology_operator.chain import ChainWindow
 from homology_operator.operator import HomologyOperator
-from homology_operator.result import OperatorResult, make_identity
+from homology_operator.result import OperatorResult, QueryResult, make_identity
 from homology_operator.solver import FeasibleSolver, ProjectionProblem
 from homology_operator.validation import ValidationError
 
@@ -75,6 +75,7 @@ class OperatorTests(unittest.TestCase):
             op.window, Matrix.zero(3, 3), op.solution.solver_run_id
         )
         bad["query_results"] = {}
+        bad["solver"]["objective"]["identity"] = bad["identity"]
         with self.assertRaises(ValidationError):
             OperatorResult.from_dict(bad)
 
@@ -105,6 +106,17 @@ class OperatorTests(unittest.TestCase):
             self.assertEqual(zero.betti(), 0)
             self.assertEqual(zero.kernel_basis(), ())
             self.assertEqual(zero.to_result().query_results["kernel_basis"].value, ())
+
+    def test_nested_objective_mixing_is_rejected(self):
+        op = self.operator()
+        other = replace(op.window, weights=(3, 2, 1))
+        other_solution = FeasibleSolver().solve(ProjectionProblem(other))
+        for objective in (
+            QueryResult("Computed", 99, other_solution.identity),
+            QueryResult("NotComputed"),
+        ):
+            with self.subTest(objective=objective), self.assertRaises(ValidationError):
+                HomologyOperator(op.window, replace(op.solution, objective=objective))
 
 
 if __name__ == "__main__":
