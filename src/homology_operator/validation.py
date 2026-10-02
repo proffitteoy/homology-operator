@@ -149,6 +149,13 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         not isinstance(proof, Mapping) or proof.get("kind") != "CycleBounds"
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
+    if certified:
+        allowed_fields = {"kind", "nonzero_cycles", "lower_bound_method"}
+        if set(proof) - allowed_fields or (
+            "lower_bound_method" in proof
+            and proof["lower_bound_method"] != "UniversalHomology"
+        ):
+            raise ValidationError(("unsupported_certificate_fields",))
     if certified and (
         upper is None
         or objective is None
