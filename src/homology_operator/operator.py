@@ -44,6 +44,11 @@ class HomologyOperator:
         if self.solution.identity != identity:
             raise ValidationError(("solution_identity",))
         if (
+            not isinstance(self.solution.objective, QueryResult)
+            or self.solution.objective.identity != identity
+        ):
+            raise ValidationError(("objective_identity",))
+        if (
             not isinstance(self.repository_revision, str)
             or not self.repository_revision
         ):
