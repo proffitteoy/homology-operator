@@ -78,6 +78,29 @@ S4-01新增[reference R0入口与复跑协议](docs/BENCHMARKS.md)，固定已�
 `selected_mass` 表示当前投影选定代表的质量，不能声称是最短代表。可行投影、精确拓扑、全局最优伸长、稳定性和性能分别需要相应证据，见 [solver 契约](docs/SOLVER_CONTRACT.md) 和 [开发路线](HOMOLOGY_OPERATOR_ROADMAP.md)。
 
 
+## 可选 native 认证求解（S4-05）
+
+沿用下文的可选 release wheel 构建与安装命令。四个限定 solver 保留原支持域，
+显式选择 native 实现，默认 reference 入口不变：
+
+```python
+from homology_operator import ProjectionProblem, solve_projection
+
+problem = ProjectionProblem(window, requested_certificate_level="ExactOptimal")
+solution = solve_projection(problem, "NativeExhaustiveExactSolver")
+# 另有 NativeGreedyCertifiedSolver、NativeRank2ExactSolver、NativeStructuredFamilySolver。
+# Greedy 不接受一般 ExactOptimal 请求；Rank2/Structured 仍要求各自已验证的结构。
+```
+
+也可用既有 solver 类的 `native=True` 参数。原生 packed 循环枚举、精确质量比值、
+共享分解、多 RHS 与独立证书重放保持完整 action、并列和预算 state 语义。
+归一化权重超出 u128 时显式保留任意精度后备；缺少扩展返回 Unavailable。
+可行种子、候选外循环和部分代数仍在 Python，最终投影仍为原显式 Matrix 或
+既有 CyclicAction。支持域、身份与恢复路径见 [solver 契约](docs/SOLVER_CONTRACT.md)。
+
+[S4-05 有限同 solver 协议](docs/BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
+它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。
+
 ## 精确 F2 reference 代数
 
 ### 可选 Rust 纵向原型（S4-02）
@@ -120,6 +143,13 @@ safe Rust、单线程、每行一个 u64，原型构造的三个链空间暂限�
 
 ## 身份、状态与序列化
 
+S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
+packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
+显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
+默认过滤快照升级为共享边界/基/活动索引的 schema 2，旧 schema 1 可读并原版本重发；
+`to_result(schema_version=1)` 显式输出旧格式，单尺度快照版本保持原契约。
+证明、状态边界及复跑命令见 [S4-07说明](docs/S4_FILTRATION.md)。
+
 ### 同 P 的紧凑因子与 HC（S4-04）
 
 `from homology_operator.native import NativeFactorizedSolver` 后，通过 `solve_projection(ProjectionProblem(window, matrix_free_output=True, solver_options={"representation": "Factorized"}), NativeFactorizedSolver())` 获取 Feasible 解。`"HC"` 显式选择同一个P的另一表示。支持多字输入，仍受原逻辑matrix_entry/state/wall预算限制；不支持的认证/选项/缺失扩展明确返回Unavailable。现有五个reference solver和64维原型入口保持不变。
@@ -132,6 +162,7 @@ Factorized 的 `CompactAction` 保存A/D、广义逆的非零行及原pivot索�
 
 Factorized成功checkpoint数仍为5+m+n，HC额外2n个生成元构造checkpoint；wall在阶段间检查，validator/恢复在构造预算外，不是硬抢占/RSS上限。完整表示/β比率/时间与RSS比较见[测量协议](docs/BENCHMARKS.md)，不自动以有限测量选择表示。
 
+`QueryResult` 区分 Computed 的合法 0、NotComputed、Unavailable、ResourceExhausted、EmptyDomain（允许约定值 0）和 NoClass，保留 exact 与六身份。`OperatorResult` 保存 schema_version=1、输入/基/权重/投影/operator/solver_run 身份、solver 状态与认证、bounds、provenance；JSON round-trip 保留 Fraction 并复核输入和内容 hash，拒绝混用其他算子查询。所有记录的 P 均重新经过独立 projection validator；认证还要独立重放支持的证书，不能凭标签或 true 标志接受最优性。
 
 内容身份使用规范 UTF-8 JSON SHA256，projection_id 与 operator_id 不包含每次独立 solver_run UUID。安全缓存包含输入、基、权重、投影、solver 配置、并列策略与 backend semantics，独立 run 仍保存在来源中；同一记录内的查询必须完全匹配六身份。
 
@@ -265,5 +296,3 @@ CI运行Python 3.10/3.12的实际测试、示例、Ruff、构建和隔离wheel�
 | #3 Phase 3汇总 | [#58](https://github.com/proffitteoy/homology-operator/pull/58)，最后合并 |
 
 认证支持域和固定证据见报告与solver契约。Phase 3没有自动合并授权；前置合并后原后继PR转向main并核对准确head，不替换PR或强推。监测是否启用以Codex自动化实际状态为准，不能把已提交PR或本地测试通过写成阶段已合并。
-
-

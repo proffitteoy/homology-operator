@@ -733,3 +733,41 @@ ResourceLimits实际支持state_limit、wall_time_limit、matrix_entry_limit。n
 相同配置产生相同P与内容身份、不同solver_run；查询仍严格绑定六身份。相同P但不同并列策略改变projection_id；预算改变solver_config_id。cache_key调用者必须传实际solver_config_id、实际并列策略与backend语义版本，不能传固定占位名称代替配置身份。不同P的质量/支撑及cache分开，跨run/action查询混用被拒绝；当前并列策略的适用范围仍分别由各solver声明，不推断代表随权重连续。
 
 [边界测试](../tests/test_solver.py) 复用固定研究PROOF T1/T4的正权前提和T-B1 m=2窗口A=0、D=(1,1,1)ᵀ，跨solver验证大于binary64精确整数范围的等权与有理缩放：当前Γ=2，但选定单坐标质量可随P不同。调度失败保留请求backend的method，返回solution后使用真实内部method，允许测量wrapper；未知GeneralSearch不再误记为FeasibleSolver。[冻结对照](BENCHMARKS.md)保留原源码下的历史记录，不回写为修复后的结果。
+
+
+## 27. 可选同语义 native solver（S4-05）
+
+四个现有类 `ExhaustiveExactSolver`、`GreedyCertifiedSolver`、`Rank2ExactSolver`、
+`StructuredFamilySolver` 增加显式 `native=True`。调度名分别为
+`NativeExhaustiveExactSolver`、`NativeGreedyCertifiedSolver`、`NativeRank2ExactSolver`、
+`NativeStructuredFamilySolver`；默认仍执行 reference。method/config 身份区分后端，
+相同 P、原坐标和并列策略仍有相同 projection_id；solver_run_id 始终独立。
+缺少扩展或旧 wheel 缺少 S4-05 内核返回 Unavailable，不换 solver 或认证等级。
+
+packed stable 分解、多右端求解和矩阵乘法服务候选构造；非零循环按原 product 顺序
+在 Rust 中以 packed XOR 枚举，对 P 的循环基像复用线性作用。所有正有理权先精确
+通分并消除共同因子，归一化总质量不超过 u128 上限时用整数计算；比值通过欧几里得
+商余比较，避免交叉乘积溢出，不使用浮点。超限保留 Python 任意精度整数/Fraction，
+`native_detail.exact_mass_fallback_calls` 明示后备，完整成本包括后备。
+
+候选参数化、支持域、候选顺序、并列、极值 witness 和 state 单位沿用上述各 solver；
+Rust 在每个非零循环检查可用 state 与剩余 wall time，构造阶段仍有原检查点。
+三种搜索 solver 的可行种子与固定 R 目前仍由 Python reference 构造，成本计入构造；
+outer 候选循环与部分代数/权重分支仍在 Python，未宣称全流程原生或免除指数枚举。
+Exhaustive/Rank2 的完整候选×循环及 Greedy 的循环×beta 重放上限仍为100000，
+Structured 的 m 仍限2/3/4；matrix-entry 不是 RSS 硬上限，单次转换/分解没有强制抢占。
+
+独立证书 verifier 从原 A/D 重建循环、商基及其全部边界提升，重算全局最优与并列；
+Greedy 重验每步全部合格循环的最低质量，Rank2 重验结构、三分母和消去轨迹，
+Structured 重验全部列公式与低重量核距离。仅复用无认证含义的代数/作用内核，
+不使用 solver 的候选表、选择、搜索完成旗标作为证明。native 回归另强制通过原
+Python verifier，对拍共享内核的计算。外部恢复和进入算子仍重新验证。
+native 记录在无扩展环境可由完整 reference 重放恢复，公开
+`certificate_replay_backend`/`certificate_mass_backend` 表明实际重放/算术路径。
+直接调度的 `resource_usage.independent_validation_seconds` 记录独立验证成本；
+`native_detail.native_kernel_seconds` 是 Python 侧批调用的计时包络，含包装/转换，
+不能当作纯 Rust 内核计时；权重规范化和任意精度后备还计入总构造时间。
+算子构造和恢复再次验证的成本另由测量入口计入，不在证书中序列化不稳定计时。
+
+构建、测试和复跑见 [README](../README.md)、[验证说明](VALIDATION.md) 与
+[有限性能协议](BENCHMARKS.md)。该实现不重开一般搜索 no-go，也不代表 S4 整体退出。

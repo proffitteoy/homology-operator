@@ -6,8 +6,98 @@
 
 ## 当前可执行验证
 
+S4-05 增加7项 native solver 验证：原23窗口的支持/拒绝、三种搜索的完整 P/objective/
+证书/并列/state 对拍；三终端及 m=2/3/4 两种结构表示；全部 state 中断位置与零时间/
+条目预算；任意精度整数/互素大分母后备与 u128 比值交叉乘积溢出；0/1及63/64/65、
+127/128/129宽度的独立 objective；两条重放路径的证书/action/witness 篡改拒绝；
+缺少扩展的 Unavailable 与 portable reference 恢复。所有合法 native 解另强制由
+原 Python verifier 重新验收；连续 JSON 往返、projection_id 与配置/run 区分有检查。
+Rust 单测独立检查商余比较的全部小比值及 u128 极端边界。
+
+本地完整151项强制native测试无跳过地通过，含新增7项；原始日志与700样本测量见
+[性能协议](BENCHMARKS.md)。reference wheel的真实无扩展隔离安装及native快照的
+完整reference恢复另实际通过。新增测试纳入现有native CI的强制入口；Windows Rust单测命令为：
+
+```powershell
+$env:PYO3_PYTHON = Join-Path (Get-Location) '.venv/Scripts/python.exe'
+cargo +1.98.1 test --manifest-path native/Cargo.toml --locked --lib
+```
+
+Rust 单测本轮只在 Windows 执行；跨平台 release 构建与 Python differential 已接入
+现有 native CI，远端成绩仍以该分支精确 SHA 的实际 checks 为据。
+
+S4-07新增相邻映射/历史基的5689个原corpus对拍、共享快照schema 1/2篡改/往返、受控缓存与
+长过滤读取测试；44个冻结过滤/solver配置继续核对composition、rank、PH、几何及历史基。
+148项本地测试在release扩展安装且强制native的环境下全部通过，无跳过；命令、归纳证明及有限消融边界见
+[过滤验收](S4_FILTRATION.md)。本地结果不替代远端CI及依赖工作包的native联合验收。
+
 S4-06 增加6项几何 workspace 回归：显式/Factorized/HC 在 0/1/63/64/65/127/128/129 维上的原坐标输出；u64 最大值、单次求和溢出与超大整数/任意正有理权；binary64 fsum、subnormal 与浮点溢出；0/1/8/64/1024 两次批查询和真实缓冲扩容复用；非循环/非法坐标/索引拒绝；projection/weight/basis/run 混用、查询 JSON 往返和 NotComputed/Computed 快照历史。既有23个冻结窗口的几何对拍继续经过新入口，独立原坐标质量与共享质量恒等式同时核对。缺少扩展显式返回 Unavailable，native CI 强制这些测试实际运行；有限性能采样另见 [BENCHMARKS](BENCHMARKS.md)，不替代 S4/S5 准入。
 
 S4-04 新增8项验收（其中2项完全不依赖Rust）：23窗口的Factorized/HC全链/循环/非循环、几何与规范核；11过滤族的全部区间transport/rank/barcode与恢复；完整增广逆与至多3×3穷举、小链窗口；0/1/63/64/65/127/128/129边界；阻断dense P/展开G/U路径；未知版本/非法因子/零投影/身份篡改及资源失败。独立D像分解复用核验所有循环残差，不信任native分解。恢复无扩展可运行；native CI仍强制运行全部native测试。原129项数学与历史数据保持，本项不是S4阶段性能准入。
 
+S4-02 可选原型增加7项测试：23个原始窗口的完整P/L、独立同调保持、循环/非循环批查询、全部至多3×3矩阵的稳定广义逆、空形状与64维边界、资源失败、超大有理权/浮点、六身份与批记录JSON恢复。reference测试允许缺少扩展时显式跳过6项native测试；原型CI设置 `HOMOLOGY_NATIVE_REQUIRED=1`，缺少扩展直接失败。真实release构建及Rust fmt/Clippy命令见根README；独立Python validator仍是进入算子的必要边界。后续大尺寸与紧凑表示验收不由这7项替代。
 
+S4-03 另增加4项实际packed代数验证：全部至多3×3矩阵以独立向量枚举核/像/membership并比较reference canonical RREF/solve；矩形、空形状、秩亏与不可解；63/64/65、127/128/129边界的加乘/action与尾部位；0/1/8/64/1024重复RHS、不变分解数、非法形状/非二元输入/污染padding与只读handle。缺少扩展时明确跳过这4项，native CI强制运行。大尺寸性能不从有限测试推断。
+
+S4-01另增加4项测量回归，检查过滤的互斥成本分段、重复联合输出hash、库内失败与成功查询的区分、
+写出前的LF字节及历史CRLF/Git LF校验映射；
+它们不计入历史129项数学测试。冻结main的重跑、R0采样/RSS与诊断入口见 [性能协议](BENCHMARKS.md)。
+
+reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前129项测试包含单尺度、有限过滤独立数学联合验收及 Phase 3 solver 边界回归；贪心 fixture 与精确最优对照、证书篡改、state 中断、已查询单尺度/族快照和身份混用均实际运行。已合入 main 的阶段环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)。包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
+
+```powershell
+pwsh -NoProfile -File ./scripts/check_docs.ps1
+git diff --check
+```
+
+文档脚本也可从其他工作目录调用，仓库位置由脚本路径决定。它检查根目录与 `docs/` 下所有 Markdown（含未跟踪文件）：必需入口存在、严格 UTF-8 解码、无 Git 冲突标记、行内 Markdown 的本地文件链接存在且位于仓库内。失败时退出码 1，成功时打印文件数和本地链接数。
+
+该轻量检查不解析完整 Markdown 语法，不检查链接的标题锚点、引用式链接或外网可达性；代码围栏中的示例不作为链接检查。`git diff --check` 补充检查跟踪文件的改动，不能覆盖未跟踪文件。检查通过不证明数学正确、最优性或运行时性能。已配置最小 reference CI；远端执行状态以各 PR 的实际 checks 为准。
+
+## 首次数学实现的验证门槛
+
+下表保留统一验收要求；Phase 1–3 reference 已合并，测试覆盖与实际成绩见各阶段验收报告。Phase 4 性能由 [S4/S5 项目](S4_S5_PROJECT.md) 细化，尚待实现；更高阶段仍待执行。依赖、真实命令与来源已记录于根README及FIXTURES。主路径只消费链输入和合法 solver 解，独立 oracle 留在 `tests/oracle/`。
+
+| 变更领域 | 最低验证 |
+| --- | --- |
+| F2 代数与 `ChainWindow` | 矩阵乘法、消元、核与像；`A`/`D` 维数、空链空间、非二元坐标、`AD≠0`、权重非正/非有限/长度错误及基顺序 |
+| 投影构造与后验证 | `AGA=A`、`DUD=D`、`P²=P`、`L²=L`、`AP=0`、`PD=0`；在 `ker(A)` 的基上验证 `z+Pz∈im(D)` |
+| 拓扑联合读取 | 小实例穷举循环，验证 `Pz=0⇔z∈im(D)`、`Pz=Py⇔z+y∈im(D)`、`betti=dim ker(L)`；拒绝非循环类查询 |
+| 几何联合读取 | 按原坐标独立计算质量、距离、共享/并集支撑；距离非负、对称、三角不等式、同类当且仅当为 0；统一身份 |
+| Solver 与 stretch | 可行与最优区分；objective 精确值与最优认证区分；bounds、并列策略、资源中断；空循环域遵循理论的 stretch=0 约定并保留空域信息，与非空循环域的 Betti 0 情形分别验证 |
+| 身份与结果 | 权重/基顺序/投影变化导致相应身份变化；不同投影不可自动合并；序列化 round-trip 保留身份、状态、精确性和 provenance |
+| Phase 2 过滤 | `T_ii=I`、composition、与诱导同调映射共轭；rank invariant 与独立 reduction 对拍；重复尺度和末端存活约定；几何追踪 |
+| Phase 4 性能 | 同 fixture、同联合输出、同认证与预算对照；报告提交、输入 hash、环境、线程、构造/查询成本及 peak RSS |
+
+后验证必须包含一个反例回归：在非零同调窗口提交零投影。它满足 `P²=P`、`AP=0`、`PD=0`，但不保持循环同调，必须拒绝。
+
+## Fixture 记录契约
+
+首次迁移时只建立真正使用的 `tests/fixtures/` 与 oracle 文件，不预建路线图中的全部空目录。每个 fixture 至少包含以下事实；具体存储格式在实现时确定。
+
+| 字段 | 内容 |
+| --- | --- |
+| 身份 | 唯一 fixture 标识、来源仓库/提交/路径及输入内容 hash |
+| 链输入 | 次数 `k`，`A`/`D` 显式形状与 F2 元素，三个空间的有序基 |
+| 权重 | 正权重精确值或浮点表示、算术策略、语义、单位 |
+| 预期 | 已知 Betti、独立同调/几何结果、已知可行投影（若有） |
+| 认证 | 已知 optimum 或 bounds（若有），预期认证等级与证据来源 |
+| 过滤（若有） | 阶段、包含映射、权重继承、预期 rank/barcode、末端约定 |
+
+至少覆盖零同调、单洞、多洞、非平凡边界、H0–H3、空链空间、人工正权和有明确几何来源的权重。手工 fixture 标明推导；迁移研究 fixture 保留原证据，在隔离副本中执行会写文件的研究脚本，不把研究仓库验证冒充为本仓库验证。
+
+## 阶段结论边界
+
+Phase 0 逻辑契约已具备；Phase 1–3 全部原PR已合入 main `54ce78b`，该提交 CI通过。Phase 3五种限定solver、认证、对照/no-go与129项数学验收的历史证据见 [Phase 3报告](PHASE3_REPORT.md)。下一轮 [S4/S5](S4_S5_PROJECT.md) 细化 Phase 4：同语义性能优化与 GUDHI/完整成本验收；有限 barcode 原型仅作独立研究证据，不替代新后端、几何追踪、一般证明或正式性能测量。公开API及发行版本仍未冻结。
+
+Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
+
+## 原始契约的总体工程门槛
+
+远端原始验证契约的三个总体阶段采用较粗粒度，保留其要求；本轮 Project 根据三份核心契约管理详细路线 Phase 1–3。
+
+1. **可复现参考实现**：从边界构造投影并后验证；同一 P 提供 PH 与几何，独立列约化仅作事后对拍；迁移 H0–H3，覆盖死亡、合并、末端存活、空链、零同调与重复尺度；核对距离、共享/总支撑与继承权重终点控制。实际欧氏体积实例与人为悬挂权重实例分别记录。
+2. **同输出优化**：冻结输入/输出及正确性口径，分别比较构造、优化、查询、序列化时间与峰值内存，绑定版本、机器、编译选项与数据。小实例穷举只作 reference；可行、认证最优与近似结果须同等级比较。
+3. **独立研究门槛**：网格细化和采样稳定性须指定网格族、权重、拓扑对应与恢复条件，不能由有限测试或形状正则推出。真实任务同预算比较 PH-only 与其他几何基线。包发行、CI/部署、许可证与生态集成另行确定，当前初始化尚未配置。
+
+单尺度、有限过滤与限定solver认证已有本仓库独立测试证据；同输出性能、一般搜索效率和研究门槛仍待后续工作，不能提前标为通过。历史阶段报告保留当时状态，不以当前能力回写原始验收事实。

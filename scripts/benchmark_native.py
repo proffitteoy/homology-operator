@@ -242,17 +242,435 @@ def prepared_worker(backend, count, width, revision):
     }
 
 
+def solver_cases():
+    """Predeclared finite cases; reuse the pinned Phase-3 fixture constructors."""
+    from compare_solvers import suite
+    from homology_operator import ResourceLimits
+
+    source = dict(suite())
+    k4 = source["h1_k4_stage_4"]
+    yield "k4_exact", k4, "ExhaustiveExactSolver"
+    yield (
+        "k4_greedy",
+        replace(k4, requested_certificate_level="CertifiedInterval"),
+        "GreedyCertifiedSolver",
+    )
+    yield "cut_rank2", source["cut_macro_specialized"], "Rank2ExactSolver"
+    yield "cyclic_m4", source["cyclic_m4"], "StructuredFamilySolver"
+    yield (
+        "k4_bigint",
+        replace(
+            k4,
+            window=replace(
+                k4.window,
+                weights=tuple(2**200 + 2 * j + 1 for j in range(k4.window.n)),
+                arithmetic="ExactInteger",
+            ),
+            requested_certificate_level="CertifiedInterval",
+        ),
+        "GreedyCertifiedSolver",
+    )
+    yield (
+        "k4_interrupted",
+        replace(k4, resource_limits=ResourceLimits(state_limit=20)),
+        "ExhaustiveExactSolver",
+    )
+    yield (
+        "floating_unavailable",
+        replace(
+            k4,
+            window=replace(
+                k4.window, weights=(1.0,) * k4.window.n, arithmetic="FloatingPoint"
+            ),
+        ),
+        "GreedyCertifiedSolver",
+    )
+
+
+def solver_worker(backend, revision, block, memory=False):
+    from homology_operator import HomologyOperator, OperatorResult, solve_projection
+    from homology_operator.result import content_id
+    from homology_operator.solver import (
+        ExhaustiveExactSolver,
+        GreedyCertifiedSolver,
+        Rank2ExactSolver,
+        StructuredFamilySolver,
+    )
+
+    classes = {
+        cls.__name__: cls
+        for cls in (
+            ExhaustiveExactSolver,
+            GreedyCertifiedSolver,
+            Rank2ExactSolver,
+            StructuredFamilySolver,
+        )
+    }
+    records = []
+    cases = tuple(solver_cases())
+    schedule = [
+        (case, repeat) for repeat in range(1 if memory else 5) for case in cases
+    ]
+    random.Random(6500 + block).shuffle(schedule)
+    for (case, problem, method), repeat in schedule:
+        solver = classes[method](native=backend == "native")
+        construction = None
+
+        class Measured:
+            def capabilities(self):
+                return solver.capabilities()
+
+            def solve(self, request):
+                nonlocal construction
+                started = perf_counter()
+                solution = solver.solve(request)
+                construction = perf_counter() - started
+                return solution
+
+        started = perf_counter()
+        solution = solve_projection(problem, Measured())
+        dispatched = perf_counter()
+        readout, serialized, restored = None, None, None
+        if solution.projection is not None:
+            op = HomologyOperator(
+                problem.window, solution, repository_revision=revision
+            )
+            z = problem.window.A.kernel_basis()[:2]
+            readout = {
+                "betti": op.betti(),
+                "representatives": tuple(op.class_representative(x) for x in z),
+                "mass": tuple(op.selected_mass(x) for x in z),
+                "support": tuple(op.support(x) for x in z),
+            }
+            serialized = op.to_result().to_json()
+            restored = OperatorResult.from_json(serialized)
+        exported = perf_counter()
+        semantic = {
+            "projection": None
+            if solution.projection is None
+            else tuple(
+                solution.projection.apply(
+                    tuple(int(i == j) for i in range(problem.window.n))
+                )
+                for j in range(problem.window.n)
+            ),
+            "objective_state": solution.objective.state,
+            "objective": solution.objective.value,
+            "certificate_level": solution.certificate_level,
+            "status": solution.status,
+            "bounds": (solution.lower_bound, solution.upper_bound),
+            "proof": solution.certificate,
+            "readout": readout,
+            "restored_projection": None
+            if restored is None
+            else tuple(
+                restored.projection.apply(
+                    tuple(int(i == j) for i in range(problem.window.n))
+                )
+                for j in range(problem.window.n)
+            ),
+        }
+        record = {
+            "case": case,
+            "method": method,
+            "backend": backend,
+            "block": block,
+            "repeat": repeat,
+            "input_hash": content_id(
+                "solver-benchmark-input", problem.window.to_dict()
+            ),
+            "request": problem.solver_config(method),
+            "status": solution.status,
+            "certificate_level": solution.certificate_level,
+            "objective_state": solution.objective.state,
+            "output_hash": content_id("solver-benchmark-output", semantic),
+            "resource_usage": solution.resource_usage,
+            "actual_method": solution.method,
+            "actual_solver_config": solution.solver_config,
+            "solver_config_id": solution.solver_config_id,
+            "diagnostics": solution.diagnostics,
+            "phases_seconds": {
+                "construction": construction,
+                "dispatch_and_independent_validation": dispatched - started,
+                "dispatch_overhead_including_validation": dispatched
+                - started
+                - (construction or 0),
+                "operator_readout_serialization_restore": exported - dispatched,
+                "complete": exported - started,
+            },
+            "serialized_bytes": None
+            if serialized is None
+            else len(serialized.encode("utf-8")),
+        }
+        records.append(record)
+    if memory:
+        from benchmark_reference import peak_rss
+
+        value, method, failure = peak_rss()
+        return {
+            "backend": backend,
+            "block": block,
+            "worker_peak_rss_bytes": value,
+            "rss_method": method,
+            "rss_failure": failure,
+            "timing_excluded": True,
+            "scope": "absolute peak of the whole seven-case worker; not per-case RSS",
+            "records": [
+                {
+                    key: r[key]
+                    for key in ("case", "output_hash", "status", "certificate_level")
+                }
+                for r in records
+            ],
+        }
+    return records
+
+
+def solver_benchmark(args):
+    import _homology_native
+    from homology_operator.result import canonical_json, content_id
+
+    if args.worker:
+        print(
+            canonical_json(
+                solver_worker(args.worker, args.revision, args.block, args.memory)
+            )
+        )
+        return
+    if args.output is None:
+        raise ValueError("--output is required")
+    head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    if head != args.revision:
+        raise ValueError("measurement requires current exact source HEAD")
+    paths = subprocess.check_output(
+        [
+            "git",
+            "ls-files",
+            "src",
+            "native",
+            "scripts/benchmark_native.py",
+            "scripts/compare_solvers.py",
+            "scripts/benchmark_reference.py",
+            "tests/fixtures/reference.json",
+            "uv.lock",
+        ],
+        cwd=ROOT,
+        text=True,
+    ).splitlines()
+    hashes = {}
+    for path in paths:
+        data = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+        committed = subprocess.check_output(
+            ["git", "show", f"{head}:{path}"], cwd=ROOT
+        ).replace(b"\r\n", b"\n")
+        if data != committed:
+            raise ValueError(f"dirty measured source: {path}")
+        hashes[path] = sha256(data).hexdigest()
+    manifest = [
+        {
+            "case": case,
+            "method": method,
+            "input_hash": content_id("solver-benchmark-input", p.window.to_dict()),
+            "request": p.solver_config(method),
+        }
+        for case, p, method in solver_cases()
+    ]
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    schedule = [
+        (backend, block) for block in range(10) for backend in ("reference", "native")
+    ]
+    random.Random(65).shuffle(schedule)
+    records, failures, memory = [], [], []
+    for mode in ("timing", "memory"):
+        jobs = schedule if mode == "timing" else [("reference", 0), ("native", 0)]
+        for backend, block in jobs:
+            started = perf_counter()
+            command = [
+                sys.executable,
+                __file__,
+                "--solvers",
+                "--worker",
+                backend,
+                "--block",
+                str(block),
+                "--revision",
+                head,
+            ]
+            if mode == "memory":
+                command.append("--memory")
+            try:
+                done = subprocess.run(
+                    command, cwd=ROOT, text=True, capture_output=True, timeout=120
+                )
+                if done.returncode:
+                    failures.append(
+                        {
+                            "mode": mode,
+                            "backend": backend,
+                            "block": block,
+                            "returncode": done.returncode,
+                            "stderr": done.stderr,
+                        }
+                    )
+                    continue
+                result = json.loads(done.stdout)
+                if mode == "memory":
+                    memory.append(result)
+                else:
+                    for r in result:
+                        r["worker_process_seconds"] = perf_counter() - started
+                    records.extend(result)
+            except subprocess.TimeoutExpired:
+                failures.append(
+                    {
+                        "mode": mode,
+                        "backend": backend,
+                        "block": block,
+                        "status": "process_timeout",
+                    }
+                )
+    for case in manifest:
+        samples = [r for r in records if r["case"] == case["case"]]
+        if len(samples) != 100 or len({r["output_hash"] for r in samples}) != 1:
+            failures.append(
+                {
+                    "case": case["case"],
+                    "status": "missing_samples_or_semantic_mismatch",
+                    "samples": len(samples),
+                }
+            )
+    from statistics import median, quantiles
+
+    summaries = []
+    for case in manifest:
+        samples = [r for r in records if r["case"] == case["case"]]
+        phases = ("construction", "dispatch_overhead_including_validation", "complete")
+        for phase in phases:
+            values = {
+                backend: [
+                    r["phases_seconds"][phase]
+                    for r in samples
+                    if r["backend"] == backend
+                    and r["phases_seconds"][phase] is not None
+                ]
+                for backend in ("reference", "native")
+            }
+            if any(len(v) != 50 for v in values.values()):
+                continue
+            paired = []
+            for block in range(10):
+                times = {
+                    backend: median(
+                        r["phases_seconds"][phase]
+                        for r in samples
+                        if r["backend"] == backend and r["block"] == block
+                    )
+                    for backend in values
+                }
+                paired.append(times["reference"] / times["native"])
+            rng = random.Random(65000)
+            bootstraps = sorted(median(rng.choices(paired, k=10)) for _ in range(10000))
+            summaries.append(
+                {
+                    "case": case["case"],
+                    "phase": phase,
+                    "reference_median_seconds": median(values["reference"]),
+                    "native_median_seconds": median(values["native"]),
+                    "reference_iqr_seconds": quantiles(
+                        values["reference"], n=4, method="inclusive"
+                    )[2]
+                    - quantiles(values["reference"], n=4, method="inclusive")[0],
+                    "native_iqr_seconds": quantiles(
+                        values["native"], n=4, method="inclusive"
+                    )[2]
+                    - quantiles(values["native"], n=4, method="inclusive")[0],
+                    "paired_block_median_ratio": median(paired),
+                    "paired_bootstrap_95_percent_interval": [
+                        bootstraps[249],
+                        bootstraps[9749],
+                    ],
+                }
+            )
+    for worker in memory:
+        for record in worker["records"]:
+            if {r["output_hash"] for r in records if r["case"] == record["case"]} != {
+                record["output_hash"]
+            }:
+                failures.append(
+                    {
+                        "mode": "memory",
+                        "case": record["case"],
+                        "status": "semantic_mismatch",
+                    }
+                )
+    report = {
+        "schema_version": 1,
+        "scope": "S4-05 finite same-solver pilot; not S4/S5 acceptance",
+        "source_revision": head,
+        "source_lf_sha256": hashes,
+        "manifest": manifest,
+        "python": sys.version,
+        "platform": platform.platform(),
+        "cpu": platform.processor(),
+        "rustc": subprocess.check_output(
+            ["rustc", "+1.98.1", "--version"], text=True
+        ).strip(),
+        "build": "maturin 1.15.0 --release --locked; PyO3 0.29.3; safe Rust; one thread",
+        "extension_sha256": sha256(
+            Path(_homology_native.__file__).read_bytes()
+        ).hexdigest(),
+        "wheel_sha256": {
+            p.name: sha256(p.read_bytes()).hexdigest()
+            for p in (ROOT / ".task-artifacts/native-s4-65-wheels").glob("*.whl")
+        },
+        "protocol": {
+            "seed": 65,
+            "blocks": 10,
+            "repeats_per_worker": 5,
+            "worker_order": "randomized, seed 65",
+            "case_order": "paired random order, seed 6500+block",
+            "warm_repeats_after_process_import": True,
+            "profiling": False,
+            "memory": "separate new processes, whole-worker absolute RSS; timings excluded",
+            "timeout_seconds": 120,
+            "general_search": "existing no-go unchanged",
+        },
+        "records": records,
+        "failures": failures,
+        "memory_workers": memory,
+        "summaries": summaries,
+    }
+    args.output.write_text(
+        json.dumps(json.loads(canonical_json(report)), indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(
+        f"{len(records)} records; {len(failures)} failures; {args.output}", flush=True
+    )
+    if failures:
+        raise ValueError("retained benchmark failures; inspect the report")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--worker", choices=("native", "reference", "prepared", "repeated")
     )
     parser.add_argument("--prepared", action="store_true")
+    parser.add_argument("--solvers", action="store_true")
+    parser.add_argument("--block", type=int, default=0)
+    parser.add_argument("--memory", action="store_true")
     parser.add_argument("--width", type=int, default=65)
     parser.add_argument("--queries", type=int, default=8)
     parser.add_argument("--revision", required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.solvers:
+        solver_benchmark(args)
+        return
     if args.worker:
         result = (
             prepared_worker(args.worker, args.queries, args.width, args.revision)

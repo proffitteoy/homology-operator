@@ -693,3 +693,221 @@ pub fn compact_actions(
         started.elapsed().as_secs_f64(),
     ))
 }
+
+// Finite solver kernels. Enumeration order matches itertools.product((0,1), ...).
+// u128 ratios are compared by Euclidean division, never overflowing cross-products.
+fn ratio_greater(mut a: u128, mut b: u128, mut c: u128, mut d: u128) -> bool {
+    let mut reversed = false;
+    loop {
+        let (q, r, s, t) = (a / b, a % b, c / d, c % d);
+        if q != s {
+            return if reversed { q < s } else { q > s };
+        }
+        if r == 0 || t == 0 {
+            return if reversed {
+                r == 0 && t != 0
+            } else {
+                r != 0 && t == 0
+            };
+        }
+        (a, b, c, d) = (b, r, d, t);
+        reversed = !reversed;
+    }
+}
+
+fn span_count(basis: &[Vec<u64>], n: usize, weights: &[u128]) -> PyResult<usize> {
+    if basis.len() > 16 || weights.len() != n || weights.contains(&0) {
+        return Err(PyValueError::new_err(
+            "finite span or positive weight shape invalid",
+        ));
+    }
+    weights
+        .iter()
+        .try_fold(0_u128, |a, b| a.checked_add(*b))
+        .ok_or_else(|| PyValueError::new_err("exact weight sum exceeds u128"))?;
+    for z in basis {
+        checked_vector(z, n)?;
+    }
+    Ok((1_usize << basis.len()) - 1)
+}
+
+fn mass(z: &[u64], weights: &[u128]) -> u128 {
+    z.iter()
+        .enumerate()
+        .map(|(word, &bits)| {
+            let mut bits = bits;
+            let mut value = 0;
+            while bits != 0 {
+                value += weights[word * 64 + bits.trailing_zeros() as usize];
+                bits &= bits - 1;
+            }
+            value
+        })
+        .sum()
+}
+
+fn span_step(z: &mut [u64], basis: &[Vec<u64>], previous: usize, current: usize) {
+    let mut changed = previous ^ current;
+    while changed != 0 {
+        let i = basis.len() - 1 - changed.trailing_zeros() as usize;
+        for (a, b) in z.iter_mut().zip(&basis[i]) {
+            *a ^= b;
+        }
+        changed &= changed - 1;
+    }
+}
+
+fn stopped(
+    used: usize,
+    quota: usize,
+    started: std::time::Instant,
+    wall: Option<f64>,
+) -> Option<String> {
+    if used >= quota {
+        Some("state_limit".to_owned())
+    } else if wall.is_some_and(|w| started.elapsed().as_secs_f64() >= w) {
+        Some("wall_time_limit".to_owned())
+    } else {
+        None
+    }
+}
+
+fn check_wall(wall: Option<f64>) -> PyResult<()> {
+    if wall.is_some_and(|w| !w.is_finite() || w < 0.0) {
+        Err(PyValueError::new_err(
+            "wall limit must be finite and nonnegative",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+type SpanObjective = (u128, u128, Option<Vec<u64>>, usize, Option<String>);
+#[pyfunction]
+pub fn span_objective(
+    basis: Vec<Vec<u64>>,
+    images: Vec<Vec<u64>>,
+    weights: Vec<u128>,
+    quota: usize,
+    wall: Option<f64>,
+) -> PyResult<SpanObjective> {
+    let n = weights.len();
+    let count = span_count(&basis, n, &weights)?;
+    check_wall(wall)?;
+    if images.len() != basis.len() {
+        return Err(PyValueError::new_err("span images differ"));
+    }
+    for y in &images {
+        checked_vector(y, n)?;
+    }
+    let started = std::time::Instant::now();
+    let mut z = zeros(n.div_ceil(64))?;
+    let mut y = z.clone();
+    let (mut num, mut den, mut witness) = (0, 1, None);
+    for i in 1..=count {
+        if let Some(reason) = stopped(i - 1, quota, started, wall) {
+            return Ok((num, den, witness, i - 1, Some(reason)));
+        }
+        span_step(&mut z, &basis, i - 1, i);
+        span_step(&mut y, &images, i - 1, i);
+        let (a, b) = (mass(&y, &weights), mass(&z, &weights));
+        if b == 0 {
+            return Err(PyValueError::new_err("cycle basis must be independent"));
+        }
+        if witness.is_none() || ratio_greater(a, b, num, den) {
+            (num, den, witness) = (a, b, Some(z.clone()));
+        }
+    }
+    Ok((num, den, witness, count, None))
+}
+
+type SpanTable = (Vec<Vec<u64>>, Vec<u128>, usize, Option<String>);
+#[pyfunction]
+pub fn span_table(
+    basis: Vec<Vec<u64>>,
+    weights: Vec<u128>,
+    quota: usize,
+    wall: Option<f64>,
+) -> PyResult<SpanTable> {
+    let n = weights.len();
+    let count = span_count(&basis, n, &weights)?;
+    check_wall(wall)?;
+    let started = std::time::Instant::now();
+    let mut z = zeros(n.div_ceil(64))?;
+    let (mut vectors, mut masses) = (
+        Vec::with_capacity(count.min(quota)),
+        Vec::with_capacity(count.min(quota)),
+    );
+    for i in 1..=count {
+        if let Some(reason) = stopped(i - 1, quota, started, wall) {
+            return Ok((vectors, masses, i - 1, Some(reason)));
+        }
+        span_step(&mut z, &basis, i - 1, i);
+        if !z.iter().any(|&x| x != 0) {
+            return Err(PyValueError::new_err("cycle basis must be independent"));
+        }
+        masses.push(mass(&z, &weights));
+        vectors.push(z.clone());
+    }
+    Ok((vectors, masses, count, None))
+}
+
+#[pyfunction]
+pub fn packed_apply(
+    rows: Vec<Vec<u64>>,
+    n: usize,
+    vectors: Vec<Vec<u64>>,
+) -> PyResult<Vec<Vec<u64>>> {
+    let matrix = Packed::new(rows, n)?;
+    vectors.iter().map(|z| matrix.apply(z)).collect()
+}
+
+#[pyfunction]
+pub fn cyclic_batch(m: usize, vectors: Vec<Vec<u64>>) -> PyResult<Vec<Vec<u64>>> {
+    if !(2..=4).contains(&m) {
+        return Err(PyValueError::new_err("cyclic supports m=2,3,4"));
+    }
+    let n = (1_usize << m) - 1;
+    let mask = (1_u64 << n) - 1;
+    vectors
+        .iter()
+        .map(|z| {
+            checked_vector(z, n)?;
+            let x = z[0];
+            let y = (0..m).fold(0, |a, i| {
+                let shift = 1 << i;
+                a ^ (((x << shift) & mask) | (x >> (n - shift)))
+            });
+            Ok(vec![y])
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod solver_tests {
+    use super::ratio_greater;
+    #[test]
+    fn exact_fraction_order_without_cross_product_overflow() {
+        for a in 0..20 {
+            for b in 1..20 {
+                for c in 0..20 {
+                    for d in 1..20 {
+                        assert_eq!(ratio_greater(a, b, c, d), a * d > c * b);
+                    }
+                }
+            }
+        }
+        assert!(ratio_greater(
+            u128::MAX,
+            u128::MAX - 1,
+            u128::MAX - 1,
+            u128::MAX
+        ));
+        assert!(!ratio_greater(
+            u128::MAX,
+            u128::MAX,
+            u128::MAX - 1,
+            u128::MAX - 1
+        ));
+    }
+}
