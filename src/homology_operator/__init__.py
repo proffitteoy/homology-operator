@@ -5,6 +5,12 @@ __version__ = "0.0.2.dev0"
 from .algebra import Matrix
 from .chain import ChainWindow, InvalidInput
 from .result import OperatorResult, QueryResult
+from .solver import (
+    FeasibleSolver,
+    ProjectionProblem,
+    ProjectionSolution,
+    ResourceLimits,
+)
 
 __all__ = [
     "Matrix",
@@ -12,5 +18,9 @@ __all__ = [
     "InvalidInput",
     "OperatorResult",
     "QueryResult",
+    "FeasibleSolver",
+    "ProjectionProblem",
+    "ProjectionSolution",
+    "ResourceLimits",
     "__version__",
 ]
