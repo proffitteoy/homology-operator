@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from math import fsum, isfinite
 from types import MappingProxyType
 
 from .algebra import Matrix, validate_vector
@@ -107,6 +108,34 @@ class HomologyOperator:
     def same_class(self, z, y):
         return self.class_representative(z) == self.class_representative(y)
 
+    def _mass(self, chain):
+        costs = [weight for weight, bit in zip(self.window.weights, chain) if bit]
+        if self.window.arithmetic == "FloatingPoint":
+            try:
+                value = fsum(costs)
+            except OverflowError as error:
+                raise ValueError("NumericalFailure: floating mass overflow") from error
+            if not isfinite(value):
+                raise ValueError("NumericalFailure: nonfinite floating mass")
+            return value
+        return sum(costs)
+
+    def selected_mass(self, z):
+        return self._mass(self.class_representative(z))
+
+    def class_distance(self, z, y):
+        z, y = self._cycle(z), self._cycle(y)
+        return self._mass(self.project(tuple(a ^ b for a, b in zip(z, y))))
+
+    def support(self, z):
+        return tuple(i for i, bit in enumerate(self.class_representative(z)) if bit)
+
+    def shared_support(self, z, y):
+        return tuple(sorted(set(self.support(z)) & set(self.support(y))))
+
+    def union_support(self, z, y):
+        return tuple(sorted(set(self.support(z)) | set(self.support(y))))
+
     def readout(self, name, *args):
         """Attach the complete identity to a scalar/vector query result."""
         if name not in {
@@ -118,10 +147,24 @@ class HomologyOperator:
             "is_boundary",
             "class_representative",
             "same_class",
+            "selected_mass",
+            "class_distance",
+            "support",
+            "shared_support",
+            "union_support",
         }:
             raise ValueError("unknown readout")
         value = getattr(self, name)(*args)
-        query = QueryResult("Computed", value, self.identity, True)
+        exact = not (
+            name in {"selected_mass", "class_distance"}
+            and self.window.arithmetic == "FloatingPoint"
+        )
+        details = {"arithmetic_policy": self.window.arithmetic}
+        if not exact:
+            details.update(
+                {"rounding_policy": "binary64 fsum; nearest-even", "tolerance": None}
+            )
+        query = QueryResult("Computed", value, self.identity, exact, details)
         # Store arguments too: a snapshot must preserve which chain was queried.
         from .result import content_id
 
@@ -131,7 +174,7 @@ class HomologyOperator:
             query.value,
             query.identity,
             query.exact,
-            {"query": name, "arguments": args},
+            {**details, "query": name, "arguments": args},
         )
         return query
 
