@@ -346,6 +346,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
             "ExhaustiveExactSolver": ExhaustiveExactSolver,
             "Rank2ExactSolver": Rank2ExactSolver,
             "StructuredFamilySolver": StructuredFamilySolver,
+            "GreedyCertifiedSolver": GreedyCertifiedSolver,
         }
         if backend not in constructors:
             return ProjectionSolution(
@@ -1031,5 +1032,171 @@ class StructuredFamilySolver:
             arithmetic_policy=window.arithmetic,
             lower_bound=Fraction(m),
             upper_bound=Fraction(m),
+            solver_config=config,
+        )
+
+
+class GreedyCertifiedSolver:
+    """Exact minimum-mass greedy section with the pinned T4/Rossman beta bound.
+
+    This finite reference enumerates cycles. It is not a polynomial-time solver.
+    Each chosen cycle is independent modulo boundaries and earlier choices.
+    """
+
+    def capabilities(self):
+        return _freeze(
+            {
+                **FeasibleSolver().capabilities(),
+                "arithmetic_policies": ("ExactInteger", "ExactRational"),
+                "certificate_levels": (
+                    "Feasible",
+                    "CertifiedUpperBound",
+                    "CertifiedInterval",
+                ),
+            }
+        )
+
+    def solve(self, problem):
+        run_id = str(uuid4())
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(
+                rejection[0],
+                run_id,
+                method="GreedyCertifiedSolver",
+                diagnostics=(rejection[1],),
+            )
+        window = problem.window
+        config = problem.solver_config("GreedyCertifiedSolver")
+        budget = _Budget(problem.resource_limits)
+        seed = FeasibleSolver().solve(
+            replace(problem, requested_certificate_level="Feasible")
+        )
+        if seed.projection is None:
+            return replace(
+                seed,
+                solver_run_id=run_id,
+                method="GreedyCertifiedSolver",
+                solver_config=config,
+                arithmetic_policy=window.arithmetic,
+            )
+        budget.states = seed.resource_usage["states"]
+        projection, value, witness = seed.projection, None, None
+        selected, cycle_count, beta, R = [], None, None, None
+        exhausted = None
+        try:
+            budget.step()
+            R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
+            N = Matrix.from_columns(window.A.kernel_basis(), nrows=window.n)
+            boundaries = window.D.image_basis()
+            beta = N.ncols - len(boundaries)
+            cycle_count = (1 << N.ncols) - 1
+            if cycle_count * max(1, beta) > 100_000:
+                raise _Exhausted("certificate_replay_state_limit")
+            budget.entries(8 * window.n**2 + (cycle_count * window.n if beta else 0))
+            value, witness = _cycle_objective(window, projection, N, budget)
+            if beta:
+                candidates = []
+                for bits in product((0, 1), repeat=N.ncols):
+                    if not any(bits):
+                        continue
+                    budget.step()
+                    z = N.apply(bits)
+                    mass = sum(w for w, bit in zip(window.weights, z) if bit)
+                    encoded = sum(bit << j for j, bit in enumerate(z))
+                    candidates.append((mass, encoded, z))
+                candidates.sort()
+                span_basis = list(boundaries)
+                for _, _, z in candidates:
+                    budget.step()
+                    trial = Matrix.from_columns((*span_basis, z), nrows=window.n)
+                    if trial.rank() > len(span_basis):
+                        selected.append(z)
+                        span_basis.append(z)
+                    if len(selected) == beta:
+                        break
+                if len(selected) != beta:
+                    raise ValueError("greedy choices did not span homology")
+                basis = Matrix.from_columns(span_basis, nrows=window.n)
+                coordinates = Matrix.from_columns(
+                    (basis.solve(z) for z in R.transpose().rows), nrows=N.ncols
+                )
+                section = Matrix.from_columns(
+                    ((0,) * window.n,) * len(boundaries) + tuple(selected),
+                    nrows=window.n,
+                )
+                candidate = section @ coordinates
+                candidate_value, candidate_witness = _cycle_objective(
+                    window, candidate, N, budget
+                )
+                projection, value, witness = (
+                    candidate,
+                    candidate_value,
+                    candidate_witness,
+                )
+        except _Exhausted as error:
+            exhausted = str(error)
+        identity = make_identity(window, projection, run_id, problem.tie_break_policy)
+        usage = {
+            **budget.usage(),
+            "nonzero_cycle_inputs": cycle_count,
+            "greedy_generators_selected": len(selected),
+            "greedy_complete": exhausted is None,
+        }
+        lower, upper, proof = None, None, {}
+        if value is None:
+            status, level = "ResourceExhausted", "Feasible"
+            objective = QueryResult("ResourceExhausted", identity=identity)
+        else:
+            objective = QueryResult(
+                "EmptyDomain" if cycle_count == 0 else "Computed",
+                value,
+                identity,
+                True,
+                {"witness": witness, "nonzero_cycles": cycle_count},
+            )
+            upper = value
+            if exhausted is not None:
+                status, level, lower = (
+                    "ResourceExhausted",
+                    "CertifiedInterval",
+                    Fraction(0),
+                )
+                proof = {
+                    "kind": "CycleBounds",
+                    "nonzero_cycles": cycle_count,
+                    "lower_bound_method": "UniversalHomology",
+                }
+            else:
+                status, lower = "Solved", Fraction(int(beta > 0))
+                level = "ExactOptimal" if lower == upper else "CertifiedInterval"
+                proof = {
+                    "kind": "GreedyBasis",
+                    "nonzero_cycles": cycle_count,
+                    "selected_generators": tuple(selected),
+                    "cycle_retraction": matrix_data(R),
+                    "theoretical_upper_bound": beta,
+                    "hypotheses": {
+                        "coefficient_field": "F2",
+                        "positive_weights": True,
+                        "arithmetic_policy": window.arithmetic,
+                        "betti": beta,
+                    },
+                }
+        return ProjectionSolution(
+            status,
+            run_id,
+            projection,
+            identity,
+            level,
+            objective,
+            {"optimization": proof} if proof else {},
+            usage,
+            (exhausted,) if exhausted is not None else (),
+            problem.tie_break_policy,
+            method="GreedyCertifiedSolver",
+            arithmetic_policy=window.arithmetic,
+            lower_bound=lower,
+            upper_bound=upper,
             solver_config=config,
         )

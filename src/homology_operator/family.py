@@ -769,7 +769,14 @@ class OperatorFamilyResult:
 
     def to_family(self):
         """Reconstruct actions from validated stage projections, without re-solving."""
-        return _restore_family(self.to_dict())[0]
+        data = self.to_dict()
+        family = _restore_family(data)[0]
+        # __post_init__ already independently replayed these immutable queries.
+        family._tracking.update(
+            (key, QueryResult.from_dict(wire))
+            for key, wire in data["tracking_readout"].items()
+        )
+        return family
 
     @classmethod
     def from_dict(cls, data):
