@@ -5,7 +5,7 @@
 > 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 本文是阶段目标与退出条件，不是安装说明或当前 API 清单。Phase 1–3 的 `54ce78b` / 129 项数学测试保留为历史验收基线；S4-01–03 已合并，当前 main/CI 与本地开发边界见 [文档索引](docs/README.md)。Phase 4 完整集成和验收、Phase 5–7 仍有未完成目标。私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理 [S4/S5](docs/S4_S5_PROJECT.md)：S4 同语义高性能开发、S5 GUDHI 对拍与真实性能报告，细化本路线的 Phase 4；不覆盖历史 Phase 3 的 solver/certification 或旧 S3 编号。
+> 本文是阶段目标与退出条件，不是安装说明或当前 API 清单。Phase 1–3 的 `54ce78b` / 129 项数学测试保留为历史验收基线；S4-01–04 已合并，当前 main/CI 与本地开发边界见 [文档索引](docs/README.md)。Phase 4 完整集成和验收、Phase 5–7 仍有未完成目标。私有 [Project #3](https://github.com/users/proffitteoy/projects/3) 管理 [S4/S5](docs/S4_S5_PROJECT.md)：S4 同语义高性能开发、S5 GUDHI 对拍与真实性能报告，细化本路线的 Phase 4；不覆盖历史 Phase 3 的 solver/certification 或旧 S3 编号。
 
 ## 1. 文档目的
 

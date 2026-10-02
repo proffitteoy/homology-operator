@@ -3,7 +3,7 @@
 日期：2026-10-02。管理入口：[GitHub Project #3](https://github.com/users/proffitteoy/projects/3)。
 规划时的实现/调研基线：`main @ 54ce78bccdcba619ffa2a4d76aeb450bfd24270e`；历史 Phase 3 的 #49–#58 已合并，
 该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788) 已通过。
-本文保留工作包、依赖、验收条件与规划来源。规划建立时尚无 Rust 后端；此后 S4-01–03 已交付并合并，不能继续把整轮描述为“未实现”。正式 GUDHI 对拍和 S4/S5 总验收仍待后续工作。
+本文保留工作包、依赖、验收条件与规划来源。规划建立时尚无 Rust 后端；此后 S4-01–04 已交付并合并，不能继续把整轮描述为“未实现”。正式 GUDHI 对拍和 S4/S5 总验收仍待后续工作。
 
 ## 当前进展与阅读方式
 

@@ -5,7 +5,7 @@
 ## 项目事实与入口
 
 - 本仓库是边界数据原生的 F2 同调算子库，Phase 1–3 全部 PR 已合并；129 项数学测试与 main `54ce78b` 是 docs/PHASE3_REPORT.md 的历史基线，不是滚动状态。当前实现与精确 main/CI 身份集中在 docs/README.md。后续阶段退出仍以实际实现、验收、全部 PR 合并和 main 数学测试/CI 为据。
-- reference backend 使用 Python 3.10+ 标准库与 uv；可选 Rust 原型、多字 packed F2 与复用分解已实现，安装和支持域见 docs/INTERFACE.md。文档检查要求 PowerShell 7。[S4/S5 计划](docs/S4_S5_PROJECT.md) 细化原 Phase 4；后续集成、GUDHI 正式对拍与测量仍需逐项验收，不覆盖历史 Phase 3/S3 编号或证据。
+- reference backend 使用 Python 3.10+ 标准库与 uv；可选 Rust 原型、多字 packed F2、复用分解与因子/HC action 已实现，安装和支持域见 docs/INTERFACE.md。文档检查要求 PowerShell 7。[S4/S5 计划](docs/S4_S5_PROJECT.md) 细化原 Phase 4；后续集成、GUDHI 正式对拍与测量仍需逐项验收，不覆盖历史 Phase 3/S3 编号或证据。
 - 开始任务先读 [README](README.md)、[文档索引](docs/README.md) 和相关契约。路线图中的目录、对象和版本号是开发目标，不能作为已实现的证据。
 - 明确的用户要求优先；仓库的数学契约优先于通用模板和 skills。若以后出现更具体的 `AGENT.md` 或目录级 `AGENTS.md`，还需读取其适用规则。
 

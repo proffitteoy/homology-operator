@@ -14,9 +14,9 @@
 
 ## 实现状态（2026-10-02 核对）
 
-GitHub `main` 为 `d9bdf3bfe7a3fb365929d99d90cb85ca7c367f23`。
-该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37019795854)
-和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37019795865)
+GitHub `main` 为 `520ecc95478d0b8123dfa17d5a11198eb7a5f734`。
+该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37023983262)
+和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37023983542)
 均已完成并通过。CI 结论仅绑定这个提交，不覆盖尚未合入该提交的开发工作。
 
 | 范围 | 已有实现或证据 | 边界 |
@@ -26,6 +26,7 @@ GitHub `main` 为 `d9bdf3bfe7a3fb365929d99d90cb85ca7c367f23`。
 | S4-02 / PR #78 | 可选 safe Rust 可行构造及批查询 | 原型三个链空间最多 64 维；真实窗口记录包含退化 |
 | S4-03 / PR #79 | 多字 packed F2、`PreparedMatrix`、多 RHS 与复用消融 | 不解除单字宽 `NativeFeasibleSolver` 的限制；不代表全算子加速 |
 | S4-04 / [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) | `6c40b93` 提供 `CompactAction` / `NativeFactorizedSolver`、因子与 HC 表示、测试和测量记录 | 已合并；保留同 P 语义与有限测量，非 S4 总验收 |
+| S4-06 / [PR #81](https://github.com/proffitteoy/homology-operator/pull/81) | 几何批查询、精确权重与 workspace 开发 | 已合并到 `s4/64-factorized-action` 分支，尚未合入 main；主线 API 不包含这组扩展 |
 | S4 后续 / S5 | 限定 solver 加速、过滤优化、后端集成、GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 private，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
