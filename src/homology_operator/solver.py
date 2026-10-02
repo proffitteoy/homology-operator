@@ -56,7 +56,7 @@ class _Budget:
 
 
 def generalized_inverse(matrix, budget=None):
-    """Return G with M G M=M using row operations on [M | I]."""
+    """Return G with M G M=M using row operations on [M | identity_matrix]."""
     if not isinstance(matrix, Matrix):
         raise ValueError("generalized_inverse requires a Matrix")
     if budget is not None:
@@ -167,8 +167,8 @@ class FeasibleSolver:
                 return ProjectionSolution(
                     "InternalError", run_id, diagnostics=("generalized inverse",)
                 )
-            I = Matrix.identity(window.n)
-            P = (I + window.D @ U) @ (I + G @ window.A)
+            identity_matrix = Matrix.identity(window.n)
+            P = (identity_matrix + window.D @ U) @ (identity_matrix + G @ window.A)
             budget.step()
             identity = make_identity(window, P, run_id, problem.tie_break_policy)
             return ProjectionSolution(

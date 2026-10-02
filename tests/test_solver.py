@@ -45,11 +45,11 @@ class SolverTests(unittest.TestCase):
             first.identity["projection_id"], second.identity["projection_id"]
         )
         self.assertNotEqual(first.solver_run_id, second.solver_run_id)
-        I = Matrix.identity(window.n)
+        identity_matrix = Matrix.identity(window.n)
         self.assertEqual(
             first.projection,
-            (I + window.D @ first.generalized_inverse_d)
-            @ (I + first.generalized_inverse_a @ window.A),
+            (identity_matrix + window.D @ first.generalized_inverse_d)
+            @ (identity_matrix + first.generalized_inverse_a @ window.A),
         )
         self.assertEqual(first.projection.rows, ((0, 0, 0), (0, 0, 0), (0, 0, 1)))
         for z in product((0, 1), repeat=window.n):
