@@ -5,7 +5,7 @@
 > 合并的远端契约基线：`main @ c0299c3b7750c8a12ced00bf479753236a7dbc85`（2026-10-01 在线核实）
 > 理论来源：`proffitteoy/homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`
 
-> 当前状态：Phase 1、Phase 2 已全部合入 main 并验收，Phase 3 正从 #19 的统一 solver 能力匹配与认证边界推进。后续 solver、Phase 4–7、未出现的源码树与版本里程碑仍是目标，不能当作已实现能力。实际入口与验收证据见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
+> 当前状态：Phase 1、Phase 2 已合入 main 并验收；Phase 3 五种限定reference solver、认证、冻结对照/no-go和129项联合数学测试已实现并逐issue提交，全部合并/main验证门槛仍待完成。Phase 4–7、未出现的源码树与版本里程碑仍是目标，不能当作已实现能力。实际入口与验收证据见 [README](README.md) 和 [文档索引](docs/README.md)。开发任务见私有 [Project #3](https://github.com/users/proffitteoy/projects/3)，依据三份核心契约管理 Phase 1–3；后续阶段仍保留在本路线中。
 
 ## 1. 文档目的
 
@@ -617,6 +617,8 @@ Phase 3 完成后，用户必须能够明确知道：
 - 资源不足发生在哪里。
 
 任何数值都不能脱离认证等级单独报告。
+
+2026-10-02的本地实现证据见 [Phase 3联合验收](docs/PHASE3_REPORT.md) 与 [对照/no-go协议](docs/BENCHMARKS.md)。Reference明确支持精确整数/有理的五类构造，浮点仅可行与数值读取；证书和失败分别表达，一般搜索本轮不准入。129项本地测试、隔离wheel和文档检查不替代合并门槛：全部原PR准确head进入main后，重新核对main数学测试与CI，再按Phase 4目标选择语言和性能实验。
 
 ---
 
