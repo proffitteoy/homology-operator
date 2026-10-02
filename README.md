@@ -85,3 +85,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 `HomologyOperator(window,solution)` 在构造边界重新验证投影与六身份，仅接受可行解。`project/apply_operator` 对所有链执行 P/L 作用；`class_representative/same_class` 仅接受循环，非循环明确拒绝。`kernel_basis` 按需计算 ker(L)，`betti` 从其维数读取；空核基和未计算状态在 `to_result()` 中可区分。
 
 `readout(name,*args)` 给原始数学返回值附上六身份与 exact 标记；`metadata/certificate/to_result` 保留同一 P、原基、权重、solver 和实际独立证书。JSON round-trip 会重新检验 P，篡改后的合法性声明不能绕过边界。repository_revision 默认 unknown；正式验收或实验须显式传入源码提交。
+## 代表几何
+
+同一对象提供 `selected_mass(z)=m_w(Pz)`、`class_distance(z,y)=m_w(P(z+y))` 以及原基索引上的 `support/shared_support/union_support`。循环域检查适用于全部几何类查询。精确权重求和保留 Fraction；浮点用 binary64 fsum，readout 标为 approximate 并记录舍入，不制造误差证书；非有限数值明确失败。
+
+例如 A=0、D=(1,1)ᵀ、权重(10,1)时，当前确定性构造选择第一坐标代表，类质量为10，而同类第二坐标代表质量为1。selected_mass 不能用作 minimum_class_mass；后者在快照中仍为 NotComputed。独立坐标测试验证交并支撑、质量恒等式及距离非负、对称、零距离同类和三角不等式。
