@@ -172,6 +172,19 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 完整成本包含导入、Matrix/RHS准备、rank/核/像/solve/membership/action的转换/原生计算/decode，以及序列化恢复/hash；外部process时间单独记录。reference实际统计RREF调用，native统计实际handle构造，counter开销计入成本。prepared只分解一次，另两条为3+2q次；记录原矩阵、RREF和消元峰值非零位数及持有word量，fill-in不等同RSS。匹配完整原坐标输出hash，保存源码与release二进制hash，不将人工有限矩阵代数消融当作算子端到端或S4准入收益；本项不重新采集或覆盖R0/S4-02历史数据。
 
+干净源码 `b75240e04e5d7b7b3e62bd7fa02adaac13ef02d6` 的 [36行完整采样](../benchmarks/s4_packed_ablation.json)（LF SHA256 `297f85dbfad1f540d5474f8d6c2a6c3a5711e41a7f0ca6fd026f9333a1a5d15d`）保存四个配置的同输出hash。Windows/MSVC、Python3.10.11、release/safe Rust/单线程；worker中位数含导入/输入/RHS/转换/输出恢复。列顺序为reference / native反复分解 / native一次prepared：
+
+| 人工矩阵 / RHS数 | 完整worker中位数 ms | 实际分解数（反复 / prepared） |
+| --- | --- | --- |
+| 24×65 / 8 | 33.201 / 26.446 / 25.661 | 19 / 1 |
+| 24×65 / 64 | 106.377 / 55.442 / 36.751 | 131 / 1 |
+| 24×129 / 8 | 47.258 / 42.653 / 41.207 | 19 / 1 |
+| 24×129 / 64 | 138.423 / 84.897 / 63.593 | 131 / 1 |
+
+24×65的96个输入非零位在消元中峰值188、RREF170，持有120个u64；24×129的96个位峰值/RREF124，持有168个u64。它们只统计Rust系数/RREF/行变换payload，排除allocator、pivots、Python、RHS与结果分配，不能冒充峰值RSS。有限人工代数实验显示复用收益，不能推广为真实算子收益；S4-02真实窗口的退化记录继续保留。
+
+[144项完整回归日志](../benchmarks/s4_packed_verification.log) 保存本地数学/测量/native全通过证据；release构建、Clippy/fmt、Ruff、文档另实际通过。远端native与reference CI按PR准确head核验。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。
