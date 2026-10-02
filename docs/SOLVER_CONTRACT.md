@@ -675,3 +675,13 @@ Solver framework 可视为冻结，至少满足：
 独立证书 verifier 当前支持 `optimization={kind: "CycleBounds", nonzero_cycles: N, lower_bound_method: "UniversalHomology"}`。它枚举所有非零循环重算当前 Γ（重放上限100000个循环），校验精确 objective、U≥Γ，以及 L≤0（β=0）或 L≤1（β>0）。通用下界来自固定理论 T1/T4；非零合法投影在其非零像向量上恒等，所以扩张至少1。仅 L=U=Γ 且证书有效时接受 ExactOptimal；等界仍标 CertifiedInterval 则拒绝，须改用 ExactOptimal。空循环域的0与非空循环域的零同调0保留不同状态。
 
 该证书不宣称完整最优搜索，不能认证大于1的全局下界。未知证明类型、篡改计数/objective/gap/配置身份、浮点等界或未经验证的 action 均拒绝。完整搜索证书属于 #20；证书重放是独立检查成本，不纳入 solver 构造时的 checkpoint 预算，尚无抢占式时间/RSS保证。固定研究提交的 native_operator、compressed_native_operator 和 T1 已逐项阅读，并在线核对缓存的 Git blob hash；它们的完整搜索成绩不作为本项实现成绩。
+
+## 22. 小规模完整搜索（S3-02）
+
+`ExhaustiveExactSolver` 使用固定研究提交 `compressed_native_operator` 的参数化：令 N 为循环基、F 为边界基，M 为 F 的循环坐标，解 Y M=I。每行解的自由度为 beta，因此恰有 `2^(rank(D)*beta)` 个候选；在固定 R 上形成 `P=R+FYT`，T 为 R 的循环坐标。所有非零循环直接参与 objective，构造不消费 PH、类标签或最短类表。
+
+完整 `ExhaustiveSearch` 证书记录 R、候选数、循环数和完成标志。独立 verifier 改用 B 的基补到 Z、枚举商基的全部边界提升，重放最优值并核对所选投影。StableBasisOrder 和 LexicographicProjection 在此 solver 中均按原基坐标、固定 R 下的 packed 投影列字典序决胜；这不是所有非循环延拓上的全局字典序。objective witness 必须是实现 Γ 的非零循环，空循环域的 witness 为 None。
+
+精确权重、state/time/matrix-entry 预算和独立重放上限为实际支持域：最多100000个非零循环，且候选数乘 `max(1,非零循环数)` 至多100000。状态预算计入可行种子的构造与实际循环求值，时间在 checkpoint 检查，matrix-entry 为保守条目上限。独立重放成本另外发生。中断时保留最后一个合法 P；未完成其 objective 时没有 bounds，完成后保留 U=Γ(P)、已跟踪的下界0和 CertifiedInterval。完整搜索结束前不报告 ExactOptimal；唯一候选完成求值即为完整搜索。
+
+[solver 回归 corpus](../tests/fixtures/solver_reference.json) 绑定原23个窗口的 input hash：22个精确实例的最优值经固定上游 compressed 搜索核对，16个 n≤6 实例再经 native 搜索核对；浮点实例预期 Unavailable。本仓库另对49个1–3维输入独立枚举全部环境矩阵，检查全局最优值。高秩人工窗口、原 H0–H3/欧氏有理权、空域、零同调、候选计数/极值 witness 篡改、错误并列选择及中断快照均有回归。该有限指数算法不提供一般高效性结论。
