@@ -193,6 +193,22 @@ uv run --locked python scripts/compare_solvers.py --output benchmarks/phase3_ref
 
 保存源码/输入/二进制hash、β/n、实际状态/认证/预算、序列化字节与factor条目，保留全部不利结果。HC在β接近n时H/C输出可大于dense P，Factorized包含A/D和逆非零行，消元有平方行变换workspace；这些成本与完整进程RSS一并报告。有限3次时间与1次RSS不足以推断S4准入或稳健速度排名，不据此自动选择默认表示，不改写R0或S4-02/03原始证据。
 
+## S4-06：几何批查询与 workspace 的有限完整成本协议
+
+复跑入口（安装 release native wheel 后）：
+
+```powershell
+uv run --locked --no-sync python scripts/benchmark_geometry.py --revision <准确HEAD> --output benchmarks/s4_geometry_workspace.json
+```
+
+源码与协议先提交，干净测量源码按 LF SHA256 核对；实际 .pyd/.so 二进制单独 hash。六个输入预先固定：原 K4 stage4 的正整数、互异分母有理数、10^100 大整数、u64 最大值求和溢出与 binary64 权重变体，另 n=65、β=2 的人工坐标边界窗。原 K4 fixture 来源/hash 与派生输入 input_id 均保存；派生权重和人工输入不冒充研究原件。查询量固定0/1/8/64/1024，每批 q 个循环及 q 个相邻循环对（末项连接首项）。
+
+每个输入/查询量的 scalar reference、临时 batch 和复用 workspace 三条路径各运行3个冷进程，共270条时间，seed66 打乱顺序；每个进程连续查询两批，第二批计为 warm。所有路线共用同一个 solver/action/认证/资源：K4 为显式 FeasibleSolver，65维为 NativeFactorizedSolver 的同一 Factorized P；reference 标量作用仍用 Python。认证均为 Feasible、objective=NotComputed。输入/求解与必需验证/算子验证/拓扑与参数/workspace准备/首批/第二批/快照恢复hash为互斥分段，worker和外部process总成本另存；批调用包含 QueryResult 冻结、转换与全部权重后备，子级detail不重复相加。
+
+每个输入/路径另用独立 q1024 新进程测绝对峰值 RSS，共18条，不与计时采样混用；平台接口不可用填 null 并记录原因。每worker上限60秒，timeout/worker failure/库内失败保留原始记录；每完成一项保存可恢复的partial记录。比较相同完整几何、拓扑、内容身份、状态、认证与JSON恢复hash，workspace增容次数/原生投影次数及后备原因/次数/成本可审计。
+
+3次时间、1次RSS只构成 S4-06 有限可重复研究，不能替代 S4-09/S5 正式区组、准入、规模和稳定性验收；保留退化，不按本批数据选择默认表示或扩大 solver 证明范围。R0、S4-02/03/04 历史样本不覆盖。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。

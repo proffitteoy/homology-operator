@@ -560,7 +560,6 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
             identity=operator.identity,
             details={"reason": "optional native extension is not installed"},
         )
-    prepared = perf_counter()
     packed = tuple(map(_words, cycles))
     converted = perf_counter()
     (
@@ -629,10 +628,8 @@ def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
             if reused
             else workspace._preparation["total_seconds"],
             "preparation_costs": None if reused else workspace._preparation,
-            "conversion_seconds": prepared
+            "conversion_seconds": converted
             - started
-            + converted
-            - prepared
             - (0.0 if reused else workspace._preparation["total_seconds"]),
             "native_seconds": native_wall,
             "binding_seconds": max(0.0, returned - converted - native_wall),
