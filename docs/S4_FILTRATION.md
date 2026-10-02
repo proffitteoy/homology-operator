@@ -10,7 +10,7 @@ T_ij=P_j J_ij|ker(L_i)，无独立 PH 旁路。上传的[端点脚本](research/
 投影，不物化 inclusion。公共 inclusion(i,j,degree) 仍按请求返回完整矩阵。每个不同投影的
 核基和 packed 列消元分解保存一次，multi-RHS 复用该分解。工作区用标准库 Python 任意精度
 整数，无新依赖；支持现有显式矩阵和 CyclicAction 的 apply/kernel_basis 协议。
-#64 因子化 action、#66 native 几何及 #68 完整绑定仍需各自实现和联合验收。
+#64 因子化 action 已由 main 520ecc9 合入本分支；#66 native 几何及 #68 完整绑定仍需各自实现和联合验收。
 
 barcode() 只读取相邻核坐标映射，不请求完整 chain action、历史基或全部区间 rank。
 transport(i,j) 按需返回原有完整 value；transport_rank(i,j) 仅读坐标映射的秩；
@@ -127,3 +127,10 @@ schema 2往返。此smoke不覆盖native因子构造或尚未交付的#66，也�
 设置HOMOLOGY_NATIVE_REQUIRED=1、使用uv --no-sync后[148项完整回归](../benchmarks/s4_filtration_verification.log)
 全部通过，无跳过。Ruff、文档/链接、示例、构建、隔离wheel导入另实际通过。远端CI及
 最终main验收按实际PR/head记录，不以本地日志代替。
+
+随后同步 main 520ecc9 的已合并 S4-04，解决README/BENCHMARKS/VALIDATION的并行文档冲突。
+整合源码9f69cb43696d1a54f8fe1d22d45f0bd3427f63b1重新构建release扩展，强制native的
+[156项完整整合回归](../benchmarks/s4_filtration_integration.log)全部通过，无跳过，包含
+Factorized/HC的11个过滤族全部区间rank/transport/barcode及恢复。Rust fmt/Clippy、Ruff、
+文档/完整PR whitespace、示例与隔离wheel也通过。上述性能样本仍绑定原e0e3183，不回写为
+新整合提交的性能证据；#66及后续全native/GUDHI联合验收仍待后续工作包。
