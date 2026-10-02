@@ -206,6 +206,17 @@ class ResultTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             record.query_results["extra"] = QueryResult("Unavailable")
 
+    def test_unsupported_certificate_and_failed_ready_are_rejected(self):
+        for level in ("CertifiedInterval", "CertifiedUpperBound", "Heuristic"):
+            solver = dict(self.record().solver)
+            solver["certificate_level"] = level
+            with self.assertRaises(ValueError):
+                self.record(solver=solver)
+        solver = dict(self.record().solver)
+        solver["status"] = "InvalidProblem"
+        with self.assertRaises(ValueError):
+            self.record(solver=solver, status="Ready")
+
     def test_reserved_mapping_keys_and_fractions_round_trip(self):
         for value in (
             {"$fraction": [1, 2]},

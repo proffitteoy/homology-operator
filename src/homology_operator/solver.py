@@ -1,6 +1,6 @@
 """Deterministic feasible construction, with explicit reference resource limits."""
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from math import isfinite
 from time import perf_counter
 from types import MappingProxyType
@@ -52,7 +52,11 @@ class _Budget:
             raise _Exhausted("matrix_entry_limit")
 
     def usage(self):
-        return {"states": self.states, "wall_time": perf_counter() - self.started}
+        return {
+            "states": self.states,
+            "wall_time": perf_counter() - self.started,
+            "limits": asdict(self.limits),
+        }
 
 
 def generalized_inverse(matrix, budget=None):
@@ -103,6 +107,7 @@ class ProjectionSolution:
     generalized_inverse_a: Matrix | None = None
     generalized_inverse_d: Matrix | None = None
     method: str = "FeasibleSolver"
+    arithmetic_policy: str | None = None
 
     def __post_init__(self):
         for name in ("identity", "certificate", "resource_usage"):
@@ -118,6 +123,7 @@ class ProjectionSolution:
             "solver_run_id": self.solver_run_id,
             "tie_break_policy": self.tie_break_policy,
             "method": self.method,
+            "arithmetic_policy": self.arithmetic_policy,
             "objective": self.objective.to_dict(),
             "lower_bound": None,
             "upper_bound": None,
@@ -189,6 +195,7 @@ class FeasibleSolver:
                 problem.tie_break_policy,
                 G,
                 U,
+                arithmetic_policy=window.arithmetic,
             )
         except _Exhausted as error:
             return ProjectionSolution(

@@ -11,6 +11,8 @@ from .solver import (
     ProjectionSolution,
     ResourceLimits,
 )
+from .validation import ValidationError, validate_projection
+from .operator import HomologyOperator
 
 __all__ = [
     "Matrix",

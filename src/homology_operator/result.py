@@ -353,10 +353,6 @@ class OperatorResult:
             )
             if identity != expected:
                 raise ValueError("result content does not match its declared identity")
-            if solver.get("certificate_level") != "Feasible":
-                raise ValueError(
-                    "Phase 1 accepts only Feasible solutions without an optimality verifier"
-                )
         if identity is not None and (
             solver.get("solver_run_id", identity["solver_run_id"])
             != identity["solver_run_id"]
@@ -377,6 +373,10 @@ class OperatorResult:
         if solver.get("certificate_level") == "ExactOptimal":
             raise ValueError(
                 "ExactOptimal is unavailable until an independent optimality verifier exists"
+            )
+        if projection is not None and solver.get("certificate_level") != "Feasible":
+            raise ValueError(
+                "Phase 1 result records accept only independently validated Feasible solutions"
             )
         if self.status == "Ready":
             if solver["status"] not in {"Solved", "FeasibleOnly", "ResourceExhausted"}:
