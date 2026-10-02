@@ -27,8 +27,14 @@ class GeometryTests(unittest.TestCase):
         op = operator()
         self.assertEqual(op.class_representative((1, 0)), (1, 0))
         self.assertEqual(op.selected_mass((1, 0)), Fraction(10))
-        # Independent enumeration of the two representatives in the class.
-        self.assertEqual(min(1, 10), 1)
+        # Enumerate z + im(D) directly, without production geometry helpers.
+        representatives = ((1, 0), (0, 1))
+        minimum = min(
+            sum(w * bit for w, bit in zip(op.window.weights, z))
+            for z in representatives
+        )
+        self.assertEqual(minimum, 1)
+        self.assertGreater(op.selected_mass((1, 0)), minimum)
         self.assertEqual(
             op.to_result().query_results["minimum_class_mass"].state, "NotComputed"
         )

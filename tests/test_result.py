@@ -217,6 +217,122 @@ class ResultTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.record(solver=solver, status="Ready")
 
+    def test_reserved_mapping_keys_and_fractions_round_trip(self):
+        for value in (
+            {"$fraction": [1, 2]},
+            {"$fraction": [1, 0]},
+            {"$mapping": {"$fraction": Fraction(1, 2)}},
+            {"nested": [{"$mapping": [1]}, Fraction(3, 2)]},
+            Fraction(1, 2),
+        ):
+            with self.subTest(value=value):
+                query = QueryResult("Computed", value, details={"payload": value})
+                self.assertEqual(query, QueryResult.from_dict(query.to_dict()))
+                record = self.record(provenance={"payload": value})
+                self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+        self.assertNotEqual(
+            content_id("value", {"$fraction": [1, 2]}),
+            content_id("value", Fraction(1, 2)),
+        )
+
+    def test_missing_projection_failure_round_trip(self):
+        window = self.window()
+        partial = {
+            key: window.identity()[key] for key in ("input_id", "basis_id", "weight_id")
+        }
+        partial["solver_run_id"] = "failed-run"
+        for status, solver_status in (
+            ("Unavailable", "Unavailable"),
+            ("SolverFailed", "NumericalFailure"),
+            ("ResourceExhausted", "ResourceExhausted"),
+            ("InternalValidationFailed", "InternalError"),
+            ("InvalidInput", "InvalidProblem"),
+        ):
+            with self.subTest(status=status):
+                record = OperatorResult(
+                    partial,
+                    window,
+                    None,
+                    {
+                        "status": solver_status,
+                        "certificate_level": None,
+                        "solver_run_id": "failed-run",
+                    },
+                    {},
+                    {"diagnostic": "no feasible action"},
+                    status,
+                )
+                self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+                self.assertNotIn("projection_id", record.identity)
+                with self.assertRaises(ValueError):
+                    record.cache_key("solver", "stable", "reference")
+        invalid = OperatorResult(
+            None,
+            None,
+            None,
+            {"status": "InvalidProblem"},
+            {},
+            {"error": "AD != 0"},
+            "InvalidInput",
+        )
+        self.assertEqual(invalid, OperatorResult.from_json(invalid.to_json()))
+
+    def test_missing_projection_rejects_fabricated_action(self):
+        values = dict(
+            identity=None,
+            input_data=self.window(),
+            projection=None,
+            solver={"status": "Unavailable", "certificate_level": None},
+            certificate={},
+            provenance={},
+            status="Unavailable",
+        )
+        for changes in (
+            {"status": "Ready"},
+            {"identity": self.record().identity},
+            {"certificate": {"p_idempotent": True}},
+            {"query_results": {"mass": QueryResult("Computed", 0)}},
+            {"solver": {"status": "Unavailable", "certificate_level": "Feasible"}},
+            {"solver": {"status": "FeasibleOnly", "certificate_level": None}},
+        ):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                OperatorResult(**(values | changes))
+
+    def test_bounds_reject_invalid_values_and_uncertified_grades(self):
+        for bounds in (
+            {"lower_bound": 100, "upper_bound": -100},
+            {"lower_bound": 2, "upper_bound": 1},
+            {"lower_bound": True},
+            {"upper_bound": "1"},
+            {"upper_bound": float("inf")},
+            {"upper_bound": float("nan")},
+        ):
+            with self.subTest(bounds=bounds), self.assertRaises(ValueError):
+                self.record(solver=dict(self.record().solver) | bounds)
+        for grade in ("CertifiedUpperBound", "CertifiedInterval", "Heuristic"):
+            with self.subTest(grade=grade), self.assertRaises(ValueError):
+                self.record(
+                    solver=dict(self.record().solver) | {"certificate_level": grade}
+                )
+
+    def test_nested_objective_requires_same_identity(self):
+        identity = self.record().identity
+        objective = QueryResult("Computed", Fraction(3, 2), identity, True)
+        record = self.record(
+            solver=dict(self.record().solver) | {"objective": objective.to_dict()}
+        )
+        self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+        other = self.record(self.window(weights=(2, 3))).identity
+        with self.assertRaises(ValueError):
+            self.record(
+                solver=dict(record.solver)
+                | {"objective": QueryResult("Computed", 99, other).to_dict()}
+            )
+        data = record.to_dict()
+        data["solver"]["objective"]["identity"]["weight_id"] = "other"
+        with self.assertRaises(ValueError):
+            OperatorResult.from_dict(data)
+
 
 if __name__ == "__main__":
     unittest.main()
