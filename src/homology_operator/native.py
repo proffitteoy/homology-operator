@@ -1,17 +1,19 @@
 """Optional native adapters; Python remains the independent validator.
 
 Importing this adapter never requires Rust. Missing/unsupported construction is
-Unavailable, without silently calling a different solver. Geometry uses exact
-Python weights on native Pz; its cost is reported as a visible fallback.
+Unavailable, without silently calling a different solver. Geometry uses checked
+native integers or a visible arbitrary-precision/fsum weight fallback.
 """
 
 from dataclasses import asdict, dataclass, field
+from fractions import Fraction
+from math import fsum, isfinite
 from time import perf_counter
 from uuid import uuid4
 
 from .algebra import Matrix, CompactAction, validate_vector
 from .operator import HomologyOperator
-from .result import QueryResult, make_identity
+from .result import QueryResult, make_identity, require_same_identity
 from .solver import (
     FeasibleSolver,
     ProjectionSolution,
@@ -439,9 +441,99 @@ def apply_batch(operator, vectors):
     )
 
 
-def geometry_batch(operator, cycles, pairs=()):
-    """Reuse native Pz for exact Python mass/distance/support, on cycles only."""
-    cycles = tuple(operator._cycle(z) for z in cycles)
+@dataclass(frozen=True)
+class GeometryWorkspace:
+    """Prepared action/weights plus private scratch; bound to all six identities.
+
+    Preparing or using this workspace never adds readouts to its operator.
+    Pass it to geometry_batch to reuse native storage across batches. It is
+    process-local and is deliberately absent from serialized operator results.
+    """
+
+    operator: HomologyOperator
+    _handle: object = field(init=False, repr=False, compare=False)
+    _weight_fallback: str | None = field(init=False, repr=False, compare=False)
+    _preparation: dict = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self):
+        started = perf_counter()
+        op = self.operator
+        if not isinstance(op, HomologyOperator) or not isinstance(
+            op.P, (Matrix, CompactAction)
+        ):
+            raise ValueError("geometry workspace requires an explicit/compact operator")
+        action = op.P
+        if isinstance(action, Matrix):
+            form, factors, pivots, complement = "Matrix", (action,), (), False
+        else:
+            form, factors, pivots, complement = (
+                action.form,
+                action.factors,
+                action.pivots,
+                action.complement,
+            )
+        rows = tuple(tuple(map(_words, matrix.rows)) for matrix in factors)
+        boundary = tuple(map(_words, op.window.A.rows))
+        fallback, weights = None, None
+        if op.window.arithmetic == "FloatingPoint":
+            fallback = "binary64 fsum"
+        elif any(Fraction(w).denominator != 1 for w in op.window.weights):
+            fallback = "arbitrary Fraction"
+        elif any(w > (1 << 64) - 1 for w in op.window.weights):
+            fallback = "integer weight exceeds u64"
+        else:
+            weights = tuple(int(w) for w in op.window.weights)
+        converted = perf_counter()
+        handle = _extension().GeometryWorkspace(
+            boundary,
+            form,
+            rows,
+            tuple(x.ncols for x in factors),
+            pivots,
+            complement,
+            weights,
+        )
+        prepared = perf_counter()
+        object.__setattr__(self, "_handle", handle)
+        object.__setattr__(self, "_weight_fallback", fallback)
+        object.__setattr__(
+            self,
+            "_preparation",
+            {
+                "conversion_seconds": converted - started,
+                "native_and_binding_seconds": prepared - converted,
+                "total_seconds": prepared - started,
+            },
+        )
+
+    @property
+    def identity(self):
+        return self.operator.identity
+
+    def statistics(self):
+        batches, growths, capacity = self._handle.statistics()
+        return {
+            "completed_batches": batches,
+            "projection_buffer_growths": growths,
+            "projection_capacity_words": capacity,
+        }
+
+
+def geometry_batch(operator, cycles, pairs=(), *, workspace=None):
+    """Project each cycle once; derive all geometry from that same packed Pz.
+
+    Native integers use checked u64 sums. Nonintegral rationals, large weights,
+    individual sum overflows and floats retain Python's exact/fsum policy, with
+    fallback reasons/counts/timing included. No operator history is mutated.
+    """
+    if not isinstance(operator, HomologyOperator):
+        raise ValueError("geometry batch requires a validated operator")
+    if workspace is not None:
+        if not isinstance(workspace, GeometryWorkspace):
+            raise ValueError("workspace must be a GeometryWorkspace")
+        require_same_identity(workspace, operator)
+    started = perf_counter()
+    cycles = tuple(validate_vector(z, operator.window.n) for z in cycles)
     pairs = tuple(tuple(pair) for pair in pairs)
     if any(
         len(pair) != 2
@@ -449,29 +541,79 @@ def geometry_batch(operator, cycles, pairs=()):
         for pair in pairs
     ):
         raise ValueError("pairs must index two cycles in this batch")
-    actions = apply_batch(operator, cycles)
-    if actions.state != "Computed":
-        return actions
-    started = perf_counter()
-    representatives = actions.value["project"]
-    supports = actions.value["support"]
-    distances, shared, union = [], [], []
-    for i, j in pairs:
-        distances.append(
-            operator._mass(
-                tuple(a ^ b for a, b in zip(representatives[i], representatives[j]))
-            )
+    if not isinstance(operator.P, (Matrix, CompactAction)):
+        for z in cycles:
+            operator._cycle(z)
+        return QueryResult(
+            "Unavailable",
+            identity=operator.identity,
+            details={"reason": "unsupported native geometry action"},
         )
-        shared.append(tuple(sorted(set(supports[i]) & set(supports[j]))))
-        union.append(tuple(sorted(set(supports[i]) | set(supports[j]))))
+    reused = workspace is not None
+    try:
+        workspace = workspace or GeometryWorkspace(operator)
+    except ImportError:
+        for z in cycles:
+            operator._cycle(z)
+        return QueryResult(
+            "Unavailable",
+            identity=operator.identity,
+            details={"reason": "optional native extension is not installed"},
+        )
+    packed = tuple(map(_words, cycles))
+    converted = perf_counter()
+    (
+        representatives,
+        supports,
+        masses,
+        distances,
+        differences,
+        shared,
+        union,
+        native_wall,
+    ) = workspace._handle.query(packed, pairs)
+    returned = perf_counter()
+    fallback_seconds, fallback_count, overflow_count = 0.0, 0, 0
+
+    def mass(indices, native_value):
+        nonlocal fallback_seconds, fallback_count, overflow_count
+        if native_value is not None:
+            return (
+                Fraction(native_value)
+                if (operator.window.arithmetic == "ExactRational" and indices)
+                else native_value
+            )
+        fallback_started = perf_counter()
+        fallback_count += 1
+        overflow_count += workspace._weight_fallback is None
+        costs = [operator.window.weights[i] for i in indices]
+        if operator.window.arithmetic == "FloatingPoint":
+            try:
+                value = fsum(costs)
+            except OverflowError as error:
+                raise ValueError("NumericalFailure: floating mass overflow") from error
+            if not isfinite(value):
+                raise ValueError("NumericalFailure: nonfinite floating mass")
+        else:
+            value = sum(costs)
+        fallback_seconds += perf_counter() - fallback_started
+        return value
+
     value = {
-        "class_representative": representatives,
-        "selected_mass": tuple(operator._mass(z) for z in representatives),
-        "support": supports,
-        "class_distance": tuple(distances),
-        "shared_support": tuple(shared),
-        "union_support": tuple(union),
+        "class_representative": tuple(
+            _unwords(z, operator.window.n) for z in representatives
+        ),
+        "selected_mass": tuple(
+            mass(indices, number) for indices, number in zip(supports, masses)
+        ),
+        "support": tuple(tuple(indices) for indices in supports),
+        "class_distance": tuple(
+            mass(indices, number) for indices, number in zip(differences, distances)
+        ),
+        "shared_support": tuple(tuple(indices) for indices in shared),
+        "union_support": tuple(tuple(indices) for indices in union),
     }
+    decoded = perf_counter()
     exact = operator.window.arithmetic != "FloatingPoint"
     return QueryResult(
         "Computed",
@@ -479,10 +621,31 @@ def geometry_batch(operator, cycles, pairs=()):
         operator.identity,
         exact,
         {
-            **actions.details,
+            "arguments": cycles,
             "pairs": pairs,
-            "geometry_fallback": "python Fraction/int or binary64 fsum",
-            "geometry_fallback_seconds": perf_counter() - started,
+            "workspace_reused": reused,
+            "preparation_seconds": 0.0
+            if reused
+            else workspace._preparation["total_seconds"],
+            "preparation_costs": None if reused else workspace._preparation,
+            "conversion_seconds": converted
+            - started
+            - (0.0 if reused else workspace._preparation["total_seconds"]),
+            "native_seconds": native_wall,
+            "binding_seconds": max(0.0, returned - converted - native_wall),
+            "decode_seconds": max(0.0, decoded - returned - fallback_seconds),
+            "geometry_fallback": (
+                workspace._weight_fallback
+                or "integer sum overflow; arbitrary precision"
+            )
+            if fallback_count
+            else None,
+            "geometry_fallback_seconds": fallback_seconds,
+            "weight_fallback_count": fallback_count,
+            "integer_overflow_count": overflow_count,
+            "projection_applications": len(cycles),
+            "workspace_statistics": workspace.statistics(),
+            "threads": 1,
             "arithmetic_policy": operator.window.arithmetic,
             "rounding_policy": None if exact else "binary64 fsum; nearest-even",
         },
