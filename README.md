@@ -96,6 +96,13 @@ barcode 来自 `T_ij=P_j J_ij|ker(L_i)` 的 rank invariant。
 uv run --locked python examples/filtration.py
 ```
 
+S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
+packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
+显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
+默认过滤快照采用共享边界/基/活动索引的 schema 2，旧 schema 1 可读并原版本重发；
+`to_result(schema_version=1)` 显式输出旧格式，单尺度快照版本保持原契约。
+证明、状态边界及复跑命令见 [S4-07说明](docs/S4_FILTRATION.md)。
+
 四种限定 solver 可显式选择 native 加速与独立证书重放；默认 reference 入口保持不变。
 调用及支持域见 [native 认证求解](docs/INTERFACE.md#限定-native-认证求解s4-05)。
 

@@ -1,6 +1,12 @@
 from dataclasses import replace
 from fractions import Fraction
 import unittest
+from collections import Counter
+from hashlib import sha256
+import json
+from pathlib import Path
+import random
+from unittest.mock import patch
 from itertools import product
 
 from homology_operator import (
@@ -434,11 +440,11 @@ class FamilySerializationTests(unittest.TestCase):
     def test_schema_json_and_weight_mixing_rejected(self):
         record = merge_family().to_result()
         data = record.to_dict()
-        data["schema_version"] = 2
+        data["schema_version"] = 3
         with self.assertRaises(ValueError):
             OperatorFamilyResult.from_dict(data)
         data = record.to_dict()
-        data["stage_results"][1]["input_data"]["weights"][0]["numerator"] = 5
+        data["windows"]["stages"][1]["weights"][0]["numerator"] = 5
         with self.assertRaises(ValueError):
             OperatorFamilyResult.from_dict(data)
         for text in ('{"schema_version":1,"schema_version":1}', '{"value":NaN}'):
@@ -505,6 +511,215 @@ class BarcodeTests(unittest.TestCase):
         missing = replace(family, operators=(failure,)).barcode()
         self.assertEqual(missing.state, "Unavailable")
         self.assertIsNone(missing.value)
+
+
+class AdjacentFiltrationTests(unittest.TestCase):
+    def test_historical_merge_generator_dies_and_stage_bases_commute(self):
+        family = merge_family()
+        before = [stage.to_result().to_json() for stage in family.operators]
+        bars = family.barcode_basis().value
+        # Both original basis vectors have the same image. The dead interval
+        # must use their sum, not retain the dependent nonzero image's source.
+        dead = next(bar for bar in bars if bar["death_stage"] == 1)
+        self.assertEqual(dead["vectors"][0]["representative"], (1, 1))
+        for i in range(len(family.windows)):
+            active = [
+                vector
+                for bar in bars
+                for vector in bar["vectors"]
+                if vector["stage"] == i
+            ]
+            basis = Matrix.from_columns(
+                (v["representative"] for v in active), family.windows[i].n
+            )
+            self.assertEqual(basis.rank(), family.stage(i).betti())
+            for vector in active:
+                self.assertEqual(vector["identity"], family.stage(i).identity)
+        for bar in bars:
+            for left, right in zip(bar["vectors"], bar["vectors"][1:]):
+                self.assertEqual(
+                    family.track_class(
+                        left["representative"], left["stage"], right["stage"]
+                    ).value,
+                    right["representative"],
+                )
+            if bar["death_stage"] is not None:
+                last = bar["vectors"][-1]
+                self.assertEqual(
+                    family.track_class(
+                        last["representative"], last["stage"], bar["death_stage"]
+                    ).value,
+                    (0, 0),
+                )
+        self.assertEqual(
+            before, [stage.to_result().to_json() for stage in family.operators]
+        )
+        snapshot = family.to_result()
+        self.assertEqual(snapshot.to_json(), snapshot.to_family().to_result().to_json())
+        wire = snapshot.to_dict()
+        wire["barcode_basis_readout"]["value"][0]["vectors"][0]["coordinates"][0] ^= 1
+        with self.assertRaises(ValueError):
+            OperatorFamilyResult.from_dict(wire)
+
+    def test_long_barcode_only_adjacent_actions_and_bounded_cache(self):
+        small = merge_family()
+        window, operator = small.windows[0], small.stage(0)
+        family = OperatorFamily(
+            tuple(range(90)), (window,) * 90, (operator,) * 90, cache_limit=3
+        )
+        before = operator.to_result().to_json()
+        with (
+            patch.object(
+                OperatorFamily,
+                "inclusion",
+                side_effect=AssertionError("dense inclusion"),
+            ),
+            patch.object(
+                OperatorFamily, "transport", side_effect=AssertionError("chain action")
+            ),
+            patch.object(
+                Matrix, "solve", side_effect=AssertionError("repeated decomposition")
+            ),
+        ):
+            self.assertEqual(family.barcode().value[0]["multiplicity"], 2)
+            self.assertTrue(all(j == i + 1 for i, j in family._actions))
+            self.assertEqual(family._transports, {})
+            table = family.rank_table()
+            self.assertEqual(len(table.value), 90 * 91 // 2)
+        self.assertLessEqual(len(family._actions), 3)
+        self.assertLessEqual(len(family._ranks), 3)
+        self.assertEqual(len(family._kernels), 1)
+        self.assertEqual(before, operator.to_result().to_json())
+        uncached = replace(small, cache_limit=0)
+        for i in range(3):
+            for j in range(i, 3):
+                self.assertEqual(uncached.transport(i, j), small.transport(i, j))
+        self.assertEqual(uncached._actions, {})
+        self.assertEqual(uncached._transports, {})
+        for bad in (True, -1, 1.5):
+            with self.assertRaises(ValueError):
+                replace(small, cache_limit=bad)
+
+    def test_compact_shared_storage_and_legacy_roundtrip(self):
+        family = merge_family()
+        family.track_mass((0, 1), 0, 2)
+        for i in range(3):
+            for j in range(i, 3):
+                family.transport(i, j)
+        legacy = family.to_result(schema_version=1)
+        self.assertEqual(
+            legacy.to_json(),
+            OperatorFamilyResult.from_json(legacy.to_json())
+            .to_family()
+            .to_result()
+            .to_json(),
+        )
+        compact = family.to_result()
+        restored = compact.to_family()
+        self.assertEqual(compact.to_json(), restored.to_result().to_json())
+        self.assertEqual(legacy.identity, compact.identity)
+        self.assertIs(restored.windows[1].D, restored.windows[2].D)
+        self.assertIs(
+            restored.windows[0].basis_current, restored.windows[2].basis_current
+        )
+        self.assertIs(restored.windows[1], restored.stage(1).window)
+        for mutation in (
+            "bool",
+            "duplicate",
+            "outside",
+            "final",
+            "reference",
+            "boundary",
+        ):
+            wire = compact.to_dict()
+            if mutation == "bool":
+                wire["windows"]["stages"][0]["active"][1][0] = True
+            elif mutation == "duplicate":
+                wire["windows"]["stages"][0]["active"][1] = [0, 0]
+            elif mutation == "outside":
+                wire["windows"]["stages"][0]["active"][1][0] = 99
+            elif mutation == "final":
+                wire["windows"]["stages"][-1]["active"][1].reverse()
+            elif mutation == "reference":
+                wire["stage_results"][0]["input_ref"] = True
+            else:
+                wire["windows"]["D"]["rows"][0][0] ^= 1
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                OperatorFamilyResult.from_dict(wire)
+
+    def test_5689_original_modules_plus_historical_bases_against_enumeration(self):
+        from homology_operator.family import _adjacent_intervals
+        from oracle.reference import rank_barcode, apply
+
+        cases = []
+        for source in range(4):
+            for target in range(4):
+                for encoding in range(1 << (source * target)):
+                    cases.append(
+                        (
+                            [source, target],
+                            [
+                                [
+                                    (encoding >> (j * target)) & ((1 << target) - 1)
+                                    for j in range(source)
+                                ]
+                            ],
+                        )
+                    )
+        rng = random.Random(20261002)
+        for _ in range(5000):
+            dimensions = [rng.randint(0, 6) for _ in range(rng.randint(1, 9))]
+            maps = [
+                [rng.randrange(1 << target) for _ in range(source)]
+                for source, target in zip(dimensions, dimensions[1:])
+            ]
+            cases.append((dimensions, maps))
+        digest = sha256()
+        for dimensions, maps in cases:
+            digest.update(
+                json.dumps(
+                    {"dimensions": dimensions, "maps": maps},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            )
+            digest.update(b"\n")
+            expected, ranks = rank_barcode(dimensions, maps)
+            bars = _adjacent_intervals(dimensions, maps, histories=True)
+            self.assertEqual(Counter((b, d) for b, d, _ in bars), expected)
+            self.assertEqual(
+                Counter((b, d) for b, d, _ in _adjacent_intervals(dimensions, maps)),
+                expected,
+            )
+            for stage, dimension in enumerate(dimensions):
+                vectors = [
+                    history[stage - birth]
+                    for birth, death, history in bars
+                    if birth <= stage and (death is None or stage < death)
+                ]
+                # Enumerate every sum, independent of production elimination.
+                span = {0}
+                for vector in vectors:
+                    span |= {x ^ vector for x in span}
+                self.assertEqual(len(vectors), dimension)
+                self.assertEqual(span, set(range(1 << dimension)))
+            for birth, death, history in bars:
+                for stage, (left, right) in enumerate(zip(history, history[1:]), birth):
+                    self.assertEqual(apply(maps[stage], left), right)
+                if death is not None:
+                    self.assertEqual(apply(maps[death - 1], history[-1]), 0)
+            for (i, j), rank in ranks.items():
+                self.assertEqual(
+                    sum(b <= i and (d is None or j < d) for b, d, _ in bars), rank
+                )
+        old = json.loads(
+            (
+                Path(__file__).parents[1]
+                / "docs/research/s4-s5/quiver_barcode_probe_result.json"
+            ).read_text("utf-8")
+        )
+        self.assertEqual(len(cases), 5689)
+        self.assertEqual(digest.hexdigest(), old["corpus_sha256"])
 
 
 if __name__ == "__main__":

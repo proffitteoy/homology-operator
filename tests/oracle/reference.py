@@ -303,3 +303,38 @@ def load_fixtures(path=None):
         if betti(fixture) != fixture["expected"]["betti"]:
             raise ValueError("fixture Betti expectation does not match enumeration")
     return tuple(fixtures)
+
+
+def rank_barcode(dimensions, maps):
+    """Old full-interval rank formula; enumerate all images independently.
+
+    Maps are packed columns. Only a small-scale test oracle, never a result
+    source or a performance backend.
+    """
+    from collections import Counter
+
+    ranks = {}
+    for start, dimension in enumerate(dimensions):
+        image = set(range(1 << dimension))
+        ranks[start, start] = dimension
+        for end in range(start + 1, len(dimensions)):
+            image = {apply(maps[end - 1], vector) for vector in image}
+            ranks[start, end] = len(image).bit_length() - 1
+
+    def rank(i, j):
+        return 0 if i < 0 or j >= len(dimensions) else ranks[i, j]
+
+    result = Counter()
+    for birth in range(len(dimensions)):
+        for death in range(birth + 1, len(dimensions) + 1):
+            count = (
+                rank(birth, death - 1)
+                - rank(birth - 1, death - 1)
+                - rank(birth, death)
+                + rank(birth - 1, death)
+            )
+            if count < 0:
+                raise ValueError("negative interval multiplicity")
+            if count:
+                result[birth, None if death == len(dimensions) else death] = count
+    return result, ranks

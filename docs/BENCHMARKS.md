@@ -220,6 +220,13 @@ Windows x64 / CPython 3.10.11，release wheel与扩展hash保存在
 额外独立安装reference wheel，在没有native扩展时恢复Factorized/HC并实跑2项纯Python边界测试。
 两示例、Ruff、Rustfmt/Clippy、release与reference打包、文档检查另通过；远端CI按PR准确head核验。
 
+## S4-07 长过滤消融
+
+S4-07长过滤完整成本另见 [过滤证明与结果](S4_FILTRATION.md) 和
+[36个冻结冷worker样本](../benchmarks/s4_filtration_ablation.json)：精确计算源码e0e3183、
+基线d9bdf3b、同输入/公共语义输出hash、64/192阶段、绝对RSS与schema存储消融。
+完整rank表按真实二次输出单列，不用于普通barcode的同输出速度比较。
+
 ## 一般搜索准入实验（S3-06）：冻结协议
 
 选择固定PROOF T11的截面参数化作为实验方向：从GreedyCertifiedSolver的P开始，每步只翻转一个边界基系数，遍历所有`rank(D)*beta`邻居并穷举循环Γ，选择严格改善最多的候选；改善并列按packed原坐标列决定，不移动到相等Γ的邻居。候选逐个独立验证。局部固定点没有全局最优证书，仅CycleBounds；通用下界0/1真实等界时才能ExactOptimal。BoundaryFlipExperiment只存在于对照脚本，未注册为公共GeneralSearchSolver。

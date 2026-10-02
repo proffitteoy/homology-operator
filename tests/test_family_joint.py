@@ -95,6 +95,40 @@ class FamilyJointTests(unittest.TestCase):
                         ),
                         oracle.persistence_barcode(stages),
                     )
+                    history = family.barcode_basis().value
+                    for stage, operator in enumerate(family.operators):
+                        active = [
+                            v
+                            for bar in history
+                            for v in bar["vectors"]
+                            if v["stage"] == stage
+                        ]
+                        self.assertEqual(
+                            Matrix.from_columns(
+                                (v["representative"] for v in active), operator.window.n
+                            ).rank(),
+                            operator.betti(),
+                        )
+                    for bar in history:
+                        for left, right in zip(bar["vectors"], bar["vectors"][1:]):
+                            self.assertEqual(
+                                family.track_class(
+                                    left["representative"],
+                                    left["stage"],
+                                    right["stage"],
+                                ).value,
+                                right["representative"],
+                            )
+                        if bar["death_stage"] is not None:
+                            last = bar["vectors"][-1]
+                            self.assertEqual(
+                                family.track_class(
+                                    last["representative"],
+                                    last["stage"],
+                                    bar["death_stage"],
+                                ).value,
+                                (0,) * family.windows[bar["death_stage"]].n,
+                            )
                     for (i, j), expected_rank in oracle.persistence_ranks(
                         stages
                     ).items():

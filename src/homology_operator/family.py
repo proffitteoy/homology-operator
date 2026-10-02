@@ -1,6 +1,7 @@
 """Finite coordinate filtrations of the same validated homology operators."""
 
 from collections.abc import Mapping, Set
+from collections import OrderedDict, Counter
 from dataclasses import dataclass, field
 from fractions import Fraction
 from math import isfinite
@@ -45,6 +46,68 @@ def _inclusion(source, target):
     )
 
 
+def _pack(vector):
+    return sum(bit << i for i, bit in enumerate(vector))
+
+
+def _unpack(vector, size):
+    return tuple((vector >> i) & 1 for i in range(size))
+
+
+def _insert(pivots, vector, combination):
+    """Reduce a packed column, retaining its expression in accepted columns."""
+    while vector:
+        pivot = vector.bit_length() - 1
+        if pivot not in pivots:
+            pivots[pivot] = (vector, combination)
+            return True, combination
+        other, coefficients = pivots[pivot]
+        vector ^= other
+        combination ^= coefficients
+    return False, combination
+
+
+def _adjacent_intervals(dimensions, maps, histories=False):
+    """Birth-prefix elimination; optional backward corrections of dying vectors.
+
+    Maps are packed columns in the *same family's* kernel coordinates. The
+    proof and historical basis correction are in docs/S4_FILTRATION.md.
+    """
+    alive = [(0, 1 << i, [1 << i] if histories else None) for i in range(dimensions[0])]
+    ended = []
+    for stage, columns in enumerate(maps, 1):
+        pivots, following = {}, []
+        for birth, vector, history in alive:
+            image = 0
+            for i, column in enumerate(columns):
+                if vector >> i & 1:
+                    image ^= column
+            independent, combination = _insert(pivots, image, 1 << len(following))
+            if independent:
+                following.append(
+                    (birth, image, history + [image] if histories else None)
+                )
+            else:
+                if histories:
+                    history = list(history)
+                    for i, (older_birth, _, older_history) in enumerate(following):
+                        if combination >> i & 1:
+                            for s in range(birth, stage):
+                                history[s - birth] ^= older_history[s - older_birth]
+                ended.append((birth, stage, history))
+        for i in range(dimensions[stage]):
+            vector = 1 << i
+            if _insert(pivots, vector, 1 << len(following))[0]:
+                following.append((stage, vector, [vector] if histories else None))
+        if len(following) != dimensions[stage]:
+            raise ValueError("adjacent transport basis does not span its target")
+        alive = following
+    ended.extend((birth, None, history) for birth, _, history in alive)
+    return sorted(
+        ended, key=lambda bar: (bar[0], len(dimensions) if bar[1] is None else bar[1])
+    )
+
+
 @dataclass(frozen=True)
 class OperatorFamily:
     """Ordered stages; repeated scales retain their distinct stage indices.
@@ -59,13 +122,26 @@ class OperatorFamily:
     weight_policy: str = "Inherited"
     duplicate_policy: str = "OrderedStages"
     terminal_extension: str = "Constant"
+    cache_limit: int = 64
     _transports: dict = field(
-        init=False, default_factory=dict, repr=False, compare=False
+        init=False, default_factory=OrderedDict, repr=False, compare=False
     )
+
+    _actions: dict = field(
+        init=False, default_factory=OrderedDict, repr=False, compare=False
+    )
+    _ranks: dict = field(
+        init=False, default_factory=OrderedDict, repr=False, compare=False
+    )
+    _kernels: dict = field(init=False, default_factory=dict, repr=False, compare=False)
+    _barcode_basis: object = field(init=False, default=None, repr=False, compare=False)
+    _schema_version: int = field(init=False, default=2, repr=False, compare=False)
 
     _tracking: dict = field(init=False, default_factory=dict, repr=False, compare=False)
 
     def __post_init__(self):
+        if type(self.cache_limit) is not int or self.cache_limit < 0:
+            raise ValueError("cache_limit must be a nonnegative integer")
         scales = _ordered(self.scales, "scales")
         windows = _ordered(self.windows, "windows")
         operators = _ordered(self.operators, "operators")
@@ -110,17 +186,54 @@ class OperatorFamily:
                 raise ValueError(
                     "stages require validated operators or explicit failed records"
                 )
-        for source, target in zip(windows, windows[1:]):
-            previous = _inclusion(source.basis_previous, target.basis_previous)
-            current = _inclusion(source.basis_current, target.basis_current)
-            following = _inclusion(source.basis_next, target.basis_next)
-            if (
-                target.A @ current != previous @ source.A
-                or target.D @ following != current @ source.D
-            ):
-                raise ValueError(
-                    "coordinate inclusions must commute with both boundary maps"
+        basis_names = ("basis_previous", "basis_current", "basis_next")
+        positions = tuple(
+            {label: i for i, label in enumerate(getattr(windows[-1], name))}
+            for name in basis_names
+        )
+        try:
+            active = tuple(
+                tuple(
+                    tuple(pos[label] for label in getattr(w, name))
+                    for pos, name in zip(positions, basis_names)
                 )
+                for w in windows
+            )
+        except KeyError as error:
+            raise ValueError(
+                "filtration bases must include all preceding coordinates"
+            ) from error
+        object.__setattr__(self, "_active", active)
+        for stage, (source, target) in enumerate(zip(windows, windows[1:])):
+            indices = []
+            for degree in range(3):
+                locations = {
+                    value: i for i, value in enumerate(active[stage + 1][degree])
+                }
+                try:
+                    indices.append(
+                        tuple(locations[value] for value in active[stage][degree])
+                    )
+                except KeyError as error:
+                    raise ValueError(
+                        "filtration bases must include all preceding coordinates"
+                    ) from error
+            for left, right, rows, columns in (
+                (source.A, target.A, indices[0], indices[1]),
+                (source.D, target.D, indices[1], indices[2]),
+            ):
+                row_locations = {target_row: row for row, target_row in enumerate(rows)}
+                if any(
+                    right.rows[r][target_column]
+                    != (
+                        left.rows[row_locations[r]][column] if r in row_locations else 0
+                    )
+                    for column, target_column in enumerate(columns)
+                    for r in range(right.nrows)
+                ):
+                    raise ValueError(
+                        "coordinate inclusions must commute with both boundary maps"
+                    )
             if (source.weight_semantics, source.unit) != (
                 target.weight_semantics,
                 target.unit,
@@ -199,6 +312,89 @@ class OperatorFamily:
             getattr(self.windows[i], name), getattr(self.windows[j], name)
         )
 
+    def _indices(self, i, j, degree=1):
+        positions = {
+            value: index for index, value in enumerate(self._active[j][degree])
+        }
+        return tuple(positions[value] for value in self._active[i][degree])
+
+    def _embed(self, vector, indices, size):
+        result = [0] * size
+        for bit, index in zip(vector, indices):
+            result[index] = bit
+        return tuple(result)
+
+    def _kernel(self, i):
+        operator = self.stage(i)
+        key = operator.identity["projection_id"]
+        if key not in self._kernels:
+            # Family-owned workspace never changes the existing operator's caches.
+            basis = operator.L.kernel_basis()
+            pivots = {}
+            for column, vector in enumerate(basis):
+                if not _insert(pivots, _pack(vector), 1 << column)[0]:
+                    raise ValueError("stage kernel basis is dependent")
+            self._kernels[key] = (basis, pivots)
+        return self._kernels[key]
+
+    def _solve_many(self, i, vectors):
+        basis, pivots = self._kernel(i)
+        result = []
+        for vector in vectors:
+            residual, coordinates = _pack(vector), 0
+            while residual:
+                pivot = residual.bit_length() - 1
+                if pivot not in pivots:
+                    raise ValueError("transport image is outside the target kernel")
+                column, coefficients = pivots[pivot]
+                residual ^= column
+                coordinates ^= coefficients
+            result.append(_unpack(coordinates, len(basis)))
+        return tuple(result)
+
+    def _cached(self, cache, key, value):
+        if self.cache_limit:
+            cache[key] = value
+            cache.move_to_end(key)
+            while len(cache) > self.cache_limit:
+                cache.popitem(last=False)
+        return value
+
+    def _failure(self, i, j):
+        failed = [
+            (index, self.stage(index).status)
+            for index in dict.fromkeys((i, j))
+            if not isinstance(self.stage(index), HomologyOperator)
+        ]
+        if failed:
+            state = (
+                "ResourceExhausted"
+                if any(status == "ResourceExhausted" for _, status in failed)
+                else "Unavailable"
+            )
+            return self._query(state, None, i, j, details={"failed_stages": failed})
+        return None
+
+    def _coordinate_action(self, i, j):
+        key = (i, j)
+        if key in self._actions:
+            self._actions.move_to_end(key)
+            return self._actions[key]
+        source_basis = self._kernel(i)[0]
+        if i == j:
+            action = Matrix.identity(len(source_basis))
+        else:
+            target = self.stage(j)
+            indices = self._indices(i, j)
+            projected = tuple(
+                target.P.apply(self._embed(x, indices, target.window.n))
+                for x in source_basis
+            )
+            action = Matrix.from_columns(
+                self._solve_many(j, projected), len(self._kernel(j)[0])
+            )
+        return self._cached(self._actions, key, action)
+
     def _details(self, i, j):
         return {
             **self.identity,
@@ -221,58 +417,55 @@ class OperatorFamily:
         """Exact action in source/target kernel coordinates, plus original-chain action."""
         self._interval(i, j)
         if (i, j) in self._transports:
+            self._transports.move_to_end((i, j))
             return self._transports[i, j]
-        failed = [
-            (index, self.stage(index).status)
-            for index in dict.fromkeys((i, j))
-            if not isinstance(self.stage(index), HomologyOperator)
-        ]
-        if failed:
-            state = (
-                "ResourceExhausted"
-                if any(status == "ResourceExhausted" for _, status in failed)
-                else "Unavailable"
-            )
-            result = self._query(state, None, i, j, details={"failed_stages": failed})
-            self._transports[i, j] = result
-            return result
-        source, target = self.stage(i), self.stage(j)
-        source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
-        target_kernel = Matrix.from_columns(target.kernel_basis(), target.window.n)
-        chain_action = target.P @ (self.inclusion(i, j) @ source_kernel)
-        coordinates = []
-        for column in chain_action.transpose().rows:
-            value = target_kernel.solve(column)
-            if value is None:
-                raise ValueError("transport image is outside the target kernel")
-            coordinates.append(value)
-        action = Matrix.from_columns(coordinates, target.betti())
+        failure = self._failure(i, j)
+        if failure is not None:
+            return self._cached(self._transports, (i, j), failure)
+        target = self.stage(j)
+        action = self._coordinate_action(i, j)
+        target_kernel = Matrix.from_columns(self._kernel(j)[0], target.window.n)
+        chain_action = target_kernel @ action
         result = self._query(
             "Computed",
             {
                 "action": matrix_data(action),
                 "chain_action": matrix_data(chain_action),
-                "source_kernel_basis": source.kernel_basis(),
-                "target_kernel_basis": target.kernel_basis(),
+                "source_kernel_basis": self._kernel(i)[0],
+                "target_kernel_basis": self._kernel(j)[0],
                 "rank": action.rank(),
             },
             i,
             j,
             True,
         )
-        self._transports[i, j] = result
-        return result
+        return self._cached(self._transports, (i, j), result)
 
     def transport_rank(self, i, j):
-        result = self.transport(i, j)
-        return self._query(
-            result.state,
-            result.value["rank"] if result.state == "Computed" else None,
-            i,
-            j,
-            result.exact,
-            result.details,
-        )
+        self._interval(i, j)
+        if (i, j) in self._ranks:
+            self._ranks.move_to_end((i, j))
+            return self._ranks[i, j]
+        result = self._failure(i, j)
+        if result is None:
+            result = self._query(
+                "Computed", self._coordinate_action(i, j).rank(), i, j, True
+            )
+        return self._cached(self._ranks, (i, j), result)
+
+    def rank_table(self):
+        """Explicit quadratic rank output; does not retain all chain actions."""
+        values = {}
+        last = len(self.windows) - 1
+        for i in range(last + 1):
+            for j in range(i, last + 1):
+                rank = self.transport_rank(i, j)
+                if rank.state != "Computed":
+                    return self._query(
+                        rank.state, None, 0, last, details={"failed_interval": (i, j)}
+                    )
+                values[f"{i}:{j}"] = rank.value
+        return self._query("Computed", values, 0, last, True)
 
     def transport_certificate(self, i, j):
         result = self.transport(i, j)
@@ -321,44 +514,63 @@ class OperatorFamily:
             True,
         )
 
-    def to_result(self):
+    def to_result(self, schema_version=None):
         """Immutable snapshot; serialization revalidates persisted derived readouts."""
         barcode = self.barcode()
-        return OperatorFamilyResult(
-            {
-                "schema_version": 1,
-                "identity": dict(self.identity),
-                "status": self.status,
-                "scales": _encode(self.scales),
-                "windows": [w.to_dict() for w in self.windows],
-                "stage_results": [
-                    (
-                        op.to_result() if isinstance(op, HomologyOperator) else op
-                    ).to_dict()
-                    for op in self.operators
-                ],
-                "weight_policy": self.weight_policy,
-                "duplicate_policy": self.duplicate_policy,
-                "terminal_extension": self.terminal_extension,
-                "transports": {
-                    f"{i}:{j}": result.to_dict()
-                    for (i, j), result in self._transports.items()
-                },
-                "rank_readout": {
-                    f"{i}:{j}": self.transport_rank(i, j).to_dict()
-                    for i, j in tuple(self._transports)
-                },
-                "barcode_readout": barcode.to_dict(),
-                "tracking_readout": {
-                    key: query.to_dict() for key, query in self._tracking.items()
-                },
-                "provenance": {
-                    "rank_invariant_source": "operator_family",
-                    "oracle_used_for_result": False,
-                    "theory_revision": THEORY_REVISION,
-                },
-            }
-        )
+        version = self._schema_version if schema_version is None else schema_version
+        if type(version) is not int or version not in (1, 2):
+            raise ValueError("unsupported family result schema")
+        stage_results = [
+            (op.to_result() if isinstance(op, HomologyOperator) else op).to_dict()
+            for op in self.operators
+        ]
+        ranks = dict(self._ranks)
+        for (i, j), result in self._transports.items():
+            ranks[i, j] = self._query(
+                result.state,
+                result.value["rank"] if result.state == "Computed" else None,
+                i,
+                j,
+                result.exact,
+                result.details,
+            )
+        data = {
+            "schema_version": version,
+            "identity": dict(self.identity),
+            "status": self.status,
+            "scales": _encode(self.scales),
+            "windows": [w.to_dict() for w in self.windows],
+            "stage_results": stage_results,
+            "weight_policy": self.weight_policy,
+            "duplicate_policy": self.duplicate_policy,
+            "terminal_extension": self.terminal_extension,
+            "transports": {
+                f"{i}:{j}": result.to_dict()
+                for (i, j), result in self._transports.items()
+            },
+            "rank_readout": {
+                f"{i}:{j}": result.to_dict() for (i, j), result in ranks.items()
+            },
+            "barcode_readout": barcode.to_dict(),
+            "tracking_readout": {
+                key: query.to_dict() for key, query in self._tracking.items()
+            },
+            "provenance": {
+                "rank_invariant_source": "operator_family",
+                "oracle_used_for_result": False,
+                "theory_revision": THEORY_REVISION,
+            },
+        }
+        if version == 2:
+            data["windows"] = _compact_windows(self)
+            for i, record in enumerate(stage_results):
+                del record["input_data"]
+                record["input_ref"] = i
+            data["barcode_basis_readout"] = (
+                self._barcode_basis
+                or self._query("NotComputed", None, 0, len(self.windows) - 1)
+            ).to_dict()
+        return OperatorFamilyResult(data)
 
     def _remember(self, name, arguments, i, j, result):
         query = self._query(
@@ -380,16 +592,15 @@ class OperatorFamily:
         x = validate_vector(x, self.windows[i].n)
         if self.windows[i].A.apply(x) != (0,) * self.windows[i].m:
             raise ValueError("class tracking requires a source cycle")
-        transport = self.transport(i, j)
-        if transport.state != "Computed":
-            result = self._query(transport.state, None, i, j, details=transport.details)
+        failure = self._failure(i, j)
+        if failure is not None:
+            result = failure
         else:
             source = self.stage(i)
-            kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
-            coordinates = kernel.solve(source.project(x))
-            if coordinates is None:
-                raise ValueError("source representative is outside its kernel")
-            value = matrix_from_data(transport.value["chain_action"]).apply(coordinates)
+            target = self.stage(j)
+            value = target.P.apply(
+                self._embed(source.project(x), self._indices(i, j), target.window.n)
+            )
             result = self._query("Computed", value, i, j, True)
         return self._remember("track_class", (x,), i, j, result)
 
@@ -402,7 +613,17 @@ class OperatorFamily:
         else:
             target = self.stage(j)
             try:
-                value = getattr(target, name)(*(x.value for x in chains))
+                supports = [
+                    tuple(i for i, bit in enumerate(x.value) if bit) for x in chains
+                ]
+                if name == "selected_mass":
+                    value = target._mass(chains[0].value)
+                elif name == "support":
+                    value = supports[0]
+                elif name == "shared_support":
+                    value = tuple(sorted(set(supports[0]) & set(supports[1])))
+                else:
+                    value = tuple(sorted(set(supports[0]) | set(supports[1])))
             except ValueError as error:
                 if name != "selected_mass" or not str(error).startswith(
                     "NumericalFailure"
@@ -523,62 +744,8 @@ class OperatorFamily:
             },
         )
 
-    def barcode(self):
-        """Read half-open stage intervals from transport ranks only.
-
-        A None death is essential under the constant final-stage extension.
-        Repeated scale labels can yield zero scale length but distinct stage ends.
-        """
+    def _barcode_query(self, intervals):
         last = len(self.windows) - 1
-        ranks = {}
-        for i in range(last + 1):
-            for j in range(i, last + 1):
-                result = self.transport_rank(i, j)
-                if result.state != "Computed":
-                    return self._query(
-                        result.state,
-                        None,
-                        0,
-                        last,
-                        details={
-                            "rank_invariant_source": "operator_family",
-                            "oracle_used_for_result": False,
-                            "failed_interval": (i, j),
-                        },
-                    )
-                ranks[i, j] = result.value
-
-        def rank(i, j):
-            return 0 if i < 0 or j > last else ranks[i, j]
-
-        intervals = []
-        for birth in range(last + 1):
-            for death in range(birth + 1, last + 2):
-                multiplicity = (
-                    rank(birth, death - 1)
-                    - rank(birth - 1, death - 1)
-                    - rank(birth, death)
-                    + rank(birth - 1, death)
-                )
-                if multiplicity < 0:
-                    raise ValueError(
-                        "rank invariant has negative interval multiplicity"
-                    )
-                if multiplicity:
-                    essential = death == last + 1
-                    intervals.append(
-                        {
-                            "birth_stage": birth,
-                            "death_stage": None if essential else death,
-                            "birth_scale": self.scales[birth],
-                            "death_scale": None if essential else self.scales[death],
-                            "multiplicity": multiplicity,
-                            "essential": essential,
-                            "zero_scale_length": False
-                            if essential
-                            else self.scales[birth] == self.scales[death],
-                        }
-                    )
         return self._query(
             "Computed",
             intervals,
@@ -594,11 +761,169 @@ class OperatorFamily:
             },
         )
 
+    def _bar(self, birth, death, multiplicity=1):
+        return {
+            "birth_stage": birth,
+            "death_stage": death,
+            "birth_scale": self.scales[birth],
+            "death_scale": None if death is None else self.scales[death],
+            "multiplicity": multiplicity,
+            "essential": death is None,
+            "zero_scale_length": death is not None
+            and self.scales[birth] == self.scales[death],
+        }
+
+    def _decompose(self, histories=False):
+        last = len(self.windows) - 1
+        for stage in range(last + 1):
+            failure = self._failure(stage, stage)
+            if failure is not None:
+                return self._query(
+                    failure.state,
+                    None,
+                    0,
+                    last,
+                    details={
+                        "rank_invariant_source": "operator_family",
+                        "oracle_used_for_result": False,
+                        "failed_interval": (0, stage),
+                    },
+                )
+        dimensions = [len(self._kernel(i)[0]) for i in range(last + 1)]
+        # Stream one adjacent map; no chain action or all-interval rank table.
+        maps = (
+            tuple(map(_pack, self._coordinate_action(i, i + 1).transpose().rows))
+            for i in range(last)
+        )
+        return _adjacent_intervals(dimensions, maps, histories)
+
+    def barcode(self):
+        """Read interval endpoints from adjacent transports of this family only."""
+        bars = self._decompose()
+        if isinstance(bars, QueryResult):
+            return bars
+        counts = Counter((birth, death) for birth, death, _ in bars)
+        return self._barcode_query(
+            [self._bar(b, d, count) for (b, d), count in counts.items()]
+        )
+
+    def barcode_basis(self):
+        """Opt-in historical interval generators, corrected at every death.
+
+        Vectors form a basis at each active stage, commute with adjacent maps,
+        and map to zero at death. History size is charged as real output.
+        """
+        bars = self._decompose(histories=True)
+        if isinstance(bars, QueryResult):
+            result = bars
+        else:
+            values = []
+            for birth, death, history in bars:
+                vectors = []
+                for stage, vector in enumerate(history, birth):
+                    coordinates = _unpack(vector, len(self._kernel(stage)[0]))
+                    representative = Matrix.from_columns(
+                        self._kernel(stage)[0], self.windows[stage].n
+                    ).apply(coordinates)
+                    vectors.append(
+                        {
+                            "stage": stage,
+                            "coordinates": coordinates,
+                            "representative": representative,
+                            "identity": dict(self.stage(stage).identity),
+                        }
+                    )
+                values.append({**self._bar(birth, death), "vectors": vectors})
+            result = self._barcode_query(values)
+        object.__setattr__(self, "_barcode_basis", result)
+        return result
+
+
+def _compact_windows(family):
+    """All boundaries are restrictions of the last stage in original labels."""
+    final = family.windows[-1].to_dict()
+    names = ("basis_previous", "basis_current", "basis_next")
+    shared = {key: final[key] for key in ("A", "D", *names)}
+    shared["stages"] = []
+    for window, active in zip(family.windows, family._active):
+        entry = window.to_dict()
+        for key in ("A", "D", *names):
+            del entry[key]
+        entry["active"] = [list(indices) for indices in active]
+        shared["stages"].append(entry)
+    return shared
+
+
+def _expand_windows(data):
+    if data["schema_version"] == 1:
+        return tuple(ChainWindow.from_dict(w) for w in data["windows"])
+    shared = data["windows"]
+    names = ("basis_previous", "basis_current", "basis_next")
+    if not isinstance(shared, Mapping) or set(shared) != {"A", "D", *names, "stages"}:
+        raise ValueError("invalid compact filtration storage")
+    a, d = matrix_from_data(shared["A"]), matrix_from_data(shared["D"])
+    bases = tuple(_ordered(shared[name], name) for name in names)
+    if tuple(map(len, bases)) != (a.nrows, a.ncols, d.ncols) or a.ncols != d.nrows:
+        raise ValueError("shared boundary and basis dimensions differ")
+    matrix_pool, basis_pool, windows = {}, {}, []
+    for entry in shared["stages"]:
+        active = entry["active"]
+        if not isinstance(active, (list, tuple)) or len(active) != 3:
+            raise ValueError("compact stages need three activity index lists")
+        for indices, basis in zip(active, bases):
+            if (
+                not isinstance(indices, (list, tuple))
+                or any(type(i) is not int or not 0 <= i < len(basis) for i in indices)
+                or len(set(indices)) != len(indices)
+            ):
+                raise ValueError("invalid compact activity indices")
+        wire = {key: value for key, value in entry.items() if key != "active"}
+        for name, basis, indices in zip(names, bases, active):
+            selected = tuple(basis[i] for i in indices)
+            wire[name] = basis_pool.setdefault(selected, selected)
+        for name, matrix, rows, columns in (
+            ("A", a, active[0], active[1]),
+            ("D", d, active[1], active[2]),
+        ):
+            restricted = Matrix.from_rows(
+                (tuple(matrix.rows[r][c] for c in columns) for r in rows),
+                ncols=len(columns),
+            )
+            wire[name] = matrix_data(restricted)
+        window = ChainWindow.from_dict(wire)
+        # Intern only immutable algebra and bases. Weights, P, identities and
+        # solver runs remain per stage; no existing operator is modified.
+        object.__setattr__(window, "A", matrix_pool.setdefault(window.A, window.A))
+        object.__setattr__(window, "D", matrix_pool.setdefault(window.D, window.D))
+        for name in names:
+            basis = getattr(window, name)
+            object.__setattr__(window, name, basis_pool.setdefault(basis, basis))
+        windows.append(window)
+    if not windows:
+        raise ValueError("compact filtration has no stages")
+    if any(
+        tuple(indices) != tuple(range(len(basis)))
+        for indices, basis in zip(shared["stages"][-1]["active"], bases)
+    ):
+        raise ValueError("final compact stage must cover the shared bases in order")
+    return tuple(windows)
+
 
 def _restore_family(data):
-    records = tuple(
-        OperatorResult.from_dict(record) for record in data["stage_results"]
-    )
+    windows = _expand_windows(data)
+    records = []
+    if len(data["stage_results"]) != len(windows):
+        raise ValueError("family stages and inputs have different lengths")
+    for i, record in enumerate(data["stage_results"]):
+        if data["schema_version"] == 2:
+            if type(record.get("input_ref")) is not int or record["input_ref"] != i:
+                raise ValueError("invalid stage input reference")
+            record = {key: value for key, value in record.items() if key != "input_ref"}
+            if "input_data" in record:
+                raise ValueError("compact stage cannot contain a duplicate input")
+            record["input_data"] = windows[i]
+        records.append(OperatorResult.from_dict(record))
+    records = tuple(records)
     stages = []
     for record in records:
         if record.status != "Ready":
@@ -643,12 +968,13 @@ def _restore_family(data):
         stages.append(operator)
     family = OperatorFamily(
         _decode(data["scales"]),
-        tuple(ChainWindow.from_dict(w) for w in data["windows"]),
+        windows,
         tuple(stages),
         data["weight_policy"],
         data["duplicate_policy"],
         data["terminal_extension"],
     )
+    object.__setattr__(family, "_schema_version", data["schema_version"])
     return family, records
 
 
@@ -659,6 +985,9 @@ class OperatorFamilyResult:
     data: Mapping
 
     def __post_init__(self):
+        version = (
+            self.data.get("schema_version") if isinstance(self.data, Mapping) else None
+        )
         fields = {
             "schema_version",
             "identity",
@@ -675,10 +1004,15 @@ class OperatorFamilyResult:
             "tracking_readout",
             "provenance",
         }
+        if type(version) is int and version == 2:
+            fields.add("barcode_basis_readout")
         if not isinstance(self.data, Mapping) or set(self.data) != fields:
             raise ValueError("invalid operator family result fields")
         data = _thaw_metadata(self.data)
-        if type(data["schema_version"]) is not int or data["schema_version"] != 1:
+        if type(data["schema_version"]) is not int or data["schema_version"] not in (
+            1,
+            2,
+        ):
             raise ValueError("unsupported family result schema")
         try:
             json.dumps(data, allow_nan=False)
@@ -686,7 +1020,7 @@ class OperatorFamilyResult:
             raise ValueError("family snapshot must be finite JSON wire data") from error
         try:
             family, records = _restore_family(data)
-        except (TypeError, KeyError, AttributeError) as error:
+        except (TypeError, KeyError, AttributeError, IndexError) as error:
             raise ValueError("malformed family stages or inputs") from error
         if data["identity"] != family.identity or data["status"] != family.status:
             raise ValueError(
@@ -725,6 +1059,17 @@ class OperatorFamilyResult:
             family.barcode().to_dict()
         ):
             raise ValueError("persisted barcode differs from current transport ranks")
+        if version == 2:
+            basis = QueryResult.from_dict(data["barcode_basis_readout"])
+            expected = (
+                family._query("NotComputed", None, 0, len(family.windows) - 1)
+                if basis.state == "NotComputed"
+                else family.barcode_basis()
+            )
+            if canonical_json(basis.to_dict()) != canonical_json(expected.to_dict()):
+                raise ValueError(
+                    "persisted barcode basis differs from current transports"
+                )
         if not isinstance(data["tracking_readout"], Mapping):
             raise ValueError("tracking readouts must be a mapping")
         for key, wire in data["tracking_readout"].items():
@@ -776,6 +1121,18 @@ class OperatorFamilyResult:
             (key, QueryResult.from_dict(wire))
             for key, wire in data["tracking_readout"].items()
         )
+        for name, cache in (
+            ("transports", family._transports),
+            ("rank_readout", family._ranks),
+        ):
+            cache.update(
+                (tuple(map(int, key.split(":"))), QueryResult.from_dict(wire))
+                for key, wire in data[name].items()
+            )
+        if data["schema_version"] == 2:
+            basis = QueryResult.from_dict(data["barcode_basis_readout"])
+            if basis.state != "NotComputed":
+                object.__setattr__(family, "_barcode_basis", basis)
         return family
 
     @classmethod

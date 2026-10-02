@@ -116,6 +116,16 @@ GUDHI 同输入 F2 正式对拍属于 S5，不把现有独立 reduction 或归�
 | [S4-03 回归日志](../benchmarks/s4_packed_verification.log) | 144 项历史全回归，另增 4 packed 差分/枚举与复用测试；详细源码/成本见 BENCHMARKS |
 | [S4-04 回归日志](../benchmarks/s4_compact_verification.log) | 152 项历史全回归与无扩展 wheel 恢复；源码及有限 time/RSS 记录见 BENCHMARKS |
 
+### S4-07 过滤验收
+
+S4-07 新增相邻映射/历史基的5689个原 corpus 对拍、共享快照 schema 1/2 篡改/往返、
+受控缓存与长过滤读取测试；44个冻结过滤/solver配置继续核对 composition、rank、PH、几何及历史基。
+此前同步 main 的 S4-04 后，整合源码 `9f69cb4` 的156项本地强制 native 测试无跳过地通过；
+原始日志、归纳证明及有限消融边界见 [过滤验收](S4_FILTRATION.md)。
+随后同步 main `63138fc` 的文档与 S4-05，实现源码整合后163项强制 native 回归无跳过地通过；
+四 native solver 与 Cyclic/HC/Factorized 混合过滤、schema 1/2 往返及无扩展恢复另通过。
+本地结果不替代远端 CI 及其他工作包的 native 联合验收。
+
 ### S4-05 本地与整合验证
 
 S4-05 增加7项 native solver 验证：原23窗口的支持/拒绝、三种搜索的完整 P/objective/

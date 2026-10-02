@@ -250,20 +250,23 @@ rank、核、像和 solve 当前重复消元。用同一不可变分解复用代
 
 ### S4-07：优化过滤共享存储、相邻 transport 与 barcode 读取
 
-当前 barcode 请求所有区间 transport。优化读取必须消费本算子族的映射，保留任意类几何追踪和按需区间查询。
+本地实现与完整证明见 [过滤读取](S4_FILTRATION.md)，冻结性能源码为e0e3183，保存36个
+冷worker样本。普通barcode已改为相邻transport，并实现独立历史基及任意类tracking。
+以下勾选表示本PR的实现/本地证据，不表示任务退出；仍需本PR合并、精确main/CI与
+#66的依赖联合验收。#64已在main 520ecc9合并，并同步到本分支；原隔离HC smoke保留为历史证据。
 
 实施交付：
 
-- [ ] 共享只读边界、基与活动索引；inclusion 用索引嵌入，目标核坐标采用一次分解和 multi-RHS。
-- [ ] 由相邻 T(i,i+1) 做区间分解；写出 birth 前缀张成空间不变量的完整证明，原全区间 rank 算法保留作小规模 oracle。
-- [ ] 接入端点原型时保留其 5689 例证据；历史 barcode bases 与任意类 tracking 另外实现/验证，不用端点原型替代。
-- [ ] 任意区间 rank/transport 按需计算和受控缓存；旧快照读取/状态与新紧凑版本显式兼容。
+- [x] 共享只读边界、基与活动索引；inclusion 用索引嵌入，目标核坐标采用一次分解和 multi-RHS。
+- [x] 由相邻 T(i,i+1) 做区间分解；写出 birth 前缀张成空间不变量的完整证明，原全区间 rank 算法保留作小规模 oracle。
+- [x] 接入端点原型时保留其 5689 例证据；历史 barcode bases 与任意类 tracking 另外实现/验证，不用端点原型替代。
+- [x] 任意区间 rank/transport 按需计算和受控缓存；旧快照读取/状态与新紧凑版本显式兼容。
 
 验收条件：
 
-- [ ] composition、共轭、全区间 rank/barcode、重复 scale 的有序 stage、末端延拓、身份和几何追踪一致。
-- [ ] barcode 普通请求不默认展开全部 chain action；要求完整 rank 表仍按真实二次输出计费。
-- [ ] 生产结果无独立 PH 旁路；缓存/workspace 不修改旧算子；长过滤消融保存时间/RSS，有限原型不冒充性能或一般证明。
+- [x] composition、共轭、全区间 rank/barcode、重复 scale 的有序 stage、末端延拓、身份和几何追踪一致。
+- [x] barcode 普通请求不默认展开全部 chain action；要求完整 rank 表仍按真实二次输出计费。
+- [x] 生产结果无独立 PH 旁路；缓存/workspace 不修改旧算子；长过滤消融保存时间/RSS，有限原型不冒充性能或一般证明。
 
 前置：S4-04、S4-06。依据：原计划 §3.6；family.py / ARCHITECTURE / RESULT_MODEL。
 

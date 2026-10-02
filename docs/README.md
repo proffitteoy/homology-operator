@@ -8,6 +8,7 @@
 | 构造输入、选择 solver、查询单尺度或过滤 | [Python API](INTERFACE.md) |
 | 安装 Rust、复用 packed 分解、批量查询 | [API 的可选 Rust 扩展章节](INTERFACE.md#可选-rust-扩展) |
 | 保存结果、判断缺失/精确性、避免身份混用 | [结果模型](RESULT_MODEL.md) |
+| 相邻 barcode、历史区间基与过滤快照 | [S4-07 过滤读取](S4_FILTRATION.md) |
 | 理解 P/L 和 transport 的来源 | [架构](ARCHITECTURE.md) |
 | 判断 solver 支持域与最优证书 | [solver 契约](SOLVER_CONTRACT.md) |
 | 贡献、测试、构建或复跑实验 | [验证说明](VALIDATION.md)、[性能协议](BENCHMARKS.md) |
@@ -27,8 +28,9 @@
 | S4-03 / PR #79 | 多字 packed F2、`PreparedMatrix`、多 RHS 与复用消融 | 不解除单字宽 `NativeFeasibleSolver` 的限制；不代表全算子加速 |
 | S4-04 / [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) | `6c40b93` 提供 `CompactAction` / `NativeFactorizedSolver`、因子与 HC 表示、测试和测量记录 | 已合并；保留同 P 语义与有限测量，非 S4 总验收 |
 | S4-06 / [PR #81](https://github.com/proffitteoy/homology-operator/pull/81) | 几何批查询、精确权重与 workspace 开发 | 已合并到 `s4/64-factorized-action` 分支，尚未合入 main；主线 API 不包含这组扩展 |
-| S4-05 / [PR #84](https://github.com/proffitteoy/homology-operator/pull/84) | 四种限定 native solver、精确质量后备与独立证书重放；159项整合回归、700条有限性能样本 | PR 待合并；认证 solver 输出仍为 Matrix/CyclicAction，后端集成另验收 |
-| S4 后续 / S5 | 过滤优化、后端集成、GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
+| S4-05 / [PR #84](https://github.com/proffitteoy/homology-operator/pull/84) | 四种限定 native solver、精确质量后备与独立证书重放；159项整合回归、700条有限性能样本 | 已合入 main `63138fc`；认证 solver 输出仍为 Matrix/CyclicAction，后端集成另验收 |
+| S4-07 / [PR #82](https://github.com/proffitteoy/homology-operator/pull/82) | 相邻 transport barcode、历史区间基、受控缓存与 schema 2 共享过滤快照 | PR 待合并；保留 schema 1 兼容和有限合成性能范围 |
+| S4 后续 / S5 | 后端集成、GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 private，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
 使用说明以已合并 API 为主；接口与测量链接到对应实现 PR，阶段完成仍需独立验收。
