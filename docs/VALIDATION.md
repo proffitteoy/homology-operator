@@ -6,7 +6,7 @@
 
 ## 当前可执行验证
 
-reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前89项测试包含单尺度、有限过滤独立数学联合验收及 Phase 3 solver 边界回归；已合入 main 的阶段环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)。包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
+reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前91项测试包含单尺度、有限过滤独立数学联合验收及 Phase 3 solver 边界回归；已合入 main 的阶段环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)。包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
 
 ```powershell
 pwsh -NoProfile -File ./scripts/check_docs.ps1

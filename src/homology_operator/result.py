@@ -377,13 +377,20 @@ class OperatorResult:
             else:
                 require_same_identity(identity, objective.identity)
         if projection is not None:
-            from .validation import validate_projection, validate_solver_certificate
+            from .validation import (
+                _validated_certificate,
+                validate_projection,
+                validate_solver_certificate,
+            )
 
-            certificate.update(validate_projection(window, projection))
-            certificate.update(
+            checks = validate_projection(window, projection)
+            checks.update(
                 validate_solver_certificate(
                     window, projection, solver, certificate, identity
                 )
+            )
+            certificate = _validated_certificate(
+                certificate, checks, solver["certificate_level"]
             )
         if self.status == "Ready":
             if solver["status"] not in {"Solved", "FeasibleOnly", "ResourceExhausted"}:

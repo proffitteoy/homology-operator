@@ -189,6 +189,84 @@ class SolverTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             OperatorResult.from_dict(data)
 
+    def test_backend_claims_cannot_become_verified_certificate_flags(self):
+        window, base = self.bound_solution()
+        base = FeasibleSolver().solve(ProjectionProblem(window))
+        forged = {
+            "optimality_verified": True,
+            "bounds_verified": True,
+            "objective_replayed": True,
+            "p_idempotent": False,
+            "optimization": {"kind": "ForgedExactSearch"},
+            "unrecognized_verified": True,
+        }
+        for level in ("Feasible", "Heuristic"):
+            op = HomologyOperator(
+                window, replace(base, certificate_level=level, certificate=forged)
+            )
+            certificate = op.certificate()
+            self.assertTrue(certificate["p_idempotent"])
+            for key in ("optimality_verified", "bounds_verified", "objective_replayed"):
+                self.assertIs(certificate[key], False)
+            self.assertNotIn("optimization", certificate)
+            self.assertNotIn("unrecognized_verified", certificate)
+            self.assertEqual(certificate["solver_evidence"], forged)
+            self.assertEqual(op.stretch().value, 10)
+            record = op.to_result()
+            for _ in range(3):
+                record = OperatorResult.from_json(record.to_json())
+                self.assertEqual(record.certificate, certificate)
+            tampered = record.to_dict()
+            tampered["certificate"].update(forged)
+            restored = OperatorResult.from_dict(tampered)
+            self.assertEqual(restored.certificate, certificate)
+            family = OperatorFamily((0,), (window,), (op,))
+            snapshot = family.to_result()
+            restored_family = OperatorFamilyResult.from_json(
+                snapshot.to_json()
+            ).to_family()
+            self.assertEqual(restored_family.operators[0].certificate(), certificate)
+            self.assertEqual(restored_family.to_result().to_json(), snapshot.to_json())
+
+    def test_dispatch_binds_returned_configuration_to_request(self):
+        problem = ProjectionProblem(self.window())
+        original = FeasibleSolver().solve(problem)
+
+        class CachedBackend:
+            result = original
+
+            def capabilities(self):
+                return dict(FeasibleSolver().capabilities()) | {
+                    "tie_break_policies": (
+                        "StableBasisOrder",
+                        "LexicographicProjection",
+                    )
+                }
+
+            def solve(self, problem):
+                return self.result
+
+        backend = CachedBackend()
+        self.assertEqual(solve_projection(problem, backend).status, "FeasibleOnly")
+        for request in (
+            replace(problem, tie_break_policy="LexicographicProjection"),
+            replace(problem, resource_limits=ResourceLimits(state_limit=0)),
+            replace(problem, deterministic=False),
+        ):
+            with self.subTest(request=request):
+                failed = solve_projection(request, backend)
+                self.assertEqual(failed.status, "InternalError")
+                self.assertIsNone(failed.projection)
+        backend.result = replace(original, solver_config=None)
+        self.assertEqual(solve_projection(problem, backend).status, "InternalError")
+        # A matching configuration cannot disguise mismatching actual policy metadata.
+        backend.result = replace(original, tie_break_policy="LexicographicProjection")
+        self.assertEqual(solve_projection(problem, backend).status, "InternalError")
+        backend.result = replace(
+            original, resource_usage={"limits": {"state_limit": 0}}
+        )
+        self.assertEqual(solve_projection(problem, backend).status, "InternalError")
+
     def bound_solution(
         self, weights=(10, 1), level="CertifiedInterval", status="ResourceExhausted"
     ):

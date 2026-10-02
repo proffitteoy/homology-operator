@@ -633,6 +633,13 @@ def _restore_family(data):
             record.provenance.get("repository_revision", "unknown"),
         )
         object.__setattr__(operator, "_provenance", record.provenance)
+        # Preserve queried states for the next snapshot. These entries are history,
+        # not substitutes for recomputing an operator action or a kernel basis.
+        operator._queries.update(record.query_results)
+        kernel = record.query_results.get("kernel_basis")
+        if kernel is not None and kernel.state == "Computed":
+            if canonical_json(kernel.value) != canonical_json(operator.kernel_basis()):
+                raise ValueError("persisted stage kernel does not match its projection")
         stages.append(operator)
     family = OperatorFamily(
         _decode(data["scales"]),

@@ -12,7 +12,7 @@
 6. [SOLVER_CONTRACT](SOLVER_CONTRACT.md)：合法投影、认证等级与资源约束。
 7. [VALIDATION](VALIDATION.md)：当前检查入口及后续数学验证。
 
-单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。两阶段均已合入 main。Phase 3 当前89项测试包含统一 solver 能力匹配、配置身份与证书边界，支持范围见 [solver 契约](SOLVER_CONTRACT.md)；完整优化 solver 和性能仍在后续任务中。
+单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。两阶段均已合入 main。Phase 3 当前91项测试包含统一 solver 能力匹配、配置身份与证书边界，支持范围见 [solver 契约](SOLVER_CONTRACT.md)；完整优化 solver 和性能仍在后续任务中。
 
 ## 参考材料
 
