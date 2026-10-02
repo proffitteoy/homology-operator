@@ -171,6 +171,12 @@ class ChainWindow:
     def p(self):
         return self.D.ncols
 
+    def identity(self):
+        """Content identity of the validated input, coordinate bases and weights."""
+        from .result import input_identity
+
+        return input_identity(self)
+
     def to_dict(self):
         weights = []
         for weight in self.weights:
