@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。Phase 3 统一认证、完整搜索、贪心、rank-2、限定循环族、对照协议与算术/资源边界已由 #49–#55 合入 main `2f6b2dc`，该main CI通过。本分支完成一般搜索准入实验（no-go）、跨solver联合验收与阶段汇总，129项本地数学测试、两个示例、隔离wheel、静态/文档检查通过，证据见 [Phase 3报告](docs/PHASE3_REPORT.md)。#56/#57及本阶段汇总PR仍待用户审核合并；这些准确head全部进入main并通过main数学测试/CI后才进入Phase 4。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。Phase 3 统一认证、完整搜索、贪心、rank-2、限定循环族、对照协议、算术/资源边界与一般搜索no-go已由 #49–#56 合入 main `6ab2232`，该main CI通过。本分支完成跨solver联合验收与阶段汇总，129项本地数学测试、两个示例、隔离wheel、静态/文档检查通过，证据见 [Phase 3报告](docs/PHASE3_REPORT.md)。#57/#58仍待用户审核合并；这些准确head全部进入main并通过main数学测试/CI后才进入Phase 4。
 
 Phase 3的[solver对照协议](docs/BENCHMARKS.md)保存324条基线和144条局部搜索支持、失败、中断与完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。联合验收覆盖73次冻结窗口支持运行、44个过滤配置和五solver混合表示族。高性能、采样稳定性、应用收益、许可证与发行仍待后续阶段。
 
@@ -186,8 +186,8 @@ CI运行Python 3.10/3.12的实际测试、示例、Ruff、构建和隔离wheel�
 | #23 循环结构族 | [#53](https://github.com/proffitteoy/homology-operator/pull/53)，已合并 |
 | #25 同问题对照 | [#54](https://github.com/proffitteoy/homology-operator/pull/54)，已合并 |
 | #28 算术/资源/身份 | [#55](https://github.com/proffitteoy/homology-operator/pull/55)，已合并 |
-| #24 一般搜索准入 | [#56](https://github.com/proffitteoy/homology-operator/pull/56)，no-go实验，待合并 |
+| #24 一般搜索准入 | [#56](https://github.com/proffitteoy/homology-operator/pull/56)，no-go实验，已合并 |
 | #29 跨solver联合验收 | [#57](https://github.com/proffitteoy/homology-operator/pull/57)，待合并 |
-| #3 Phase 3汇总 | 本阶段汇总PR，最后合并 |
+| #3 Phase 3汇总 | [#58](https://github.com/proffitteoy/homology-operator/pull/58)，最后合并 |
 
 认证支持域和固定证据见报告与solver契约。Phase 3没有自动合并授权；前置合并后原后继PR转向main并核对准确head，不替换PR或强推。监测是否启用以Codex自动化实际状态为准，不能把已提交PR或本地测试通过写成阶段已合并。
