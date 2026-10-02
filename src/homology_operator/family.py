@@ -233,7 +233,9 @@ class OperatorFamily:
                 if any(status == "ResourceExhausted" for _, status in failed)
                 else "Unavailable"
             )
-            return self._query(state, None, i, j, details={"failed_stages": failed})
+            result = self._query(state, None, i, j, details={"failed_stages": failed})
+            self._transports[i, j] = result
+            return result
         source, target = self.stage(i), self.stage(j)
         source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
         target_kernel = Matrix.from_columns(target.kernel_basis(), target.window.n)
@@ -321,6 +323,7 @@ class OperatorFamily:
 
     def to_result(self):
         """Immutable snapshot; serialization revalidates persisted derived readouts."""
+        barcode = self.barcode()
         return OperatorFamilyResult(
             {
                 "schema_version": 1,
@@ -345,7 +348,7 @@ class OperatorFamily:
                     f"{i}:{j}": self.transport_rank(i, j).to_dict()
                     for i, j in tuple(self._transports)
                 },
-                "barcode_readout": self.barcode().to_dict(),
+                "barcode_readout": barcode.to_dict(),
                 "tracking_readout": {
                     key: query.to_dict() for key, query in self._tracking.items()
                 },

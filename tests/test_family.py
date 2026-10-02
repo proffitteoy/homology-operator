@@ -11,6 +11,7 @@ from homology_operator import (
     OperatorFamily,
     OperatorFamilyResult,
     OperatorResult,
+    QueryResult,
     ResourceLimits,
     ProjectionProblem,
 )
@@ -177,6 +178,53 @@ class TransportTests(unittest.TestCase):
 
 
 class TrackingTests(unittest.TestCase):
+    def test_float_ratio_product_overflow_and_zero_queries(self):
+        first = ChainWindow(
+            1,
+            Matrix.zero(0, 1),
+            Matrix.zero(1, 0),
+            (),
+            ("a",),
+            (),
+            (1e-300,),
+            arithmetic="FloatingPoint",
+        )
+        second = replace(first, weights=(1e300,))
+        family = OperatorFamily(
+            (0, 1), (first, second), (op(first), op(second)), "Variable"
+        )
+        for x in ((0,), (1,)):
+            result = family.endpoint_mass_bound(x, 0, 1)
+            self.assertEqual(result.state, "Unavailable")
+            self.assertIsNone(result.value)
+            self.assertEqual(result.details["reason"], "NumericalFailure")
+        source = ChainWindow(
+            0,
+            Matrix.zero(0, 2),
+            Matrix.zero(2, 0),
+            (),
+            ("a", "b"),
+            (),
+            (1e-100, 1e250),
+            arithmetic="FloatingPoint",
+        )
+        target = replace(
+            source,
+            D=Matrix.from_rows(((1,), (1,))),
+            basis_next=("e",),
+            weights=(1.0, 1e250),
+        )
+        family = OperatorFamily(
+            (0, 1), (source, target), (op(source), op(target)), "Variable"
+        )
+        self.assertEqual(family.stage(1).stretch().state, "Computed")
+        overflow = family.endpoint_mass_bound((0, 1), 0, 1)
+        self.assertEqual(overflow.state, "Unavailable")
+        self.assertEqual(overflow.details["reason"], "NumericalFailure")
+        zero = family.endpoint_mass_bound((0, 0), 0, 1)
+        self.assertEqual(zero.state, "Computed")
+        self.assertEqual(zero.value["mass_bound"], 0)
+
     def test_direct_multistep_death_merger_and_support(self):
         family = merge_family()
         for x in product((0, 1), repeat=2):
@@ -242,6 +290,66 @@ class TrackingTests(unittest.TestCase):
 
 
 class FamilySerializationTests(unittest.TestCase):
+    def test_queried_failures_survive_with_and_without_partial_identity(self):
+        family = merge_family()
+        for status, solver_status in (
+            ("InvalidInput", "InvalidProblem"),
+            ("SolverFailed", "NumericalFailure"),
+            ("ResourceExhausted", "ResourceExhausted"),
+            ("Unavailable", "Unavailable"),
+            ("InternalValidationFailed", "InternalError"),
+        ):
+            for with_identity in (False, True):
+                with self.subTest(status=status, with_identity=with_identity):
+                    identity = {
+                        key: family.windows[1].identity()[key]
+                        for key in ("input_id", "basis_id", "weight_id")
+                    }
+                    identity["solver_run_id"] = "failed-run"
+                    failure = OperatorResult(
+                        identity if with_identity else None,
+                        family.windows[1],
+                        None,
+                        {
+                            "status": solver_status,
+                            "certificate_level": None,
+                            "solver_run_id": "failed-run",
+                        },
+                        {},
+                        {"diagnostic": status},
+                        status,
+                    )
+                    partial = replace(
+                        family, operators=(family.stage(0), failure, family.stage(2))
+                    )
+                    transport, rank = (
+                        partial.transport(0, 1),
+                        partial.transport_rank(0, 1),
+                    )
+                    expected = (
+                        "ResourceExhausted"
+                        if status == "ResourceExhausted"
+                        else "Unavailable"
+                    )
+                    self.assertEqual(transport.state, expected)
+                    self.assertIsNone(rank.value)
+                    result = partial.to_result()
+                    restored = OperatorFamilyResult.from_json(result.to_json())
+                    data = restored.to_dict()
+                    self.assertEqual(
+                        QueryResult.from_dict(data["transports"]["0:1"]), transport
+                    )
+                    self.assertEqual(
+                        QueryResult.from_dict(data["rank_readout"]["0:1"]), rank
+                    )
+                    self.assertEqual(restored, result)
+                    self.assertEqual(
+                        data["transports"]["0:1"]["details"]["target_identity"],
+                        dict(identity) if with_identity else None,
+                    )
+                    self.assertNotIn("0:2", data["transports"])
+                    self.assertEqual(result.to_json(), partial.to_result().to_json())
+
     def test_lossless_snapshot_and_restored_actions(self):
         family = merge_family()
         family = replace(family, scales=(Fraction(0), Fraction(1, 2), Fraction(1, 2)))
