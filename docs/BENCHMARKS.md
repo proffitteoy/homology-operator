@@ -95,13 +95,31 @@ m=4结构化构造约1.03 ms，dispatch与算子验证分别约16.84/17.26 ms，
 各分段median不保证相加等于总成本median；原始单次分段严格互斥且和等于流水线总成本。
 冷进程还包含导入与退出，未测Rust、GUDHI、一般规模效率或正式S5置信区间。
 
-| 冻结文件 | SHA256（UTF-8/LF文件） |
-| --- | --- |
-| s4_r0_manifest.json | 5b7461fa18eab56e9c5457f8395755b6c82f77587738ef199d5965a561d53e31 |
-| s4_r0_pilot.json | 6fc7698cc1e4c7c12370a5a8eb18d79475edde3f85ac6b67043887602765ba42 |
-| s4_r0_samples.json | 614e6ec1edec3342fbb84785b7fb78f3fc8c96fd88b0ae2fca5aca3fa31c7a99 |
-| s4_r0_validation.json | 0e888c6d0da7f27537564c8516bfdb70001bf33e9b6bcf73fc0ac84cd1d1a66b |
-| s4_r0_profile.json | 1111f609bafae07ecf20b4928c649902e0c64ed763ebc97328a9ab85c2d7ec02 |
+### 原始CRLF身份与Git LF文件校验
+
+初次Windows采集时，Python默认文本写出把换行转换为CRLF。
+原先此表误将这些原始字节SHA256标为UTF-8/LF；随后`.gitattributes`使Git文件为LF，
+但不会改写已采集报告的身份。修正保留五份冻结JSON和三个报告的`manifest_sha256`原值：
+它们绑定原始CRLF manifest `5b7461fa…`，不是Git LF manifest `0008d7ba…`。
+不得将该历史字段直接与LF checkout的`read_bytes()`摘要比较，或无说明重写为新身份。
+
+[可机读校验表](../benchmarks/s4_r0_checksums.json)显式区分`original_crlf_sha256`与`git_lf_sha256`。
+LF摘要已逐文件核对Git blob；从LF字节仅将换行换回CRLF，便能重建原始采集字节身份。
+采样内容、时间、输出hash、harness/source身份及旧manifest绑定均未重写。
+未来`write_json`在Git处理前就显式写UTF-8/LF，原始文件摘要与LF checkout摘要相同。
+新报告同时记录输入文件的原始`manifest_sha256`和换行归一化的`manifest_sha256_lf`，
+即使读取历史CRLF输入也能核对Git LF身份；三个历史报告继续使用上述伴随校验表。
+回归同时核对写出字节、五份历史CRLF/LF映射和三个旧manifest绑定；运行
+`uv run --locked python -m unittest discover -s tests -p test_comparison.py -v`。
+首次采集的131测试记录仍是历史证据，修正后新增两项校验使当前测试总数为133。
+
+| 冻结文件 | Git UTF-8/LF文件SHA256 | 原始UTF-8/CRLF采集SHA256 |
+| --- | --- | --- |
+| s4_r0_manifest.json | 0008d7bae2f0f9f8f12667196c9b4013fd9ebaf299615e0e6f3f3e4fa2fe0496 | 5b7461fa18eab56e9c5457f8395755b6c82f77587738ef199d5965a561d53e31 |
+| s4_r0_pilot.json | af95942149efd2034617ce34079675245460013040ccc9fcdcdbadf1f479019d | 6fc7698cc1e4c7c12370a5a8eb18d79475edde3f85ac6b67043887602765ba42 |
+| s4_r0_samples.json | b66646ca59bc69d70b1a0fa568d001fff5012cb8561ec0addecf515e0246d5a4 | 614e6ec1edec3342fbb84785b7fb78f3fc8c96fd88b0ae2fca5aca3fa31c7a99 |
+| s4_r0_validation.json | a8dbed283c30be34661197e7fa48fab38378afbd22c11d94105432d4ac6eda57 | 0e888c6d0da7f27537564c8516bfdb70001bf33e9b6bcf73fc0ac84cd1d1a66b |
+| s4_r0_profile.json | 71dd0fb35160ef741c6fdadf9cc336956eaab86f8fb1559a3f37811ca4420172 | 1111f609bafae07ecf20b4928c649902e0c64ed763ebc97328a9ab85c2d7ec02 |
 
 ## Phase 3 solver 对照（历史协议）
 

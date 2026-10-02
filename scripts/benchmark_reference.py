@@ -27,7 +27,9 @@ def digest(value):
 def write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps(value, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
 
@@ -740,6 +742,9 @@ def main():
             "phase": args.phase,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "manifest_sha256": sha256(args.manifest.read_bytes()).hexdigest(),
+            "manifest_sha256_lf": sha256(
+                args.manifest.read_bytes().replace(b"\r\n", b"\n")
+            ).hexdigest(),
             "harness_revision": subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
             ).strip(),

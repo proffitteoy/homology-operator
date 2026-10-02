@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "capture_commit": "65e2e5fc3e0b6106c95da26b6229a76f8b5d9cce",
+  "lf_checkout_commit": "76eb418d6bb5ab5f5ff1fb7c9b1a9ebc9d01f80f",
+  "hash_policy": "original_crlf_sha256 preserves the original Windows capture bytes; git_lf_sha256 checks the committed UTF-8/LF bytes. Reconstruct CRLF from LF without changing parsed JSON or historical manifest bindings. Future harness writes are explicitly UTF-8/LF.",
+  "reports_with_historical_manifest_binding": [
+    "s4_r0_pilot.json",
+    "s4_r0_samples.json",
+    "s4_r0_profile.json"
+  ],
+  "artifacts": {
+    "s4_r0_manifest.json": {
+      "git_lf_sha256": "0008d7bae2f0f9f8f12667196c9b4013fd9ebaf299615e0e6f3f3e4fa2fe0496",
+      "original_crlf_sha256": "5b7461fa18eab56e9c5457f8395755b6c82f77587738ef199d5965a561d53e31"
+    },
+    "s4_r0_pilot.json": {
+      "git_lf_sha256": "af95942149efd2034617ce34079675245460013040ccc9fcdcdbadf1f479019d",
+      "original_crlf_sha256": "6fc7698cc1e4c7c12370a5a8eb18d79475edde3f85ac6b67043887602765ba42"
+    },
+    "s4_r0_samples.json": {
+      "git_lf_sha256": "b66646ca59bc69d70b1a0fa568d001fff5012cb8561ec0addecf515e0246d5a4",
+      "original_crlf_sha256": "614e6ec1edec3342fbb84785b7fb78f3fc8c96fd88b0ae2fca5aca3fa31c7a99"
+    },
+    "s4_r0_validation.json": {
+      "git_lf_sha256": "a8dbed283c30be34661197e7fa48fab38378afbd22c11d94105432d4ac6eda57",
+      "original_crlf_sha256": "0e888c6d0da7f27537564c8516bfdb70001bf33e9b6bcf73fc0ac84cd1d1a66b"
+    },
+    "s4_r0_profile.json": {
+      "git_lf_sha256": "71dd0fb35160ef741c6fdadf9cc336956eaab86f8fb1559a3f37811ca4420172",
+      "original_crlf_sha256": "1111f609bafae07ecf20b4928c649902e0c64ed763ebc97328a9ab85c2d7ec02"
+    }
+  }
+}

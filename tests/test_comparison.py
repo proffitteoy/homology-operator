@@ -2,8 +2,10 @@
 
 from dataclasses import replace
 import importlib.util
+from hashlib import sha256
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from homology_operator import ChainWindow, Matrix, ProjectionProblem, ResourceLimits
@@ -26,6 +28,39 @@ r0_spec.loader.exec_module(r0)
 
 
 class ComparisonTests(unittest.TestCase):
+    def test_r0_json_output_is_lf_before_git_normalization(self):
+        value = {"unicode": "原始证据", "values": [1, 2]}
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            r0.write_json(path, value)
+            raw = path.read_bytes()
+            self.assertNotIn(b"\r", raw)
+            self.assertTrue(raw.endswith(b"\n"))
+            self.assertEqual(json.loads(raw), value)
+            # An exact file digest survives text-mode read/write on Windows.
+            other = Path(directory) / "copy.json"
+            r0.write_json(other, json.loads(path.read_text("utf-8")))
+            self.assertEqual(sha256(raw).digest(), sha256(other.read_bytes()).digest())
+
+    def test_r0_frozen_lf_and_historical_crlf_checksums(self):
+        folder = Path(__file__).resolve().parents[1] / "benchmarks"
+        mapping = json.loads((folder / "s4_r0_checksums.json").read_text("utf-8"))
+        for name, checksums in mapping["artifacts"].items():
+            with self.subTest(file=name):
+                raw = (folder / name).read_bytes().replace(b"\r\n", b"\n")
+                self.assertEqual(sha256(raw).hexdigest(), checksums["git_lf_sha256"])
+                self.assertEqual(
+                    sha256(raw.replace(b"\n", b"\r\n")).hexdigest(),
+                    checksums["original_crlf_sha256"],
+                )
+        manifest = mapping["artifacts"]["s4_r0_manifest.json"]
+        for name in mapping["reports_with_historical_manifest_binding"]:
+            report = json.loads((folder / name).read_text("utf-8"))
+            self.assertEqual(
+                report["manifest_sha256"], manifest["original_crlf_sha256"]
+            )
+            self.assertNotEqual(report["manifest_sha256"], manifest["git_lf_sha256"])
+
     def test_r0_disjoint_costs_and_repeatable_joint_output(self):
         manifest = json.loads(
             (
