@@ -89,7 +89,11 @@ def worker(backend, case, count, revision, rss):
             result = geometry_batch(op, cycles, pairs, workspace=workspace)
             if result.state != "Computed":
                 raise ValueError(str(result.details))
-            return result.value, dict(result.details)
+            return result.value, {
+                key: value
+                for key, value in result.details.items()
+                if key not in {"arguments", "pairs"}
+            }
         value = {
             name: tuple(getattr(op, name)(z) for z in cycles)
             for name in ("class_representative", "selected_mass", "support")
@@ -328,6 +332,10 @@ def main():
         "extension_sha256": sha256(
             Path(native_binary.__file__).read_bytes()
         ).hexdigest(),
+        "wheel_sha256": {
+            p.name: sha256(p.read_bytes()).hexdigest()
+            for p in (ROOT / ".task-artifacts/native-s4-66-wheels").glob("*.whl")
+        },
         "protocol": {
             "cases": CASES,
             "counts": COUNTS,
