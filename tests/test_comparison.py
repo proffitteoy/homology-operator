@@ -17,8 +17,62 @@ spec = importlib.util.spec_from_file_location(
 comparison = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(comparison)
 
+r0_spec = importlib.util.spec_from_file_location(
+    "benchmark_reference",
+    Path(__file__).resolve().parents[1] / "scripts/benchmark_reference.py",
+)
+r0 = importlib.util.module_from_spec(r0_spec)
+r0_spec.loader.exec_module(r0)
+
 
 class ComparisonTests(unittest.TestCase):
+    def test_r0_disjoint_costs_and_repeatable_joint_output(self):
+        manifest = json.loads(
+            (
+                Path(__file__).resolve().parents[1] / "benchmarks/s4_r0_manifest.json"
+            ).read_text("utf-8")
+        )
+        case = next(
+            c
+            for c in manifest["cases"]
+            if c["id"] == "family/h1_k4_all_deaths/feasible/q8"
+        )
+        first = r0.run_case(manifest, case, manifest["source"]["revision"])
+        second = r0.run_case(manifest, case, manifest["source"]["revision"])
+        self.assertEqual(
+            first["semantic_output_sha256"], second["semantic_output_sha256"]
+        )
+        self.assertTrue(first["completed_requested_workload"])
+        costs = first["segments_seconds"]
+        self.assertTrue(all(value >= 0 for value in costs.values()))
+        self.assertAlmostEqual(sum(costs.values()), first["pipeline_seconds"])
+        for phase in (
+            "dispatch_validation",
+            "operator_validation",
+            "serialization",
+            "restore",
+            "transport_barcode",
+            "geometry",
+        ):
+            self.assertGreater(costs[phase], 0)
+
+    def test_r0_library_failures_are_not_successful_or_zero_queries(self):
+        manifest = json.loads(
+            (
+                Path(__file__).resolve().parents[1] / "benchmarks/s4_r0_manifest.json"
+            ).read_text("utf-8")
+        )
+        for name, expected in (
+            ("failure/floating-exact", "Unavailable"),
+            ("failure/k4-exact-states-0", "ResourceExhausted"),
+        ):
+            case = next(c for c in manifest["cases"] if c["id"] == name)
+            result = r0.run_case(manifest, case, manifest["source"]["revision"])
+            self.assertFalse(result["completed_requested_workload"])
+            self.assertEqual(result["solver_results"][0]["status"], expected)
+            self.assertNotIn("geometry", result["segments_seconds"])
+            self.assertNotIn("operator_validation", result["segments_seconds"])
+
     def problem(self):
         return ProjectionProblem(
             ChainWindow(

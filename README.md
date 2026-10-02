@@ -46,6 +46,10 @@ uv build --no-build-isolation
 
 CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。包导入测试只证明工具链可用，不替代后续数学验收。
 
+S4-01新增[reference R0入口与复跑协议](docs/BENCHMARKS.md)，固定已合并main的计算源码，
+分开冷进程计时、互斥分段、操作系统绝对峰值RSS与profiling。
+这是native开发前的有限基线；Rust后端与S5正式GUDHI/性能验收仍按issue逐项推进。
+
 第一条检查必需文档、UTF-8、冲突标记和本地 Markdown 文件链接，涵盖尚未跟踪的文档；失败时退出码非零。第二条检查已有跟踪文件改动的空白错误。详细范围和数学实现的验收门槛见 [验证说明](docs/VALIDATION.md)。
 
 | 入口 | 当前状态 |

@@ -1,8 +1,69 @@
-# Phase 3 solver 对照协议
+# Solver 对照与性能协议
 
 本协议回答同一ProjectionProblem下各solver支持什么、保留什么认证、付出了哪些成本，供#24的一般搜索go/no-go使用。不把单次reference耗时当作性能排名，也不宣称PH加速。
 
 下一轮正式性能协议与工作包见 [S4/S5 项目计划](S4_S5_PROJECT.md)。本文件及冻结记录保留历史口径；后续无 profiler 的重复计时、操作系统峰值 RSS、GUDHI 同输入基线与联合信息成本另行报告。
+
+## S4-01：main reference R0
+
+[测量入口](../scripts/benchmark_reference.py)与[冻结 manifest](../benchmarks/s4_r0_manifest.json)
+将实际计算源码固定到已合并 main `54ce78bccdcba619ffa2a4d76aeb450bfd24270e`。
+该 main 的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/36998360788)
+已通过；实现分支与测量 harness 的提交/hash另行记录，不用它们替换被测 main。
+运行前逐文件比较实际 `src`、fixture、原输入构造器、pyproject 和 lock 与该 Git 提交，
+worker 再核对实际导入路径；换行统一为 LF 后保存源码 SHA256。
+
+manifest 保留原23份带来源/hash的窗口、11个既有过滤配置（各用可行 solver），
+补充K4的三个认证 solver、T-B1 m=2/3/4紧凑 action、K4的0/1/8/64次查询，
+以及浮点不支持、state=0/20中断请求，共46个配置。
+每个输入保留完整链、基、权重/算术、shape、nnz、rank与Betti；查询循环、scale、
+预算、solver和请求认证写入manifest。Joint-basic查询代表、质量、距离和三种支撑，
+过滤另查询追踪；Topology配置为0次几何查询。Joint-certified使用原solver认证，
+不额外运行stretch来升级未计算的objective。
+
+冷成本由父进程计时整个全新worker的启动、导入、manifest读取、标准调用链、JSON输出和退出。
+流水线的互斥分段为输入转换、solver、dispatch必需验证/其余开销、算子边界验证/其余开销、
+拓扑、族输入审计、transport/barcode及composition验证、几何、序列化、恢复/恢复审计和digest。
+dispatch与算子总计时只用于相减拆分，不重复加入总成本；快照中的重复验证计入序列化或恢复。
+未执行的分段不生成数值，不能解释成合法零。manifest中预声明查询的准备不属于被测流水线，
+冷成本仍包含请求文件读取；全部数据共用同一manifest读取路径。
+
+所有计时worker关闭profiler/tracemalloc。RSS另开全新worker执行同一请求，
+Windows使用`GetProcessMemoryInfo.PeakWorkingSetSize`，Linux使用`ru_maxrss×1024`，
+macOS使用其字节值；无法可靠读取时保存null和原因。
+这是含解释器、导入、manifest及RSS读取辅助代码的整个worker绝对峰值，
+不是阶段内存差、Python分配峰值或矩阵条目预算。RSSworker的时间不进入计时样本。
+两项代表性cProfile诊断另存记录；诊断耗时不作R0计时。
+
+pilot预声明每配置1个独立进程；开发R0为3个进程区组×1次有效重复，固定seed随机化顺序，
+另每配置1个RSSworker。这只是后续优化的有限开发基线，不提供尾分位、稳健排名或一般规模结论。
+外部timeout、worker异常/退出码保留原始记录；库内Unavailable/ResourceExhausted另保留solver状态、
+认证、bounds和未完成标志，不能混入成功负载的summary。
+原始样本按同case输入/输出、solver、实际认证、停止状态、算术及预算分组；
+跨独立worker核对语义输出hash。输出digest排除run UUID与时间元数据，
+真实快照仍完整保留六身份，并按生产入口验证JSON往返。
+
+pilot后、native采样前冻结准入：同输出负载的冷总成本或绝对RSS，
+至少一组10个独立进程区组的配对median log ratio经10000次固定seed bootstrap得到的
+95%区间完全低于1，才报告改善；全部组公开，median冷成本或RSS退化超过20%时
+阻止默认替换，可保留明确限定域的可选后端。数学/认证/失败语义必须全部通过。
+此规则不预设收益倍率，不拿正式或holdout数据选路线；S4-09新增规模负载仍需先冻结新manifest。
+
+复跑（仓库根目录；保留已有产物，换新输出路径）：
+
+```powershell
+git archive 54ce78bccdcba619ffa2a4d76aeb450bfd24270e --format=zip -o .task-artifacts/r0-main.zip
+Expand-Archive -LiteralPath .task-artifacts/r0-main.zip -DestinationPath .task-artifacts/r0-main -Force
+uv run --locked python scripts/benchmark_reference.py --source-root .task-artifacts/r0-main --manifest benchmarks/s4_r0_manifest.json --phase pilot --output .task-artifacts/s4-r0/pilot.json
+uv run --locked python scripts/benchmark_reference.py --source-root .task-artifacts/r0-main --manifest benchmarks/s4_r0_manifest.json --phase r0 --output .task-artifacts/s4-r0/replay.json
+uv run --locked python scripts/benchmark_reference.py --source-root .task-artifacts/r0-main --manifest benchmarks/s4_r0_manifest.json --mode diagnostic --output .task-artifacts/s4-r0/profile.json
+```
+
+首次运行前按README执行`uv sync --locked --python 3.10`，并先建立`.task-artifacts`目录。
+全新worker使用同一锁定Python，显式导入归档main的源码；不修改主包、依赖或历史Phase 3记录。
+用`--create-manifest --source-revision <SHA>`可以生成新manifest，但不是本次冻结证据的复跑入口。
+
+## Phase 3 solver 对照（历史协议）
 
 运行：
 
