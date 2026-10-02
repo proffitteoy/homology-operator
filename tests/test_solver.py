@@ -4,6 +4,7 @@ from fractions import Fraction
 import json
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from homology_operator.algebra import Matrix
 from homology_operator.chain import ChainWindow
@@ -157,6 +158,248 @@ class SolverTests(unittest.TestCase):
                 self.assertEqual(
                     check_solver_request(problem, caps | {key: value})[0], "Unavailable"
                 )
+
+    def test_dispatch_failures_keep_actual_backend_method(self):
+        problem = ProjectionProblem(self.window())
+        for method in (
+            "FeasibleSolver",
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+            "GeneralSearchSolver",
+        ):
+            failed = solve_projection(
+                replace(problem, arithmetic_policy="MixedCertified"), method
+            )
+            self.assertEqual(failed.status, "Unavailable")
+            self.assertEqual(failed.method, method)
+            self.assertIsNone(failed.projection)
+        self.assertEqual(solve_projection(problem, object()).method, "object")
+
+        class BrokenBackend:
+            def capabilities(self):
+                return FeasibleSolver().capabilities()
+
+            def solve(self, problem):
+                raise RuntimeError("backend failure")
+
+        failed = solve_projection(problem, BrokenBackend())
+        self.assertEqual(
+            (failed.status, failed.method), ("InternalError", "BrokenBackend")
+        )
+
+        class Wrapper(BrokenBackend):
+            def solve(self, problem):
+                return FeasibleSolver().solve(problem)
+
+        self.assertEqual(solve_projection(problem, Wrapper()).method, "FeasibleSolver")
+
+    def test_cross_solver_exact_arithmetic_and_float_scope(self):
+        window = ChainWindow(
+            0,
+            Matrix.zero(0, 3),
+            Matrix.from_columns(((1, 1, 1),), nrows=3),
+            (),
+            ("x", "y", "z"),
+            ("b",),
+            (1, 1, 1),
+        )
+        methods = (
+            "FeasibleSolver",
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+        )
+        for method in methods:
+            structure = (
+                "CyclicTrace"
+                if method == "StructuredFamilySolver"
+                else "GeneralChainWindow"
+            )
+            for arithmetic, weight in (
+                ("ExactInteger", 2**60 + 1),
+                ("ExactRational", Fraction(2**60 + 1, 7)),
+            ):
+                exact_window = replace(
+                    window, weights=(weight,) * 3, arithmetic=arithmetic
+                )
+                solution = solve_projection(
+                    ProjectionProblem(exact_window, input_structure=structure), method
+                )
+                op = HomologyOperator(exact_window, solution)
+                objective = op.stretch()
+                self.assertEqual(objective.value, 2)
+                self.assertIs(type(objective.value), Fraction)
+                self.assertIs(objective.exact, True)
+                self.assertEqual(
+                    op.selected_mass((1, 0, 0)),
+                    sum(
+                        w
+                        for w, bit in zip(exact_window.weights, op.project((1, 0, 0)))
+                        if bit
+                    ),
+                )
+                self.assertEqual(
+                    op.to_result(), OperatorResult.from_json(op.to_result().to_json())
+                )
+            float_window = replace(
+                window, weights=(1.0,) * 3, arithmetic="FloatingPoint"
+            )
+            problem = ProjectionProblem(float_window, input_structure=structure)
+            floating = solve_projection(problem, method)
+            if method == "FeasibleSolver":
+                op = HomologyOperator(float_window, floating)
+                objective = op.stretch()
+                self.assertIs(objective.exact, False)
+                self.assertIsNone(objective.details["tolerance"])
+                self.assertIn("nearest-even", objective.details["rounding_policy"])
+                self.assertIsNone(floating.upper_bound)
+                self.assertNotIn("upper_bound", objective.details)
+            else:
+                self.assertEqual(floating.status, "Unavailable")
+            self.assertEqual(
+                solve_projection(
+                    replace(problem, arithmetic_policy="MixedCertified"), method
+                ).status,
+                "Unavailable",
+            )
+        with self.assertRaises(ValueError):
+            replace(window, arithmetic="MixedCertified")
+
+    def test_cross_solver_positive_wall_limits_at_checkpoints(self):
+        window = ChainWindow(
+            0,
+            Matrix.zero(0, 3),
+            Matrix.from_columns(((1, 1, 1),), nrows=3),
+            (),
+            ("x", "y", "z"),
+            ("b",),
+            (1, 1, 1),
+        )
+        for method in (
+            "FeasibleSolver",
+            "ExhaustiveExactSolver",
+            "GreedyCertifiedSolver",
+            "Rank2ExactSolver",
+            "StructuredFamilySolver",
+        ):
+            problem = ProjectionProblem(
+                window,
+                input_structure="CyclicTrace"
+                if method == "StructuredFamilySolver"
+                else "GeneralChainWindow",
+            )
+            # Every clock read advances one second, without real sleeps or races.
+            with patch(
+                "homology_operator.solver.perf_counter", side_effect=range(10000)
+            ) as clock:
+                complete = solve_projection(
+                    replace(
+                        problem, resource_limits=ResourceLimits(wall_time_limit=10000)
+                    ),
+                    method,
+                )
+                calls = clock.call_count
+            self.assertIn(complete.status, {"Solved", "FeasibleOnly"})
+            saw_seed, saw_bound = False, False
+            for seconds in range(1, calls + 1):
+                with patch(
+                    "homology_operator.solver.perf_counter", side_effect=range(10000)
+                ):
+                    solution = solve_projection(
+                        replace(
+                            problem,
+                            resource_limits=ResourceLimits(wall_time_limit=seconds),
+                        ),
+                        method,
+                    )
+                if solution.status != "ResourceExhausted":
+                    continue
+                self.assertEqual(solution.diagnostics, ("wall_time_limit",))
+                if solution.projection is None:
+                    self.assertIsNone(solution.certificate_level)
+                    with self.assertRaises(ValueError):
+                        HomologyOperator(window, solution)
+                    continue
+                saw_seed = True
+                record = HomologyOperator(window, solution).to_result()
+                self.assertEqual(record.status, "Ready")
+                self.assertEqual(record, OperatorResult.from_json(record.to_json()))
+                if solution.upper_bound is not None:
+                    saw_bound = True
+                    self.assertEqual(solution.certificate_level, "CertifiedInterval")
+                    self.assertLessEqual(solution.lower_bound, 2)
+                    self.assertGreaterEqual(solution.upper_bound, 2)
+                    self.assertEqual(
+                        solution.optimality_gap["absolute"],
+                        solution.upper_bound - solution.lower_bound,
+                    )
+            if method in {
+                "ExhaustiveExactSolver",
+                "GreedyCertifiedSolver",
+                "Rank2ExactSolver",
+            }:
+                self.assertTrue(saw_seed and saw_bound, method)
+
+    def test_resource_fields_reject_unimplemented_limits(self):
+        for name in (
+            "memory_limit",
+            "node_limit",
+            "iteration_limit",
+            "output_size_limit",
+        ):
+            with self.subTest(name=name), self.assertRaises(TypeError):
+                ResourceLimits(**{name: 1})
+
+    def test_solver_policy_and_geometry_cache_boundaries(self):
+        problem = ProjectionProblem(self.window())
+        first, second = (
+            solve_projection(problem, "ExhaustiveExactSolver") for _ in range(2)
+        )
+        records = [
+            HomologyOperator(problem.window, s).to_result() for s in (first, second)
+        ]
+        key = records[0].cache_key(
+            first.solver_config_id, first.tie_break_policy, "reference-v1"
+        )
+        self.assertEqual(
+            key,
+            records[1].cache_key(
+                second.solver_config_id, second.tie_break_policy, "reference-v1"
+            ),
+        )
+        for changes in (
+            {"tie_break_policy": "LexicographicProjection"},
+            {"resource_limits": ResourceLimits(state_limit=99999)},
+        ):
+            changed = solve_projection(
+                replace(problem, **changes), "ExhaustiveExactSolver"
+            )
+            self.assertEqual(first.projection, changed.projection)
+            record = HomologyOperator(problem.window, changed).to_result()
+            self.assertNotEqual(
+                key,
+                record.cache_key(
+                    changed.solver_config_id, changed.tie_break_policy, "reference-v1"
+                ),
+            )
+        window, feasible = self.bound_solution()
+        optimal = solve_projection(ProjectionProblem(window), "ExhaustiveExactSolver")
+        ops = tuple(HomologyOperator(window, s) for s in (feasible, optimal))
+        self.assertEqual([op.betti() for op in ops], [1, 1])
+        self.assertEqual([op.support((1, 0)) for op in ops], [(0,), (1,)])
+        self.assertEqual([op.selected_mass((1, 0)) for op in ops], [10, 1])
+        queried = [op.readout("selected_mass", (1, 0)) for op in ops]
+        self.assertNotEqual(
+            ops[0].to_result().cache_key("solver-v1", "stable", "reference-v1"),
+            ops[1].to_result().cache_key("solver-v1", "stable", "reference-v1"),
+        )
+        data = ops[0].to_result().to_dict()
+        data["query_results"]["selected_mass"] = queried[1].to_dict()
+        with self.assertRaises(ValueError):
+            OperatorResult.from_dict(data)
 
     def test_config_identity_is_immutable_and_run_independent(self):
         problem = ProjectionProblem(self.window())
