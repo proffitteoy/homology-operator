@@ -695,3 +695,19 @@ Solver framework 可视为冻结，至少满足：
 完整输出保存 `objective=U=Γ(P)`、通用下界 L=1（β=0 时0）与 gap；L=U 才报告 ExactOptimal，其余为 CertifiedInterval。理论 β 界独立保存在已验证 proof 中，不能替代实算 objective 或最优性证明。22个精确 fixture 的 Γ 和所选生成元与固定 verify.py `model(optimize=False)` 一致；与 #20 的 optimum 对照均满足 optimum≤Γ≤β。K4 stage 4 的4/3只提供区间[1,4/3]，穷举最优是9/8。
 
 独立重放限制为非零循环数乘 `max(1,β)` 至多100000；构造还受 state/time/matrix-entry 预算，循环表计入保守条目数。资源耗尽时保留可行种子：其 objective 未完成则只有 Feasible，已完成则保留 L=0、U=种子 Γ 的 CertifiedInterval 和 CycleBounds，不携带未完成的贪心理论保证。零同调种子完整求值后已经完成搜索，直接认证0。证书重放成本单独发生，排序/稠密代数检查点之间没有强制抢占或 RSS 保证。回归覆盖所有 state 中断位置、零时间/条目预算、重放上限、假设/并列/action/witness 篡改、身份混用与已查询快照反复往返；族恢复保留已验证的 tracking 历史。
+
+## 24. Rank-2 结构求解（S3-04）
+
+`Rank2ExactSolver` 支持精确整数/有理正权、β=2、显式矩阵和 StableBasisOrder。一般 `GeneralChainWindow` 路径枚举两个固定商生成元的边界修正，共 `4^rank(D)` 个；每个候选按固定理论 T5 消去支撑内非零边界，选择质量最大的成员颜色（并列按1、2、3），直到支撑中没有同调零循环。三类质量逐项不增，仍为同一线性截面。它从循环枚举计算三个商类的最短质量，再只用三个比值评价候选；类标签和最短质量不是外部必需输入，也不写入算子 selected_mass 的语义。
+
+`GraphCycle` 在上述条件外验证 k=1、A 每列恰有两个1，表示允许平行边、不含自环的图；不据此推断平面性。`ThreeTerminalCut` 路径要求三个有序且互异的终端、对偶顶点数及与原链坐标一一对应的有序边。令 δ 为固定 t0 位势为0后的顶点割矩阵，验证 rank(δ)=V−1、Aδ=0、dim ker(A)=V−1，并验证内部顶点割张成 im(D)。这些等式直接证明归一化割位势与循环/同调商的对应，无需信任“平面”标签。平行边保留，环边和不连通对偶图拒绝。
+
+在已验证的割模型上，T-A3 的重标号论证保证只需0、e1、e2三个标签，构造枚举 `3^(V−3)` 个划分，终端标签固定。三个精确分母仍从循环枚举独立算出；此 reference 未引入 max-flow 依赖或声称高效最小割。T-A1 的一般平面识别、相对同调、正亏格对偶割、欧氏平坦环面的连续星形几何均不在支持域。仅β=2或元数据中的几何名称不能启用这些归约；FloatingPoint、PlanarSurface、EuclideanFlatTorus及matrix-free请求返回Unavailable。
+
+`Rank2Search` 保存R、完整候选/实际归约候选数、商生成元、三个精确最短质量、Pareto起点与消去轨迹，或三终端标签。独立 verifier 重新验证输入结构、归约步和action，从全部循环重放objective/witness，再完整枚举所有截面核对全局最优值（不使用消去搜索或三标签假设作最优性捷径）。StableBasisOrder在一般路径表示同调单射支撑候选中的packed投影列字典序；三终端路径表示三标签候选中的相同顺序；两者都固定R，不承诺在所有非循环延拓或所有未归约并列解中最小。
+
+证书重放支持上限与完整搜索相同：`4^rank(D) * 非零循环数 <= 100000`。state计入种子、类分母枚举、候选及消去检查点；构造受时间与保守matrix-entry上限约束。输入结构验证和单次稠密代数步骤没有中途抢占；独立证书重放成本另计，不提供RSS保证。中断保留合法种子或已完成的更优解；objective未完成则无bounds，完成后保留L=0/U=当前Γ及CycleBounds，搜索未完成不标ExactOptimal。
+
+验证来源固定为 `6143729669902ee875b211b58085e954c76cdf88`：PROOF T5、T-A1/T-A3/T-A4及T10，实际阅读了 `global-torus/verify_pruning.py`（Git blob `7a776660b10353928aae6035726a4816b9d53a3c`）、`planar/planar_homology_cut_check.py`（`f6c363e5107b19f6d58bc64320345402a8787e0f`）、`cutting-plane/planar_mincut.py`（`cbb87bff1ab4bb99bacc71c4c001dfc60cc041fd`）。没有移植其浮点容差为精确认证，也没有运行会写研究数据的main。
+
+[rank-2回归](../tests/test_rank2.py) 复用原corpus中全部6个β=2输入及hash，与已有精确真值一致；另按固定PROOF公式生成T-A4宏观割族（δ=1/4、1/10、1/1000，得到 `(2−δ)/(2−2δ)`）和T10秩三反例，文件内记录理论提交及PROOF blob。32组小整数权重与ExhaustiveExactSolver对拍；验证非空消去轨迹、错误结构/终端/分母/标签/颜色、身份与witness篡改、所有state中断位置，以及单尺度和族往返。该有限reference不提供一般规模性能或连续几何最优性结论。

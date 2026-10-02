@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界和小规模 ExhaustiveExactSolver 已经 #49/#50 合入 main；当前分支增加带理论上界的 GreedyCertifiedSolver，101项本地测试通过。其余专用 solver、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支增加 Rank2ExactSolver，当前109项本地测试通过。贪心 solver 已经 PR #51 合入 main，其余专用 solver、高性能核心与发行尚未完成。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -48,7 +48,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；101 项单尺度/过滤数学、solver 边界与身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；109 项单尺度/过滤数学、solver 边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
@@ -94,6 +94,8 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 
 `solve_projection(ProjectionProblem(window, requested_certificate_level="ExactOptimal"), "ExhaustiveExactSolver")` 固定循环回缩 R，枚举 `2^(rank(D) * beta)` 个循环上的边界回缩，并逐个计算当前 Γ；非循环延拓不被重复当作同调优化候选。仅支持精确有理/整数权，并列按原坐标投影列的 packed 整数字典序。独立 verifier 用商空间基的全部提升重放完整搜索，核对 objective、极值循环 witness、候选数、最优投影及并列选择。证书重放限制为候选数乘非零循环数至多100000（空循环按1计）；超限或求解中断保留已验证投影和已完成 objective 的上界，搜索完成前下界只跟踪0，不宣称 ExactOptimal。冻结的22个精确 fixture 与固定上游最优值一致，1个浮点 fixture 明确 Unavailable；K4 stage 4 得到9/8，可行构造的4/3不再被当作最优值。
 `solve_projection(ProjectionProblem(window, requested_certificate_level="CertifiedInterval"), "GreedyCertifiedSolver")` 在精确正权下按质量、原坐标 packed 整数依次选择模边界独立的循环，构造最小总质量同调基的截面。独立 `GreedyBasis` 重放每步最小选择、并列和完整 action；固定理论 T4 的 Rossman 贪心回缩加权版本给出 Γ≤beta。返回实际 Γ、全局下界1（零同调为0）和理论假设，只有等界时标 ExactOptimal。K4 stage 4 的贪心4/3大于穷举最优9/8，报告 CertifiedInterval。仅支持 StableBasisOrder 与有限循环枚举；不支持浮点认证或请求通用 ExactOptimal。中断保留可行种子及已完成的 bounds，查询后的单尺度和族快照保留历史。详细支持域与来源见 [solver 契约](docs/SOLVER_CONTRACT.md)。
+
+`solve_projection(ProjectionProblem(window, requested_certificate_level="ExactOptimal"), "Rank2ExactSolver")` 仅支持精确正权且 β=2。一般链窗口枚举两个生成元的边界修正，用 T5 的三色 Pareto 消去减少支撑，以三个类的精确最短质量计算 objective；独立 verifier 仍用全部循环与完整截面搜索核对最优性。`GraphCycle` 额外验证 k=1 与图关联矩阵。`ThreeTerminalCut` 要求 solver_options 中明确给出 `dual_vertex_count`、按原链坐标排序的 `dual_edges` 和三个有序 `terminals`，验证 ker(A)=对偶割空间、im(D)=内部顶点割空间后，按 T-A3 搜索三标签划分。此代数证书不声称识别平面嵌入；无几何假设的平面/欧氏环面请求明确不支持。支持域、证书、确定性及有限资源限制见 [solver 契约](docs/SOLVER_CONTRACT.md)。
 
 `validate_projection(window,P)` 与 solver 独立，验证 P²=P、L²=L、AP=0、PD=0，且在 ker(A) 的完整基上验证 z+Pz 属于 im(D)。失败抛带 `InternalValidationFailed` 状态与具体失败项的 `ValidationError`。非零同调上的零投影即便前三项成立也被拒绝；Ready 序列化记录重新执行该验证，输入证书布尔值不作为信任来源。
 

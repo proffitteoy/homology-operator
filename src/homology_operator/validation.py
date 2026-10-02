@@ -147,7 +147,8 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     proof = certificate.get("optimization")
     if certified and (
         not isinstance(proof, Mapping)
-        or proof.get("kind") not in {"CycleBounds", "ExhaustiveSearch", "GreedyBasis"}
+        or proof.get("kind")
+        not in {"CycleBounds", "ExhaustiveSearch", "Rank2Search", "GreedyBasis"}
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
     if certified:
@@ -159,6 +160,20 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
                 "nonzero_cycles",
                 "cycle_retraction",
                 "tie_break_complete",
+            },
+            "Rank2Search": {
+                "kind",
+                "candidate_count",
+                "nonzero_cycles",
+                "cycle_retraction",
+                "tie_break_complete",
+                "structure",
+                "searched_candidates",
+                "quotient_generators",
+                "class_minima",
+                "initial_generators",
+                "pareto_steps",
+                "terminal_labels",
             },
             "GreedyBasis": {
                 "kind",
@@ -224,9 +239,14 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     beta = len(cycles) - window.D.rank()
     universal_lower = int(beta > 0)
     replayed_optimum = None
-    if certified and proof["kind"] == "ExhaustiveSearch":
+    rank2_cut = None
+    if certified and proof["kind"] == "Rank2Search":
+        rank2_cut = _validate_rank2_reduction(
+            window, projection, proof, cycle_inputs, solver
+        )
+    if certified and proof["kind"] in {"ExhaustiveSearch", "Rank2Search"}:
         replayed_optimum = _replay_exhaustive(
-            window, projection, proof, cycles, cycle_inputs
+            window, projection, proof, cycles, cycle_inputs, rank2_cut
         )
     if certified and proof["kind"] == "GreedyBasis":
         theoretical = _replay_greedy(window, projection, proof, cycles, cycle_inputs)
@@ -266,7 +286,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
                     raise ValidationError(("objective_witness",))
         if (
             certified
-            and proof["kind"] in {"ExhaustiveSearch", "GreedyBasis"}
+            and proof["kind"] in {"ExhaustiveSearch", "Rank2Search", "GreedyBasis"}
             and "witness" not in objective.details
         ):
             raise ValidationError(("objective_witness_required",))
@@ -293,7 +313,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     }
 
 
-def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
+def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut=None):
     """Enumerate lifts of a quotient basis, independently of retraction rows Y."""
     R = matrix_from_data(proof.get("cycle_retraction"))
     if (
@@ -325,7 +345,7 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
     coordinates = Matrix.from_columns(
         (coordinate_basis.solve(z) for z in R.transpose().rows), nrows=len(full)
     )
-    optimum = None
+    optimum, global_value = None, None
     for parameters in product((0, 1), repeat=r * beta):
         lifts = tuple(
             tuple(
@@ -350,6 +370,33 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
             ),
             default=Fraction(0),
         )
+        global_value = value if global_value is None else min(global_value, value)
+        if proof["kind"] == "Rank2Search":
+            if rank2_cut is None:
+                # Independent test of the T5 terminal condition: no supported B.
+                F = Matrix.from_columns(boundary_basis, nrows=window.n)
+                if (
+                    Matrix.from_rows(
+                        (
+                            row
+                            for j, row in enumerate(F.rows)
+                            if not any(z[j] for z in lifts)
+                        ),
+                        ncols=r,
+                    ).rank()
+                    != r
+                ):
+                    continue
+            else:
+                delta, vertices, terminals, _ = rank2_cut
+                # delta omits t0; terminal columns represent the fixed hole basis.
+                nonroot = [v for v in range(vertices) if v != terminals[0]]
+                holes = [
+                    delta.transpose().rows[nonroot.index(t)] for t in terminals[1:]
+                ]
+                potentials = [delta.solve(candidate.apply(z)) for z in holes]
+                if any(a + 2 * b == 3 for a, b in zip(*potentials)):
+                    continue
         key = tuple(
             sum(bit << j for j, bit in enumerate(column))
             for column in candidate.transpose().rows
@@ -370,9 +417,178 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
         ),
         default=Fraction(0),
     )
-    if (current, declared_key) != optimum:
+    if (current, declared_key) != optimum or current != global_value:
         raise ValidationError(("optimal_projection_or_tie_break",))
     return optimum[0]
+
+
+def validate_rank2_structure(window, structure, options):
+    """Prove a cut-space witness algebraically; never infer a planar embedding."""
+    if window.n - window.A.rank() - window.D.rank() != 2:
+        raise ValidationError(("rank_two_required",))
+    if structure in {"GeneralChainWindow", "GraphCycle"}:
+        if options:
+            raise ValidationError(("unexpected_structure_options",))
+        if structure == "GraphCycle" and (
+            window.k != 1
+            or any(sum(column) != 2 for column in window.A.transpose().rows)
+        ):
+            raise ValidationError(("graph_incidence_required",))
+        return None
+    if structure != "ThreeTerminalCut" or set(options) != {
+        "dual_vertex_count",
+        "dual_edges",
+        "terminals",
+    }:
+        raise ValidationError(("unsupported_rank2_structure",))
+    vertices, edges, terminals = (
+        options[name] for name in ("dual_vertex_count", "dual_edges", "terminals")
+    )
+    if type(vertices) is not int or not 3 <= vertices <= window.n + 1:
+        raise ValidationError(("dual_vertex_count",))
+    if (
+        not isinstance(terminals, (tuple, list))
+        or len(terminals) != 3
+        or any(type(t) is not int or not 0 <= t < vertices for t in terminals)
+        or len(set(terminals)) != 3
+    ):
+        raise ValidationError(("three_distinct_terminals_required",))
+    if (
+        not isinstance(edges, (tuple, list))
+        or len(edges) != window.n
+        or any(
+            not isinstance(e, (tuple, list))
+            or len(e) != 2
+            or any(type(v) is not int or not 0 <= v < vertices for v in e)
+            or e[0] == e[1]
+            for e in edges
+        )
+    ):
+        raise ValidationError(("dual_edge_coordinates",))
+    delta = Matrix.from_rows(
+        (
+            tuple(
+                int(u == t) ^ int(v == t) for t in range(vertices) if t != terminals[0]
+            )
+            for u, v in edges
+        ),
+        ncols=vertices - 1,
+    )
+    internal = tuple(t for t in range(vertices) if t not in terminals)
+    interior = Matrix.from_columns(
+        (tuple(int(u == t) ^ int(v == t) for u, v in edges) for t in internal),
+        nrows=window.n,
+    )
+    if (
+        delta.rank() != vertices - 1
+        or window.A @ delta != Matrix.zero(window.m, vertices - 1)
+        or vertices - 1 != window.n - window.A.rank()
+    ):
+        raise ValidationError(("cycles_are_not_dual_cuts",))
+    if interior.rank() != window.D.rank() or any(
+        window.D.solve(z) is None for z in interior.transpose().rows
+    ):
+        raise ValidationError(("boundaries_are_not_internal_cuts",))
+    return delta, vertices, tuple(terminals), internal
+
+
+def _validate_rank2_reduction(window, projection, proof, inputs, solver):
+    config = solver.get("solver_config")
+    if not isinstance(config, Mapping) or config["input_structure"] != proof.get(
+        "structure"
+    ):
+        raise ValidationError(("rank2_structure_config",))
+    cut = validate_rank2_structure(window, proof["structure"], config["solver_options"])
+    r = window.D.rank()
+    if (4**r) * len(inputs) > 100_000:
+        raise ValidationError(("certificate_replay_state_limit",))
+    expected_count = 4**r if cut is None else 3 ** len(cut[3])
+    if (
+        type(proof.get("searched_candidates")) is not int
+        or proof["searched_candidates"] != expected_count
+    ):
+        raise ValidationError(("rank2_search_count",))
+    H = proof.get("quotient_generators")
+    if not isinstance(H, (tuple, list)) or len(H) != 2:
+        raise ValidationError(("rank2_quotient_generators",))
+    H = tuple(validate_vector(z, window.n) for z in H)
+    basis = Matrix.from_columns(window.D.image_basis() + H, nrows=window.n)
+    if basis.rank() != r + 2 or any(any(window.A.apply(z)) for z in H):
+        raise ValidationError(("rank2_quotient_generators",))
+    minima = [None] * 3
+    for z, mass in inputs:
+        coordinates = basis.solve(z)
+        h = coordinates[-2] + 2 * coordinates[-1]
+        if h:
+            minima[h - 1] = mass if minima[h - 1] is None else min(mass, minima[h - 1])
+    if content_id("minima", tuple(minima)) != content_id(
+        "minima", proof.get("class_minima")
+    ):
+        raise ValidationError(("rank2_class_minima",))
+    initial = proof.get("initial_generators")
+    if not isinstance(initial, (tuple, list)) or len(initial) != 2:
+        raise ValidationError(("pareto_initial_pair",))
+    pair = tuple(validate_vector(z, window.n) for z in initial)
+    if any(
+        window.D.solve(tuple(a ^ b for a, b in zip(z, h))) is None
+        for z, h in zip(pair, H)
+    ):
+        raise ValidationError(("pareto_initial_classes",))
+    steps = proof.get("pareto_steps")
+    if not isinstance(steps, (tuple, list)) or len(steps) > window.n:
+        raise ValidationError(("pareto_steps",))
+    for step in steps:
+        if not isinstance(step, Mapping) or set(step) != {"boundary", "color"}:
+            raise ValidationError(("pareto_step_fields",))
+        b, color = validate_vector(step["boundary"], window.n), step["color"]
+        x, y = pair
+        if (
+            not any(b)
+            or window.D.solve(b) is None
+            or any(bit and not (a or c) for bit, a, c in zip(b, x, y))
+        ):
+            raise ValidationError(("pareto_supported_boundary",))
+        masses = [
+            sum(
+                w
+                for w, bit, a, c in zip(window.weights, b, x, y)
+                if bit and a + 2 * c == j
+            )
+            for j in (1, 2, 3)
+        ]
+        if type(color) is not int or color != max(
+            (1, 2, 3), key=lambda j: (masses[j - 1], -j)
+        ):
+            raise ValidationError(("pareto_heaviest_color",))
+        pair = tuple(
+            tuple(a ^ (bit if color & (1 << i) else 0) for a, bit in zip(z, b))
+            for i, z in enumerate(pair)
+        )
+    if pair != tuple(projection.apply(z) for z in H):
+        raise ValidationError(("pareto_final_action",))
+    if cut is None:
+        if proof.get("terminal_labels") is not None:
+            raise ValidationError(("unexpected_terminal_labels",))
+    else:
+        delta, vertices, terminals, _ = cut
+        labels = proof.get("terminal_labels")
+        if (
+            not isinstance(labels, (tuple, list))
+            or len(labels) != vertices
+            or any(type(a) is not int or a not in (0, 1, 2) for a in labels)
+            or tuple(labels[t] for t in terminals) != (0, 1, 2)
+            or steps
+        ):
+            raise ValidationError(("three_terminal_labels",))
+        nonroot = [v for v in range(vertices) if v != terminals[0]]
+        expected_holes = tuple(
+            delta.transpose().rows[nonroot.index(t)] for t in terminals[1:]
+        )
+        if H != expected_holes or pair != tuple(
+            delta.apply(tuple((labels[v] >> i) & 1 for v in nonroot)) for i in (0, 1)
+        ):
+            raise ValidationError(("three_terminal_action",))
+    return cut
 
 
 def _replay_greedy(window, projection, proof, cycle_basis, inputs):

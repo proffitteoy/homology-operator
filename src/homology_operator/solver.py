@@ -344,6 +344,7 @@ def solve_projection(problem, backend="FeasibleSolver"):
         constructors = {
             "FeasibleSolver": FeasibleSolver,
             "ExhaustiveExactSolver": ExhaustiveExactSolver,
+            "Rank2ExactSolver": Rank2ExactSolver,
             "GreedyCertifiedSolver": GreedyCertifiedSolver,
         }
         if backend not in constructors:
@@ -651,6 +652,270 @@ class ExhaustiveExactSolver:
             arithmetic_policy=window.arithmetic,
             lower_bound=best_value,
             upper_bound=best_value,
+            solver_config=config,
+        )
+
+
+def _pareto_rank2(window, pair, boundaries, budget):
+    """Pinned T5: remove a supported boundary using the heaviest of three colors."""
+    x, y = pair
+    trace = []
+    F = Matrix.from_columns(boundaries, nrows=window.n)
+    while True:
+        budget.step()
+        outside = Matrix.from_rows(
+            (row for j, row in enumerate(F.rows) if not (x[j] or y[j])),
+            ncols=F.ncols,
+        ).kernel_basis()
+        if not outside:
+            return (x, y), tuple(trace)
+        b = F.apply(outside[0])
+        costs = tuple(
+            sum(
+                w
+                for w, bit, a, c in zip(window.weights, b, x, y)
+                if bit and a + 2 * c == label
+            )
+            for label in (1, 2, 3)
+        )
+        label = max((1, 2, 3), key=lambda a: (costs[a - 1], -a))
+        trace.append({"boundary": b, "color": label})
+        x = tuple(a ^ (bit if label & 1 else 0) for a, bit in zip(x, b))
+        y = tuple(a ^ (bit if label & 2 else 0) for a, bit in zip(y, b))
+
+
+class Rank2ExactSolver:
+    """Finite rank-two search: Pareto-reduced sections or verified three-label cuts.
+
+    General rank two does not imply planarity or Euclidean flat-torus geometry.
+    The cut route requires an explicit chain/cut-space equivalence witness.
+    """
+
+    def capabilities(self):
+        return _freeze(
+            {
+                **ExhaustiveExactSolver().capabilities(),
+                "supported_betti_range": (2, 2),
+                "input_structures": (
+                    "GeneralChainWindow",
+                    "GraphCycle",
+                    "ThreeTerminalCut",
+                ),
+                "tie_break_policies": ("StableBasisOrder",),
+                "solver_options": ("dual_vertex_count", "dual_edges", "terminals"),
+            }
+        )
+
+    def solve(self, problem):
+        from .validation import validate_rank2_structure
+
+        run_id = str(uuid4())
+        rejection = check_solver_request(problem, self.capabilities())
+        if rejection is not None:
+            return ProjectionSolution(
+                rejection[0],
+                run_id,
+                method="Rank2ExactSolver",
+                diagnostics=(rejection[1],),
+            )
+        window = problem.window
+        config = problem.solver_config("Rank2ExactSolver")
+        budget = _Budget(problem.resource_limits)
+        try:
+            cut = validate_rank2_structure(
+                window, problem.input_structure, problem.solver_options
+            )
+        except ValueError as error:
+            return ProjectionSolution(
+                "Unavailable",
+                run_id,
+                method="Rank2ExactSolver",
+                diagnostics=(str(error),),
+                solver_config=config,
+                arithmetic_policy=window.arithmetic,
+            )
+        seed = FeasibleSolver().solve(
+            replace(
+                problem,
+                requested_certificate_level="Feasible",
+                input_structure="GeneralChainWindow",
+                solver_options={},
+            )
+        )
+        if seed.projection is None:
+            return replace(
+                seed,
+                solver_run_id=run_id,
+                method="Rank2ExactSolver",
+                solver_config=config,
+            )
+        budget.states = seed.resource_usage["states"]
+        best, value, witness = seed.projection, None, None
+        cycle_count, count, visited = None, None, 0
+        exhausted, proof = None, {}
+        try:
+            budget.step()
+            R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
+            boundaries = window.D.image_basis()
+            r = len(boundaries)
+            cycle_count, count = (1 << (r + 2)) - 1, 1 << (2 * r)
+            if count * cycle_count > 100_000:
+                raise _Exhausted("certificate_replay_state_limit")
+            budget.entries(10 * window.n**2 + cycle_count * window.n)
+            full = list(boundaries)
+            H = []
+            if cut is None:
+                for z in window.A.kernel_basis():
+                    if Matrix.from_columns((*full, z), nrows=window.n).rank() > len(
+                        full
+                    ):
+                        H.append(z)
+                        full.append(z)
+            else:
+                delta, vertices, terminals, internal = cut
+                H = [
+                    tuple(
+                        int(u == t) ^ int(v == t)
+                        for u, v in problem.solver_options["dual_edges"]
+                    )
+                    for t in terminals[1:]
+                ]
+                full.extend(H)
+            basis = Matrix.from_columns(full, nrows=window.n)
+            coordinates = Matrix.from_columns(
+                (basis.solve(z)[r:] for z in R.transpose().rows), nrows=2
+            )
+            minima, minimum_witnesses = [None] * 3, [None] * 3
+            for bits in product((0, 1), repeat=r + 2):
+                if not any(bits):
+                    continue
+                budget.step()
+                h = bits[-2] + 2 * bits[-1]
+                if h:
+                    z = basis.apply(bits)
+                    mass = sum(w for w, bit in zip(window.weights, z) if bit)
+                    if minima[h - 1] is None or mass < minima[h - 1]:
+                        minima[h - 1], minimum_witnesses[h - 1] = mass, z
+
+            def objective(pair):
+                x, y = pair
+                outputs = (x, y, tuple(a ^ b for a, b in zip(x, y)))
+                ratios = tuple(
+                    Fraction(sum(w for w, bit in zip(window.weights, z) if bit))
+                    / minima[i]
+                    for i, z in enumerate(outputs)
+                )
+                j = max(range(3), key=lambda i: ratios[i])
+                return ratios[j], minimum_witnesses[j]
+
+            value, witness = objective(tuple(best.apply(z) for z in H))
+            best_reduced = None
+            params = (
+                product((0, 1), repeat=2 * r)
+                if cut is None
+                else product((0, 1, 2), repeat=len(internal))
+            )
+            F = Matrix.from_columns(boundaries, nrows=window.n)
+            for parameters in params:
+                budget.step()
+                if cut is None:
+                    initial = tuple(
+                        tuple(
+                            a ^ b
+                            for a, b in zip(z, F.apply(parameters[i * r : (i + 1) * r]))
+                        )
+                        for i, z in enumerate(H)
+                    )
+                    pair, trace = _pareto_rank2(window, initial, boundaries, budget)
+                    labels = None
+                else:
+                    labels = [0] * vertices
+                    labels[terminals[1]], labels[terminals[2]] = 1, 2
+                    for v, label in zip(internal, parameters):
+                        labels[v] = label
+                    pair = tuple(
+                        tuple(
+                            ((labels[u] ^ labels[v]) >> i) & 1
+                            for u, v in problem.solver_options["dual_edges"]
+                        )
+                        for i in range(2)
+                    )
+                    initial, trace = pair, ()
+                candidate = Matrix.from_columns(pair, nrows=window.n) @ coordinates
+                current, current_witness = objective(pair)
+                key = tuple(
+                    sum(bit << j for j, bit in enumerate(z))
+                    for z in candidate.transpose().rows
+                )
+                visited += 1
+                if best_reduced is None or (current, key) < best_reduced:
+                    best_reduced = current, key
+                    final_action, final_witness = candidate, current_witness
+                    proof = {
+                        "kind": "Rank2Search",
+                        "candidate_count": count,
+                        "nonzero_cycles": cycle_count,
+                        "cycle_retraction": matrix_data(R),
+                        "tie_break_complete": True,
+                        "structure": problem.input_structure,
+                        "searched_candidates": count
+                        if cut is None
+                        else 3 ** len(internal),
+                        "quotient_generators": tuple(H),
+                        "class_minima": tuple(minima),
+                        "initial_generators": initial,
+                        "pareto_steps": trace,
+                        "terminal_labels": labels,
+                    }
+                if current < value:
+                    best, value, witness = candidate, current, current_witness
+            best, value, witness = final_action, best_reduced[0], final_witness
+        except _Exhausted as error:
+            exhausted = str(error)
+        identity = make_identity(window, best, run_id, problem.tie_break_policy)
+        lower = None if value is None else (value if exhausted is None else Fraction(0))
+        level = (
+            "Feasible"
+            if value is None
+            else ("ExactOptimal" if exhausted is None else "CertifiedInterval")
+        )
+        if exhausted is not None:
+            proof = (
+                {}
+                if value is None
+                else {
+                    "kind": "CycleBounds",
+                    "nonzero_cycles": cycle_count,
+                    "lower_bound_method": "UniversalHomology",
+                }
+            )
+        return ProjectionSolution(
+            "Solved" if exhausted is None else "ResourceExhausted",
+            run_id,
+            best,
+            identity,
+            level,
+            QueryResult("ResourceExhausted", identity=identity)
+            if value is None
+            else QueryResult(
+                "Computed",
+                value,
+                identity,
+                True,
+                {"witness": witness, "nonzero_cycles": cycle_count},
+            ),
+            {"optimization": proof} if proof else {},
+            {
+                **budget.usage(),
+                "candidates_visited": visited,
+                "nonzero_cycle_inputs": cycle_count,
+            },
+            (exhausted,) if exhausted else (),
+            problem.tie_break_policy,
+            method="Rank2ExactSolver",
+            arithmetic_policy=window.arithmetic,
+            lower_bound=lower,
+            upper_bound=value,
             solver_config=config,
         )
 
