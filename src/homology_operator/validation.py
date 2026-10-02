@@ -5,8 +5,8 @@ from fractions import Fraction
 from itertools import product
 from math import isfinite
 
-from .algebra import Matrix
-from .chain import ChainWindow
+from .algebra import Matrix, validate_vector
+from .chain import ChainWindow, matrix_from_data
 from .result import QueryResult, content_id, make_identity
 
 
@@ -146,7 +146,8 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     certified = level in {"CertifiedUpperBound", "CertifiedInterval", "ExactOptimal"}
     proof = certificate.get("optimization")
     if certified and (
-        not isinstance(proof, Mapping) or proof.get("kind") != "CycleBounds"
+        not isinstance(proof, Mapping)
+        or proof.get("kind") not in {"CycleBounds", "ExhaustiveSearch"}
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
     if certified and (
@@ -179,6 +180,7 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     if cycle_count > 100_000:
         raise ValidationError(("certificate_replay_state_limit",))
     current = Fraction(0)
+    cycle_inputs = []
     for bits in product((0, 1), repeat=len(cycles)):
         z = tuple(
             sum(bit * vector[j] for bit, vector in zip(bits, cycles)) % 2
@@ -189,10 +191,18 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         output = projection.apply(z)
         numerator = sum(w for w, bit in zip(window.weights, output) if bit)
         denominator = sum(w for w, bit in zip(window.weights, z) if bit)
+        cycle_inputs.append((z, denominator))
         current = max(current, Fraction(numerator) / Fraction(denominator))
     beta = len(cycles) - window.D.rank()
     universal_lower = int(beta > 0)
-    if lower is not None and lower > universal_lower:
+    replayed_optimum = None
+    if certified and proof["kind"] == "ExhaustiveSearch":
+        replayed_optimum = _replay_exhaustive(
+            window, projection, proof, cycles, cycle_inputs
+        )
+    if lower is not None and lower > (
+        universal_lower if replayed_optimum is None else replayed_optimum
+    ):
         raise ValidationError(("unsupported_lower_bound_proof",))
     if upper is not None and upper < current:
         raise ValidationError(("upper_bound_below_current_objective",))
@@ -205,13 +215,40 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
             or objective.exact is not True
         ):
             raise ValidationError(("objective_replay",))
+        if "witness" in objective.details:
+            witness = objective.details["witness"]
+            if cycle_count == 0:
+                if witness is not None:
+                    raise ValidationError(("objective_witness",))
+            else:
+                witness = validate_vector(witness, window.n)
+                if not any(witness) or window.A.apply(witness) != (0,) * window.m:
+                    raise ValidationError(("objective_witness",))
+                witness_mass = sum(w for w, bit in zip(window.weights, witness) if bit)
+                output_mass = sum(
+                    w
+                    for w, bit in zip(window.weights, projection.apply(witness))
+                    if bit
+                )
+                if Fraction(output_mass) / witness_mass != current:
+                    raise ValidationError(("objective_witness",))
+        if (
+            certified
+            and proof["kind"] == "ExhaustiveSearch"
+            and "witness" not in objective.details
+        ):
+            raise ValidationError(("objective_witness_required",))
     if certified:
         if (
             type(proof.get("nonzero_cycles")) is not int
             or proof["nonzero_cycles"] != cycle_count
         ):
             raise ValidationError(("cycle_enumeration_count",))
-        if lower is not None and proof.get("lower_bound_method") != "UniversalHomology":
+        if (
+            lower is not None
+            and proof["kind"] == "CycleBounds"
+            and proof.get("lower_bound_method") != "UniversalHomology"
+        ):
             raise ValidationError(("lower_bound_method",))
     if level == "ExactOptimal" and not (lower == upper == current):
         raise ValidationError(("exact_optimal_requires_equal_proven_bounds",))
@@ -222,6 +259,88 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         "bounds_verified": lower is not None or upper is not None,
         "optimality_verified": level == "ExactOptimal",
     }
+
+
+def _replay_exhaustive(window, projection, proof, cycle_basis, inputs):
+    """Enumerate lifts of a quotient basis, independently of retraction rows Y."""
+    R = matrix_from_data(proof.get("cycle_retraction"))
+    if (
+        (R.nrows, R.ncols) != (window.n, window.n)
+        or R @ R != R
+        or window.A @ R != Matrix.zero(window.m, window.n)
+        or any(R.apply(z) != z for z in cycle_basis)
+        or projection @ R != projection
+    ):
+        raise ValidationError(("cycle_retraction",))
+    boundary_basis = window.D.image_basis()
+    full = list(boundary_basis)
+    quotient_basis = []
+    for z in cycle_basis:
+        if Matrix.from_columns((*full, z), nrows=window.n).rank() > len(full):
+            full.append(z)
+            quotient_basis.append(z)
+    r, beta = len(boundary_basis), len(quotient_basis)
+    count = 1 << (r * beta)
+    if (
+        type(proof.get("candidate_count")) is not int
+        or proof["candidate_count"] != count
+        or proof.get("tie_break_complete") is not True
+    ):
+        raise ValidationError(("complete_search_count",))
+    if count * max(1, len(inputs)) > 100_000:
+        raise ValidationError(("certificate_replay_state_limit",))
+    coordinate_basis = Matrix.from_columns(full, nrows=window.n)
+    coordinates = Matrix.from_columns(
+        (coordinate_basis.solve(z) for z in R.transpose().rows), nrows=len(full)
+    )
+    optimum = None
+    for parameters in product((0, 1), repeat=r * beta):
+        lifts = tuple(
+            tuple(
+                z[j]
+                ^ (
+                    sum(parameters[i * r + b] * boundary_basis[b][j] for b in range(r))
+                    % 2
+                )
+                for j in range(window.n)
+            )
+            for i, z in enumerate(quotient_basis)
+        )
+        section = Matrix.from_columns(((0,) * window.n,) * r + lifts, nrows=window.n)
+        candidate = section @ coordinates
+        value = max(
+            (
+                Fraction(
+                    sum(w for w, bit in zip(window.weights, candidate.apply(z)) if bit)
+                )
+                / denominator
+                for z, denominator in inputs
+            ),
+            default=Fraction(0),
+        )
+        key = tuple(
+            sum(bit << j for j, bit in enumerate(column))
+            for column in candidate.transpose().rows
+        )
+        if optimum is None or (value, key) < optimum:
+            optimum = value, key
+    declared_key = tuple(
+        sum(bit << j for j, bit in enumerate(column))
+        for column in projection.transpose().rows
+    )
+    current = max(
+        (
+            Fraction(
+                sum(w for w, bit in zip(window.weights, projection.apply(z)) if bit)
+            )
+            / denominator
+            for z, denominator in inputs
+        ),
+        default=Fraction(0),
+    )
+    if (current, declared_key) != optimum:
+        raise ValidationError(("optimal_projection_or_tie_break",))
+    return optimum[0]
 
 
 def validate_solution(window, solution):

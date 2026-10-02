@@ -7,6 +7,7 @@ from .chain import ChainWindow, InvalidInput
 from .result import OperatorResult, QueryResult
 from .solver import (
     FeasibleSolver,
+    ExhaustiveExactSolver,
     ProjectionProblem,
     ProjectionSolution,
     ResourceLimits,
@@ -23,6 +24,7 @@ __all__ = [
     "OperatorResult",
     "QueryResult",
     "FeasibleSolver",
+    "ExhaustiveExactSolver",
     "ProjectionProblem",
     "ProjectionSolution",
     "ResourceLimits",
