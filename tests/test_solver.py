@@ -231,6 +231,18 @@ class SolverTests(unittest.TestCase):
             self.assertEqual(restored_family.operators[0].certificate(), certificate)
             self.assertEqual(restored_family.to_result().to_json(), snapshot.to_json())
 
+        window, certified = self.bound_solution(level="CertifiedUpperBound")
+        for extra in ({"optimality_verified": True}, {"lower_bound_method": "Forged"}):
+            proof = dict(certified.certificate["optimization"]) | extra
+            with self.subTest(extra=extra), self.assertRaises(ValidationError):
+                HomologyOperator(
+                    window, replace(certified, certificate={"optimization": proof})
+                )
+            tampered = HomologyOperator(window, certified).to_result().to_dict()
+            tampered["certificate"]["optimization"].update(extra)
+            with self.assertRaises(ValidationError):
+                OperatorResult.from_dict(tampered)
+
     def test_dispatch_binds_returned_configuration_to_request(self):
         problem = ProjectionProblem(self.window())
         original = FeasibleSolver().solve(problem)

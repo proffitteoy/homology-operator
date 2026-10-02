@@ -150,6 +150,22 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         or proof.get("kind") not in {"CycleBounds", "ExhaustiveSearch"}
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
+    if certified:
+        allowed_fields = {
+            "CycleBounds": {"kind", "nonzero_cycles", "lower_bound_method"},
+            "ExhaustiveSearch": {
+                "kind",
+                "candidate_count",
+                "nonzero_cycles",
+                "cycle_retraction",
+                "tie_break_complete",
+            },
+        }[proof["kind"]]
+        if set(proof) - allowed_fields or (
+            "lower_bound_method" in proof
+            and proof["lower_bound_method"] != "UniversalHomology"
+        ):
+            raise ValidationError(("unsupported_certificate_fields",))
     if certified and (
         upper is None
         or objective is None
