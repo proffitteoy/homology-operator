@@ -174,5 +174,66 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(partial.transport_certificate(0, 2).state, "Unavailable")
 
 
+class BarcodeTests(unittest.TestCase):
+    def test_merge_essential_duplicate_and_rank_reconstruction(self):
+        family = merge_family()
+        result = family.barcode()
+        self.assertEqual(result.state, "Computed")
+        self.assertEqual(
+            [
+                (x["birth_stage"], x["death_stage"], x["multiplicity"])
+                for x in result.value
+            ],
+            [(0, 1, 1), (0, None, 1)],
+        )
+        self.assertFalse(result.details["oracle_used_for_result"])
+        for i in range(3):
+            for j in range(i, 3):
+                rank = sum(
+                    x["multiplicity"]
+                    for x in result.value
+                    if x["birth_stage"] <= i
+                    and (x["death_stage"] is None or j < x["death_stage"])
+                )
+                self.assertEqual(rank, family.transport_rank(i, j).value)
+
+    def test_same_betti_different_barcode_and_zero_scale_length(self):
+        first = ChainWindow(
+            1, Matrix.zero(0, 1), Matrix.zero(1, 0), (), ("a",), (), (1,)
+        )
+        dead = ChainWindow(
+            1,
+            Matrix.zero(0, 2),
+            Matrix.from_rows(((1,), (0,))),
+            (),
+            ("a", "b"),
+            ("f",),
+            (1, 1),
+        )
+        alive = replace(dead, D=Matrix.from_rows(((0,), (1,))))
+        killed = OperatorFamily((1, 1), (first, dead), (op(first), op(dead))).barcode()
+        kept = OperatorFamily((1, 1), (first, alive), (op(first), op(alive))).barcode()
+        self.assertEqual(
+            [(x["birth_stage"], x["death_stage"]) for x in killed.value],
+            [(0, 1), (1, None)],
+        )
+        self.assertEqual(
+            [(x["birth_stage"], x["death_stage"]) for x in kept.value], [(0, None)]
+        )
+        self.assertTrue(killed.value[0]["zero_scale_length"])
+        self.assertFalse(kept.value[0]["zero_scale_length"])
+
+    def test_empty_barcode_and_failure_are_distinct(self):
+        empty = ChainWindow(1, Matrix.zero(0, 0), Matrix.zero(0, 0), (), (), (), ())
+        family = OperatorFamily((0,), (empty,), (op(empty),))
+        self.assertEqual(family.barcode().value, ())
+        failure = OperatorResult(
+            None, empty, None, {"status": "Unavailable"}, {}, {}, "Unavailable"
+        )
+        missing = replace(family, operators=(failure,)).barcode()
+        self.assertEqual(missing.state, "Unavailable")
+        self.assertIsNone(missing.value)
+
+
 if __name__ == "__main__":
     unittest.main()
