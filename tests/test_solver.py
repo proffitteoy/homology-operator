@@ -40,6 +40,8 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(first.status, "FeasibleOnly")
         self.assertEqual(first.certificate_level, "Feasible")
         self.assertEqual(first.objective.state, "NotComputed")
+        self.assertEqual(first.solver_metadata()["arithmetic_policy"], "ExactRational")
+        self.assertEqual(first.resource_usage["limits"]["state_limit"], 100_000)
         self.assertEqual(first.projection, second.projection)
         self.assertEqual(
             first.identity["projection_id"], second.identity["projection_id"]

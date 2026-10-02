@@ -297,7 +297,15 @@ class OperatorResult:
             raise ValueError(
                 "ExactOptimal is unavailable until an independent optimality verifier exists"
             )
+        if solver["certificate_level"] != "Feasible":
+            raise ValueError(
+                "Phase 1 result records accept only independently validated Feasible solutions"
+            )
         if self.status == "Ready":
+            if solver["status"] not in {"Solved", "FeasibleOnly", "ResourceExhausted"}:
+                raise ValueError(
+                    "Ready requires a solver status that can retain a feasible projection"
+                )
             # Persisted true flags are never accepted as evidence of a legal action.
             try:
                 from .validation import validate_projection
