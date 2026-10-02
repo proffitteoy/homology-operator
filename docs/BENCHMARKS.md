@@ -229,7 +229,8 @@ $revision = git rev-parse HEAD
 uv run --locked --no-sync python scripts/benchmark_native.py --solvers --revision $revision --output .task-artifacts/s4_solver_rerun.json
 ```
 
-报告需同时记录源码 SHA、全部测量文件 LF hash、fixture/request hash、release 二进制与
+保存wheel hash时构建输出应为 `.task-artifacts/native-s4-65-wheels`；复跑使用该路径的
+已安装 release wheel。报告需同时记录源码 SHA、全部测量文件 LF hash、fixture/request hash、release 二进制与
 wheel hash、Python/Rust/OS/CPU、构建参数和所有原始样本。构造与重放的收益分开解释；
 可行种子、普通几何读取和显式快照仍有 reference 成本，不能称整个算子已原生化。
 
@@ -238,3 +239,37 @@ wheel hash、Python/Rust/OS/CPU、构建参数和所有原始样本。构造与�
 median比，以及10个配对区组的median比的95% percentile bootstrap区间
 （10000次重采样，seed=65000）。区组为统计单位；拒绝请求无构造计时，不把None填0。
 内存worker也复核同一输出hash，任何库内诊断与实际method/config身份均保留。
+
+
+本地实际测量源码为干净提交 `99adf07a4d9fd967ae021589bed897769f5d3360`，Windows x64 / CPython 3.10.11 /
+Rust 1.98.1，release 单线程；源码 LF、fixture/request、扩展与 wheel hash 全部记录在
+[700条原始样本](../benchmarks/s4_solver_pilot.json)，报告文件 SHA256 为
+`60d71d2999d82991f54ce8aff574886600d137f4c6a3005c579aa891ac016c87`。
+500条成功、100条库内 ResourceExhausted、100条 Unavailable；两后端各配置的完整
+生成元 action、proof、联合读取与恢复 hash 相同，采样/语义失败为0。
+
+| 固定配置 | reference完整成本 median/ms | native完整成本 median/ms | 配对区组median比 | 95%区组bootstrap区间 |
+| --- | --- | --- | --- | --- |
+| k4_exact | 20.195 | 17.163 | 1.184 | [1.048, 1.259] |
+| k4_greedy | 16.986 | 15.249 | 1.128 | [1.026, 1.183] |
+| cut_rank2 | 46.270 | 34.979 | 1.272 | [1.203, 1.419] |
+| cyclic_m4 | 86.574 | 77.075 | 1.096 | [1.021, 1.214] |
+| k4_bigint | 16.713 | 15.076 | 1.093 | [1.030, 1.208] |
+| k4_interrupted | 7.621 | 7.946 | 0.976 | [0.831, 1.028] |
+| floating_unavailable | 0.186 | 0.191 | 0.993 | [0.902, 1.042] |
+
+Rank2 的构造 median 为3.582/3.697ms，配对比0.979、区间[0.920,1.098]，收益主要来自
+独立重放；Structured 构造0.998/0.995ms，区间覆盖无差异。大整数配置每次报告3次
+精确质量后备；该构造配对比1.047、区间[0.967,1.102]，没有独立构造收益证据。
+提前中断配置完整成本7.621/7.946ms，保留其退化，不作为成功求解加速。
+
+两个新内存worker的操作系统绝对峰值RSS分别为22,437,888 / 23,048,192 bytes
+（reference/native），native反而高610,304 bytes。各仅一次、覆盖整个7配置worker，
+不能宣称每配置或稳定内存改善。成功配置有限完整成本的配对改善约1.09–1.27倍，
+不从这些小规模/预先选定配置外推一般规模、高维、S4全后端或S5正式结论。
+
+[完整151项回归日志](../benchmarks/s4_solver_verification.log) 记录本地强制native、无跳过
+的完整数学/测量回归；Rust比值单测、fmt/Clippy、Ruff、文档与git diff检查通过。
+reference sdist/wheel构建及真实无扩展的隔离wheel安装通过，四种reference请求完成、
+四种native请求Unavailable，native快照经完整reference重放恢复。
+原工作区的S4-04修改保留；本实现位于基于S4-03的隔离分支，尚无本分支远端CI/合并证据。

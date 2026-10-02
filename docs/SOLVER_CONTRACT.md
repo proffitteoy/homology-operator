@@ -765,6 +765,8 @@ Python verifier，对拍共享内核的计算。外部恢复和进入算子仍�
 native 记录在无扩展环境可由完整 reference 重放恢复，公开
 `certificate_replay_backend`/`certificate_mass_backend` 表明实际重放/算术路径。
 直接调度的 `resource_usage.independent_validation_seconds` 记录独立验证成本；
+`native_detail.native_kernel_seconds` 是 Python 侧批调用的计时包络，含包装/转换，
+不能当作纯 Rust 内核计时；权重规范化和任意精度后备还计入总构造时间。
 算子构造和恢复再次验证的成本另由测量入口计入，不在证书中序列化不稳定计时。
 
 构建、测试和复跑见 [README](../README.md)、[验证说明](VALIDATION.md) 与
