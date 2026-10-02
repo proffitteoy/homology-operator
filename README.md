@@ -7,7 +7,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 已全部合入 main 并通过本地 57 项测试与 Python 3.10/3.12 CI。Phase 2 现已实现有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化，79 项本地测试通过；23 份 H0–H3/加权 fixture 组织为 11 个独立 PH 对拍族/变体。Phase 2 按 issue 提交 PR，全部合入 main 后才进入 Phase 3。一般最优 solver、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 已全部合入 main 并通过本地 57 项测试与 Python 3.10/3.12 CI。Phase 2 现已实现有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化，81 项本地测试通过；23 份 H0–H3/加权 fixture 组织为 11 个独立 PH 对拍族/变体。Phase 2 按 issue 提交 PR，全部合入 main 后才进入 Phase 3。一般最优 solver、高性能核心与发行尚未完成。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -48,7 +48,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；79 项单尺度/过滤数学、边界与身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；81 项单尺度/过滤数学、边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |

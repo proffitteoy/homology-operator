@@ -6,7 +6,7 @@
 
 ## 当前可执行验证
 
-reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前79项测试包含单尺度与有限过滤独立数学联合验收，具体环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
+reference 工具链已提供 Python 3.10+ / uv 0.11.5 的锁定安装、unittest、Ruff 与打包入口，命令见根 README。当前81项测试包含单尺度与有限过滤独立数学联合验收，具体环境、源码身份和 fixture 见 [Phase 1](PHASE1_REPORT.md) 及 [Phase 2 验收报告](PHASE2_REPORT.md)；包导入检查本身不构成数学正确性证据。文档检查需要 Git 与 PowerShell 7，在仓库根目录运行：
 
 ```powershell
 pwsh -NoProfile -File ./scripts/check_docs.ps1
@@ -51,7 +51,7 @@ git diff --check
 
 ## 阶段结论边界
 
-Phase 0 逻辑契约已具备；Phase 1 的23份固定fixture和57项单尺度验收已随PR #30–#41合入main。Phase 2 提供有限过滤及完整联合读取，79项本地测试通过并提交逐issue PR；所有本阶段PR进入main并验证后才能推进Phase 3。公开API及发行版本仍未冻结。
+Phase 0 逻辑契约已具备；Phase 1 的23份固定fixture和57项单尺度验收已随PR #30–#41合入main。Phase 2 提供有限过滤及完整联合读取，81项本地测试通过并提交逐issue PR；所有本阶段PR进入main并验证后才能推进Phase 3。公开API及发行版本仍未冻结。
 
 Phase 1 完成需有可运行的单尺度算子、完整联合读取和上述数学测试。Phase 2–7 依 [路线图](../HOMOLOGY_OPERATOR_ROADMAP.md) 分别验收，不能从文档检查或有限小实例测试推导通用效率、稳定性与应用价值。
 
