@@ -36,7 +36,10 @@ def _encode(value):
     if isinstance(value, Mapping):
         if any(not isinstance(key, str) for key in value):
             raise ValueError("JSON keys must be strings")
-        return {key: _encode(item) for key, item in value.items()}
+        encoded = {key: _encode(item) for key, item in value.items()}
+        if set(encoded) in ({"$fraction"}, {"$mapping"}):
+            return {"$mapping": encoded}
+        return encoded
     if isinstance(value, (tuple, list)):
         return [_encode(item) for item in value]
     if value is None or isinstance(value, (str, bool, int)):
@@ -47,11 +50,16 @@ def _encode(value):
 
 
 def _decode(value):
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
+        if set(value) == {"$mapping"}:
+            items = value["$mapping"]
+            if not isinstance(items, Mapping):
+                raise ValueError("invalid escaped mapping")
+            return {key: _decode(item) for key, item in items.items()}
         if set(value) == {"$fraction"}:
             pair = value["$fraction"]
             if (
-                not isinstance(pair, list)
+                not isinstance(pair, (tuple, list))
                 or len(pair) != 2
                 or any(type(x) is not int for x in pair)
             ):
@@ -61,7 +69,7 @@ def _decode(value):
             except ZeroDivisionError as error:
                 raise ValueError("invalid rational denominator") from error
         return {key: _decode(item) for key, item in value.items()}
-    if isinstance(value, list):
+    if isinstance(value, (tuple, list)):
         return [_decode(item) for item in value]
     return value
 
@@ -223,9 +231,9 @@ class QueryResult:
 class OperatorResult:
     """A content-checked single-scale result record; Ready additionally validates P."""
 
-    identity: Mapping
-    input_data: ChainWindow | Mapping
-    projection: Matrix | Mapping
+    identity: Mapping | None
+    input_data: ChainWindow | Mapping | None
+    projection: Matrix | Mapping | None
     solver: Mapping
     certificate: Mapping
     provenance: Mapping
@@ -246,16 +254,23 @@ class OperatorResult:
         }:
             raise ValueError("unknown operator status")
         window = (
-            self.input_data
-            if isinstance(self.input_data, ChainWindow)
-            else ChainWindow.from_dict(self.input_data)
+            None
+            if self.input_data is None
+            else (
+                self.input_data
+                if isinstance(self.input_data, ChainWindow)
+                else ChainWindow.from_dict(self.input_data)
+            )
         )
         projection = (
-            self.projection
-            if isinstance(self.projection, Matrix)
-            else matrix_from_data(self.projection)
+            None
+            if self.projection is None
+            else (
+                self.projection
+                if isinstance(self.projection, Matrix)
+                else matrix_from_data(self.projection)
+            )
         )
-        identity = _identity(self.identity)
         if not isinstance(self.solver, Mapping):
             raise ValueError("solver data must be a mapping")
         solver = _freeze(self.solver)
@@ -269,35 +284,105 @@ class OperatorResult:
             "InternalError",
         }:
             raise ValueError("unknown solver status")
-        if solver.get("certificate_level") not in {
-            "Feasible",
-            "ExactOptimal",
-            "CertifiedUpperBound",
-            "CertifiedInterval",
-            "Heuristic",
-        }:
-            raise ValueError("unknown solver certificate level")
-        tie_break = solver.get("tie_break_policy", "StableBasisOrder")
-        expected = make_identity(
-            window, projection, identity["solver_run_id"], tie_break
-        )
-        if identity != expected:
-            raise ValueError("result content does not match its declared identity")
-        if (
-            solver.get("solver_run_id", identity["solver_run_id"])
-            != identity["solver_run_id"]
-        ):
-            raise ValueError("solver run identity mismatch")
+        for name in ("lower_bound", "upper_bound"):
+            value = solver.get(name)
+            if value is not None and (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float, Fraction))
+                or (isinstance(value, float) and not isfinite(value))
+                or value < 0
+            ):
+                raise ValueError("bounds must be finite nonnegative numbers or None")
+        lower, upper = solver.get("lower_bound"), solver.get("upper_bound")
+        if lower is not None and upper is not None and lower > upper:
+            raise ValueError("lower bound cannot exceed upper bound")
         if not isinstance(self.certificate, Mapping) or not isinstance(
             self.provenance, Mapping
         ):
             raise ValueError("certificate and provenance must be mappings")
         certificate = dict(self.certificate)
-        if solver["certificate_level"] == "ExactOptimal":
+        if projection is None:
+            failure_statuses = {
+                "InvalidInput": {"InvalidProblem"},
+                "SolverFailed": {"NumericalFailure", "InternalError"},
+                "ResourceExhausted": {"ResourceExhausted"},
+                "Unavailable": {"Unavailable"},
+                "InternalValidationFailed": {"InternalError"},
+            }
+            if solver["status"] not in failure_statuses.get(self.status, set()):
+                raise ValueError(
+                    "missing projection requires a matching failure status"
+                )
+            if (
+                solver.get("certificate_level") is not None
+                or certificate
+                or self.query_results
+            ):
+                raise ValueError(
+                    "missing projection cannot carry certification or operator queries"
+                )
+            identity = None
+            if self.identity is not None:
+                fields = {"input_id", "basis_id", "weight_id", "solver_run_id"}
+                if (
+                    not isinstance(self.identity, Mapping)
+                    or set(self.identity) != fields
+                ):
+                    raise ValueError(
+                        "failure identity must omit projection and operator IDs"
+                    )
+                if window is None or any(
+                    not isinstance(value, str) or not value
+                    for value in self.identity.values()
+                ):
+                    raise ValueError(
+                        "partial identity requires validated input and a solver run"
+                    )
+                expected = input_identity(window)
+                if any(
+                    self.identity[key] != expected[key]
+                    for key in fields - {"solver_run_id"}
+                ):
+                    raise ValueError("failure input identity mismatch")
+                identity = _freeze(self.identity)
+        else:
+            identity = _identity(self.identity)
+            tie_break = solver.get("tie_break_policy", "StableBasisOrder")
+            expected = make_identity(
+                window, projection, identity["solver_run_id"], tie_break
+            )
+            if identity != expected:
+                raise ValueError("result content does not match its declared identity")
+            if solver.get("certificate_level") != "Feasible":
+                raise ValueError(
+                    "Phase 1 accepts only Feasible solutions without an optimality verifier"
+                )
+        if identity is not None and (
+            solver.get("solver_run_id", identity["solver_run_id"])
+            != identity["solver_run_id"]
+        ):
+            raise ValueError("solver run identity mismatch")
+        if "objective" in solver:
+            objective = QueryResult.from_dict(solver["objective"])
+            if projection is None:
+                if objective.identity is not None or objective.state in {
+                    "Computed",
+                    "EmptyDomain",
+                }:
+                    raise ValueError(
+                        "missing projection cannot carry an operator objective"
+                    )
+            else:
+                require_same_identity(identity, objective.identity)
+        if solver.get("certificate_level") == "ExactOptimal":
             raise ValueError(
                 "ExactOptimal is unavailable until an independent optimality verifier exists"
             )
         if self.status == "Ready":
+            if solver["status"] not in {"Solved", "FeasibleOnly", "ResourceExhausted"}:
+                raise ValueError(
+                    "Ready requires a solver status that can retain a feasible projection"
+                )
             # Persisted true flags are never accepted as evidence of a legal action.
             try:
                 from .validation import validate_projection
@@ -331,8 +416,12 @@ class OperatorResult:
             "schema_version": self.schema_version,
             "status": self.status,
             "identity": _encode(self.identity),
-            "input_data": self.input_data.to_dict(),
-            "projection": matrix_data(self.projection),
+            "input_data": None
+            if self.input_data is None
+            else self.input_data.to_dict(),
+            "projection": None
+            if self.projection is None
+            else matrix_data(self.projection),
             "solver": _encode(self.solver),
             "certificate": _encode(self.certificate),
             "provenance": _encode(self.provenance),
@@ -342,7 +431,13 @@ class OperatorResult:
         }
 
     def to_json(self):
-        return canonical_json(self.to_dict())
+        return json.dumps(
+            self.to_dict(),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
 
     @classmethod
     def from_dict(cls, data):
@@ -393,6 +488,8 @@ class OperatorResult:
     def cache_key(
         self, solver_config_id, tie_break_policy_id, backend_semantics_version
     ):
+        if self.projection is None:
+            raise ValueError("missing projection has no operator cache key")
         for value in (solver_config_id, tie_break_policy_id, backend_semantics_version):
             if not isinstance(value, str) or not value:
                 raise ValueError("cache policy fields must be nonempty strings")
