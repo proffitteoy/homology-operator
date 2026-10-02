@@ -156,9 +156,10 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.worker:
+        result = worker(args.worker, args.queries, args.revision)
         from homology_operator.result import canonical_json
 
-        print(canonical_json(worker(args.worker, args.queries, args.revision)))
+        print(canonical_json(result))
         return
     if not args.output:
         parser.error("--output is required")
