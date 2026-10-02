@@ -397,7 +397,21 @@ class OperatorFamily:
             result = self._query(missing.state, None, i, j, details=missing.details)
         else:
             target = self.stage(j)
-            value = getattr(target, name)(*(x.value for x in chains))
+            try:
+                value = getattr(target, name)(*(x.value for x in chains))
+            except ValueError as error:
+                if name != "selected_mass" or not str(error).startswith(
+                    "NumericalFailure"
+                ):
+                    raise
+                result = self._query(
+                    "Unavailable",
+                    None,
+                    i,
+                    j,
+                    details={"reason": "NumericalFailure", "diagnostic": str(error)},
+                )
+                return self._remember("track_mass", arguments, i, j, result)
             result = self._query(
                 "Computed",
                 value,
@@ -457,22 +471,38 @@ class OperatorFamily:
             source.window.arithmetic != "FloatingPoint"
             and target.window.arithmetic != "FloatingPoint"
         )
-        ratios = (
-            Fraction(target_weights[label]) / Fraction(weight)
-            if exact
-            else target_weights[label] / weight
-            for label, weight in zip(source.window.basis_current, source.window.weights)
-        )
-        factor = max(ratios, default=Fraction(1) if exact else 1.0)
-        mass = target.selected_mass(tracked.value)
-        bound = stretch.value * factor * source.selected_mass(x)
+        try:
+            ratios = (
+                Fraction(target_weights[label]) / Fraction(weight)
+                if exact
+                else target_weights[label] / weight
+                for label, weight in zip(
+                    source.window.basis_current, source.window.weights
+                )
+            )
+            factor = max(ratios, default=Fraction(1) if exact else 1.0)
+            mass = target.selected_mass(tracked.value)
+            source_mass = source.selected_mass(x)
+            bound = stretch.value * factor * source_mass
+            if not exact and any(
+                not isfinite(value) for value in (factor, mass, source_mass, bound)
+            ):
+                raise ValueError("nonfinite weight factor or mass bound")
+        except (OverflowError, ValueError) as error:
+            return self._query(
+                "Unavailable",
+                None,
+                i,
+                j,
+                details={"reason": "NumericalFailure", "diagnostic": str(error)},
+            )
         if exact and mass > bound:
             raise ValueError("endpoint stretch inequality failed")
         return self._query(
             "Computed",
             {
                 "target_mass": mass,
-                "source_selected_mass": source.selected_mass(x),
+                "source_selected_mass": source_mass,
                 "weight_change_factor": factor,
                 "endpoint_stretch": stretch.value,
                 "mass_bound": bound,
