@@ -9,7 +9,9 @@ from homology_operator import (
     HomologyOperator,
     Matrix,
     OperatorFamily,
+    OperatorFamilyResult,
     OperatorResult,
+    QueryResult,
     ResourceLimits,
     ProjectionProblem,
 )
@@ -285,6 +287,163 @@ class TrackingTests(unittest.TestCase):
         for x in ((1,), (), (2,)):
             with self.subTest(x=x), self.assertRaises(ValueError):
                 family.track_class(x, 0, 0)
+
+
+class FamilySerializationTests(unittest.TestCase):
+    def test_queried_failures_survive_with_and_without_partial_identity(self):
+        family = merge_family()
+        for status, solver_status in (
+            ("InvalidInput", "InvalidProblem"),
+            ("SolverFailed", "NumericalFailure"),
+            ("ResourceExhausted", "ResourceExhausted"),
+            ("Unavailable", "Unavailable"),
+            ("InternalValidationFailed", "InternalError"),
+        ):
+            for with_identity in (False, True):
+                with self.subTest(status=status, with_identity=with_identity):
+                    identity = {
+                        key: family.windows[1].identity()[key]
+                        for key in ("input_id", "basis_id", "weight_id")
+                    }
+                    identity["solver_run_id"] = "failed-run"
+                    failure = OperatorResult(
+                        identity if with_identity else None,
+                        family.windows[1],
+                        None,
+                        {
+                            "status": solver_status,
+                            "certificate_level": None,
+                            "solver_run_id": "failed-run",
+                        },
+                        {},
+                        {"diagnostic": status},
+                        status,
+                    )
+                    partial = replace(
+                        family, operators=(family.stage(0), failure, family.stage(2))
+                    )
+                    transport, rank = (
+                        partial.transport(0, 1),
+                        partial.transport_rank(0, 1),
+                    )
+                    expected = (
+                        "ResourceExhausted"
+                        if status == "ResourceExhausted"
+                        else "Unavailable"
+                    )
+                    self.assertEqual(transport.state, expected)
+                    self.assertIsNone(rank.value)
+                    result = partial.to_result()
+                    restored = OperatorFamilyResult.from_json(result.to_json())
+                    data = restored.to_dict()
+                    self.assertEqual(
+                        QueryResult.from_dict(data["transports"]["0:1"]), transport
+                    )
+                    self.assertEqual(
+                        QueryResult.from_dict(data["rank_readout"]["0:1"]), rank
+                    )
+                    self.assertEqual(restored, result)
+                    self.assertEqual(
+                        data["transports"]["0:1"]["details"]["target_identity"],
+                        dict(identity) if with_identity else None,
+                    )
+                    self.assertNotIn("0:2", data["transports"])
+                    self.assertEqual(result.to_json(), partial.to_result().to_json())
+
+    def test_lossless_snapshot_and_restored_actions(self):
+        family = merge_family()
+        family = replace(family, scales=(Fraction(0), Fraction(1, 2), Fraction(1, 2)))
+        family.transport(0, 2)
+        family.track_class((1, 1), 0, 2)
+        family.track_mass((1, 0), 0, 1)
+        family.track_support((0, 1), 0, 2)
+        result = family.to_result()
+        frozen = result.to_json()
+        restored = OperatorFamilyResult.from_json(frozen)
+        self.assertEqual(result, restored)
+        self.assertEqual(result.stage_results, restored.stage_results)
+        self.assertEqual(restored.to_family().identity, family.identity)
+        self.assertEqual(restored.to_family().barcode(), family.barcode())
+        family.track_mass((0, 0), 1, 2)
+        self.assertEqual(result.to_json(), frozen)
+        with self.assertRaises(TypeError):
+            result.data["status"] = "Partial"
+
+    def test_readout_identity_action_rank_and_barcode_tampering(self):
+        family = merge_family()
+        family.transport(0, 1)
+        family.track_mass((0, 1), 0, 1)
+        record = family.to_result()
+        for field in (
+            "identity",
+            "projection",
+            "rank",
+            "barcode",
+            "tracking",
+            "provenance",
+            "scale",
+        ):
+            data = record.to_dict()
+            if field == "identity":
+                data["transports"]["0:1"]["details"]["source_identity"][
+                    "operator_id"
+                ] = "wrong"
+            elif field == "projection":
+                data["transports"]["0:1"]["value"]["chain_action"]["rows"][0][0] ^= 1
+            elif field == "rank":
+                data["rank_readout"]["0:1"]["value"] = 0
+            elif field == "barcode":
+                data["barcode_readout"]["value"][0]["multiplicity"] = 99
+            elif field == "tracking":
+                next(
+                    value
+                    for value in data["tracking_readout"].values()
+                    if value["details"]["query"] == "track_mass"
+                )["value"] = 99
+            elif field == "provenance":
+                data["provenance"]["oracle_used_for_result"] = True
+            else:
+                data["scales"][1] = 100
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                OperatorFamilyResult.from_dict(data)
+
+    def test_partial_roundtrip_and_zero_remain_distinct(self):
+        family = merge_family()
+        failure = OperatorResult(
+            None,
+            family.windows[1],
+            None,
+            {"status": "ResourceExhausted"},
+            {},
+            {"$fraction": [1, 0]},
+            "ResourceExhausted",
+        )
+        partial = replace(family, operators=(family.stage(0), failure, family.stage(2)))
+        partial.track_mass((1, 1), 0, 1)
+        result = partial.to_result()
+        restored = OperatorFamilyResult.from_json(result.to_json())
+        self.assertEqual(result, restored)
+        self.assertEqual(restored.status, "Partial")
+        self.assertEqual(restored.stage_results[1].status, "ResourceExhausted")
+        self.assertEqual(
+            restored.to_family().track_mass((1, 1), 0, 1).state, "ResourceExhausted"
+        )
+        self.assertEqual(family.track_mass((1, 1), 0, 1).value, 0)
+        self.assertIsNone(restored.to_family().track_mass((1, 1), 0, 1).value)
+
+    def test_schema_json_and_weight_mixing_rejected(self):
+        record = merge_family().to_result()
+        data = record.to_dict()
+        data["schema_version"] = 2
+        with self.assertRaises(ValueError):
+            OperatorFamilyResult.from_dict(data)
+        data = record.to_dict()
+        data["stage_results"][1]["input_data"]["weights"][0]["numerator"] = 5
+        with self.assertRaises(ValueError):
+            OperatorFamilyResult.from_dict(data)
+        for text in ('{"schema_version":1,"schema_version":1}', '{"value":NaN}'):
+            with self.assertRaises(ValueError):
+                OperatorFamilyResult.from_json(text)
 
 
 class BarcodeTests(unittest.TestCase):

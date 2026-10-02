@@ -556,6 +556,8 @@ ResourceUsage
 
 ## 14. `OperatorFamilyResult`
 
+reference 的 `OperatorFamily.to_result()` 生成不可变 `OperatorFamilyResult` 快照，保存完整阶段结果、scales/policies、族身份、已查询传输与 rank、barcode、已查询 tracking。`to_json/from_json` 使用 schema_version=1；读取时重新验证窗口与投影、族内容身份并重算传输/rank/barcode/tracking，拒绝篡改来源、作用和几何值。`to_family()` 从记录的合法 P 恢复作用，不重新求解。失败阶段完整保留，Partial 不能被当作 Ready；同一合法零链与 ResourceExhausted/Unavailable 不混淆。
+
 过滤上的顶层结果建议为：
 
 ```text
