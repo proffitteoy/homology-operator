@@ -7,7 +7,9 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支含 Rank2ExactSolver 与限定循环族的 StructuredFamilySolver，当前116项本地测试通过。贪心 solver 已经 PR #51 合入 main；阶段联合验收、高性能核心与发行尚未完成。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成初始化。2026-10-02 Phase 1 的 PR #30–#41 和 Phase 2 的 PR #42–#48 已全部合入 main；Phase 2 main `f83d4c6` 的81项测试及 Python 3.10/3.12 CI通过。有限 OperatorFamily、transport/rank/barcode、几何追踪和族序列化以23份 H0–H3/加权 fixture、11个独立 PH 对拍族/变体验收。Phase 3 的统一能力/认证边界与 ExhaustiveExactSolver 已经 #49/#50 合入 main；本分支含 Rank2ExactSolver 与限定循环族的 StructuredFamilySolver，当前119项本地测试通过。贪心 solver 已经 PR #51 合入 main；阶段联合验收、高性能核心与发行尚未完成。
+
+Phase 3的[solver对照协议](docs/BENCHMARKS.md)已保存固定源码/环境下324条支持、失败、中断和完整成本记录，认证等级分别报告；源码提交、输入与结果hash可核对。当前分支增加3项协议回归，共119项测试。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -48,7 +50,7 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
 | reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
-| 导入、构建、测试 | uv 安装；Hatchling 打包；116 项单尺度/过滤数学、solver 边界与身份测试 |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；119 项单尺度/过滤数学、solver 边界与身份测试 |
 | 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
 | CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |

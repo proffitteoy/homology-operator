@@ -12,9 +12,11 @@
 6. [SOLVER_CONTRACT](SOLVER_CONTRACT.md)：合法投影、认证等级与资源约束。
 7. [VALIDATION](VALIDATION.md)：当前检查入口及后续数学验证。
 
-单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。两阶段均已合入 main。Phase 3 当前116项测试包含统一 solver 能力匹配、配置身份、独立证书边界、小规模完整最优搜索、贪心截面、rank-2结构/归约认证和matrix-free循环族，支持范围见 [solver 契约](SOLVER_CONTRACT.md)；专用 solver 和性能仍在后续任务中。
+单尺度和有限过滤接口已在 Python reference 中落地，安装/API 命令见根 README。[Fixture 迁移说明](FIXTURES.md) 记录23个窗口、真实几何来源及 hash；[Phase 1](PHASE1_REPORT.md) 记录57项单尺度验收，[Phase 2](PHASE2_REPORT.md) 记录81项测试、11个族/变体的独立 PH 对拍、隔离 wheel 与范围限制。两阶段均已合入 main。Phase 3 当前119项测试包含统一 solver 能力匹配、配置身份、独立证书边界、小规模完整最优搜索、贪心截面、rank-2结构/归约认证和matrix-free循环族，支持范围见 [solver 契约](SOLVER_CONTRACT.md)；专用 solver 和性能仍在后续任务中。
 
 ## 参考材料
+
+- [Phase 3 solver对照协议与冻结结果](BENCHMARKS.md)：同问题、认证、预算与完整成本边界，保留不利和失败记录。
 
 - [冷启动](冷启动.md)：从仓库事实裁剪项目规则的流程。
 - [通用项目架构模板](development/通用项目架构模板.md)：按需裁剪，不直接套用 Web 或数据项目结构。
