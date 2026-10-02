@@ -1,15 +1,15 @@
 """Finite coordinate filtrations of the same validated homology operators."""
 
 from collections.abc import Mapping, Set
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fractions import Fraction
 from math import isfinite
 from types import MappingProxyType
 
 from .algebra import Matrix
-from .chain import ChainWindow
+from .chain import ChainWindow, matrix_data, matrix_from_data
 from .operator import HomologyOperator
-from .result import OperatorResult, content_id, input_identity
+from .result import OperatorResult, QueryResult, content_id, input_identity
 
 
 def _ordered(value, name):
@@ -48,6 +48,9 @@ class OperatorFamily:
     weight_policy: str = "Inherited"
     duplicate_policy: str = "OrderedStages"
     terminal_extension: str = "Constant"
+    _transports: dict = field(
+        init=False, default_factory=dict, repr=False, compare=False
+    )
 
     def __post_init__(self):
         scales = _ordered(self.scales, "scales")
@@ -181,4 +184,124 @@ class OperatorFamily:
         name = {-1: "basis_previous", 0: "basis_current", 1: "basis_next"}[degree]
         return _inclusion(
             getattr(self.windows[i], name), getattr(self.windows[j], name)
+        )
+
+    def _details(self, i, j):
+        return {
+            **self.identity,
+            "source_stage": i,
+            "target_stage": j,
+            "source_scale": self.scales[i],
+            "target_scale": self.scales[j],
+            "source_identity": self.stage(i).identity,
+            "target_identity": self.stage(j).identity,
+        }
+
+    def _query(self, state, value, i, j, exact=None, details=None):
+        target = self.stage(j)
+        identity = target.identity if isinstance(target, HomologyOperator) else None
+        return QueryResult(
+            state, value, identity, exact, {**self._details(i, j), **(details or {})}
+        )
+
+    def transport(self, i, j):
+        """Exact action in source/target kernel coordinates, plus original-chain action."""
+        self._interval(i, j)
+        if (i, j) in self._transports:
+            return self._transports[i, j]
+        failed = [
+            (index, self.stage(index).status)
+            for index in dict.fromkeys((i, j))
+            if not isinstance(self.stage(index), HomologyOperator)
+        ]
+        if failed:
+            state = (
+                "ResourceExhausted"
+                if any(status == "ResourceExhausted" for _, status in failed)
+                else "Unavailable"
+            )
+            return self._query(state, None, i, j, details={"failed_stages": failed})
+        source, target = self.stage(i), self.stage(j)
+        source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
+        target_kernel = Matrix.from_columns(target.kernel_basis(), target.window.n)
+        chain_action = target.P @ self.inclusion(i, j) @ source_kernel
+        coordinates = []
+        for column in chain_action.transpose().rows:
+            value = target_kernel.solve(column)
+            if value is None:
+                raise ValueError("transport image is outside the target kernel")
+            coordinates.append(value)
+        action = Matrix.from_columns(coordinates, target.betti())
+        result = self._query(
+            "Computed",
+            {
+                "action": matrix_data(action),
+                "chain_action": matrix_data(chain_action),
+                "source_kernel_basis": source.kernel_basis(),
+                "target_kernel_basis": target.kernel_basis(),
+                "rank": action.rank(),
+            },
+            i,
+            j,
+            True,
+        )
+        self._transports[i, j] = result
+        return result
+
+    def transport_rank(self, i, j):
+        result = self.transport(i, j)
+        return self._query(
+            result.state,
+            result.value["rank"] if result.state == "Computed" else None,
+            i,
+            j,
+            result.exact,
+            result.details,
+        )
+
+    def transport_certificate(self, i, j):
+        result = self.transport(i, j)
+        if result.state != "Computed":
+            return result
+        source, target = self.stage(i), self.stage(j)
+        action = matrix_from_data(result.value["action"])
+        chain = matrix_from_data(result.value["chain_action"])
+        source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
+        differences = self.inclusion(i, j) @ source_kernel + chain
+        quotient_preserved = all(
+            target.window.D.solve(x) is not None for x in differences.transpose().rows
+        )
+        image_in_kernel = target.L @ chain == Matrix.zero(
+            target.window.n, source.betti()
+        )
+        identity_verified = i != j or action == Matrix.identity(source.betti())
+        for middle in range(i, j + 1):
+            first, second = self.transport(i, middle), self.transport(middle, j)
+            if first.state != "Computed" or second.state != "Computed":
+                return self._query(
+                    "Unavailable",
+                    None,
+                    i,
+                    j,
+                    details={"reason": "composition includes a failed stage"},
+                )
+            if (
+                matrix_from_data(second.value["action"])
+                @ matrix_from_data(first.value["action"])
+                != action
+            ):
+                raise ValueError("transport composition failed")
+        if not quotient_preserved or not image_in_kernel or not identity_verified:
+            raise ValueError("transport validation failed")
+        return self._query(
+            "Computed",
+            {
+                "identity_verified": identity_verified,
+                "composition_verified": True,
+                "image_in_target_kernel": image_in_kernel,
+                "induced_homology_map_verified": quotient_preserved,
+            },
+            i,
+            j,
+            True,
         )
