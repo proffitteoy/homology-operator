@@ -24,6 +24,10 @@
 
 ## 2. 身份模型
 
+S4-04 的 `CompactF2` 版本1保存 `form=GeneralizedInverse|HC`、严格显式形状的factors、原列pivots和boolean complement。GeneralizedInverse依次保存A/D/非零G行/非零U行，pivot确定散射到原坐标；HC保存H/C。旧Matrix/CyclicTrace仍可读，未知版本、额外字段、形状/索引污染拒绝。`projection_id`直接绑定因子内容和表示版本，不为hash展开P，不做跨表示身份归一化；恢复独立检验完整链action与循环同调保持。Feasible标签不证明最优，当前compact只另支持通用CycleBounds重放，其他优化proof格式明确拒绝，后续solver工作包另行实现。
+
+对于已验证幂等action，`ker(L)=im(P)`、`ker(P)=im(L)`。流式生成坐标列形成完整像空间，不保留全P。Python整数行消元从最高原坐标向下选择pivot，并清除所有其他基向量中的该位，最后按pivot升序读取；得到该子空间唯一的右向左reduced basis。reference左向右RREF的canonical kernel每个向量在其自由坐标为1，其他自由坐标为0，非零pivot坐标都在该自由坐标之前，因此自由坐标恰为最高非零位。这也是上述唯一reduced basis，故完整核基及过滤坐标与reference一致。输出本身可能有平方大小，按实际核输出计费；这个论证依赖独立验证的幂等性，不用于接受非法候选。
+
 结构族reference的projection字段可保存严格版本化handle `{kind: "CyclicTrace", version: 1, m: 2|3|4, complement: false}`；L由同一参数的补action生成。`projection_id`散列输入、原基、并列策略及handle，所有实际作用由固定且可验证的公式决定。它与显式矩阵表示使用不同内容身份，不声称跨表示归一化；同一handle重复求解或JSON往返保持projection/operator身份，solver_run仍独立。未知版本、额外字段和无效参数拒绝；恢复重新验证生成集、输入、认证与查询身份。链输入A/D的矩阵schema不接受action handle。
 
 Phase 1 reference 的 `OperatorResult` 支持无投影失败记录：`projection=None` 时只能使用匹配的失败状态，认证为空，不能携带算子查询或生成算子缓存键。已验证输入可保留 input/basis/weight 与 solver_run 的部分身份，尚无合法输入时身份和输入均可为空；不生成 projection/operator 身份。嵌套 solver objective 也必须与有投影记录的完整六身份一致。

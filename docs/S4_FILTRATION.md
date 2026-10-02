@@ -10,7 +10,7 @@ T_ij=P_j J_ij|ker(L_i)，无独立 PH 旁路。上传的[端点脚本](research/
 投影，不物化 inclusion。公共 inclusion(i,j,degree) 仍按请求返回完整矩阵。每个不同投影的
 核基和 packed 列消元分解保存一次，multi-RHS 复用该分解。工作区用标准库 Python 任意精度
 整数，无新依赖；支持现有显式矩阵和 CyclicAction 的 apply/kernel_basis 协议。
-#64 因子化 action、#66 native 几何及 #68 完整绑定仍需各自实现和联合验收。
+#64 因子化 action 已由 main 520ecc9 合入本分支；#66 native 几何及 #68 完整绑定仍需各自实现和联合验收。
 
 barcode() 只读取相邻核坐标映射，不请求完整 chain action、历史基或全部区间 rank。
 transport(i,j) 按需返回原有完整 value；transport_rank(i,j) 仅读坐标映射的秩；

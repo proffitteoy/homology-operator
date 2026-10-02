@@ -120,6 +120,18 @@ safe Rust、单线程、每行一个 u64，三个链空间暂限至多64维；�
 
 ## 身份、状态与序列化
 
+### 同 P 的紧凑因子与 HC（S4-04）
+
+`from homology_operator.native import NativeFactorizedSolver` 后，通过 `solve_projection(ProjectionProblem(window, matrix_free_output=True, solver_options={"representation": "Factorized"}), NativeFactorizedSolver())` 获取 Feasible 解。`"HC"` 显式选择同一个P的另一表示。支持多字输入，仍受原逻辑matrix_entry/state/wall预算限制；不支持的认证/选项/缺失扩展明确返回Unavailable。现有五个reference solver和64维原型入口保持不变。
+
+Factorized 的 `CompactAction` 保存A/D、广义逆的非零行及原pivot索引，通过 `Rx=x+GAx`、`Px=Rx+DU(Rx)` 作用，G/U/P/L不展开。Rust先复用stable packed分解，再继续消元整个 `[M|I]` 的右半部分，保持reference的非循环延拓。HC先流式读取该P的坐标生成元，构造H的规范像基，再逐列求唯一C坐标，保存 `P=HC`；不先构造n×n P。β接近n时HC真实输出仍可能有平方大小，初始消元行变换也有平方workspace，本项不宣称所有中间量都线性。
+
+两种表示都保存不可变的版本1因子内容；同P跨表示projection_id不同，各自恢复身份稳定，不能混用查询。Scalar P/L、拓扑、几何和JSON恢复在没有Rust时仍能消费该内容；批量P/L通过一个native调用，精确质量/距离后备政策保持。身份与证书只散列因子，不隐藏生成dense P；读取必要的核基/transport仍按实际输出大小分配。
+
+独立Python verifier检查完整生成元的P²=P/L²=L/AP=0、PD=0与循环基 `Z+PZ∈im(D)`，D的像分解只做一次，不使用solver提供的分解或true标签。Factorized另查AGA/DUD及A/D与窗口一致，HC另查AH=0/CD=0/CH=I。算子构造、快照与外部恢复均重验；没有验证去重或未经认证最优标签。拓扑的规范核基由幂等式 `ker(L)=im(P)` 流式生成，并用从右向左的规范基消元匹配reference的自由坐标顺序，说明见[结果模型](docs/RESULT_MODEL.md)。
+
+Factorized成功checkpoint数仍为5+m+n，HC额外2n个生成元构造checkpoint；wall在阶段间检查，validator/恢复在构造预算外，不是硬抢占/RSS上限。完整表示/β比率/时间与RSS比较见[测量协议](docs/BENCHMARKS.md)，不自动以有限测量选择表示。
+
 S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
 packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
 显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
