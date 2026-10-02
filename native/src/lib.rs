@@ -5,6 +5,8 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use std::time::Instant;
 
+mod packed;
+
 fn mask(n: usize) -> u64 {
     if n == 64 { u64::MAX } else { (1_u64 << n) - 1 }
 }
@@ -220,6 +222,9 @@ fn actions(projection: Vec<u64>, n: usize, vectors: Vec<u64>) -> PyResult<Batch>
 fn _homology_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(construct, module)?)?;
     module.add_function(wrap_pyfunction!(actions, module)?)?;
+    module.add_function(wrap_pyfunction!(packed::packed_add, module)?)?;
+    module.add_function(wrap_pyfunction!(packed::packed_product, module)?)?;
+    module.add_class::<packed::PreparedMatrix>()?;
     module.add("__version__", "0.0.2.dev0")?;
     Ok(())
 }

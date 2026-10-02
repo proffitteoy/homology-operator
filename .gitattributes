@@ -4,3 +4,5 @@ docs/research/s4-s5/* -text
 docs/research/s4-s5/*.md whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 # Keep frozen S4 JSON file hashes stable on Windows and Linux.
 benchmarks/s4_r0_*.json text eol=lf
+benchmarks/s4_native_prototype.json text eol=lf
+benchmarks/s4_packed_ablation.json text eol=lf

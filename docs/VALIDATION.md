@@ -8,6 +8,8 @@
 
 S4-02 可选原型增加7项测试：23个原始窗口的完整P/L、独立同调保持、循环/非循环批查询、全部至多3×3矩阵的稳定广义逆、空形状与64维边界、资源失败、超大有理权/浮点、六身份与批记录JSON恢复。reference测试允许缺少扩展时显式跳过6项native测试；原型CI设置 `HOMOLOGY_NATIVE_REQUIRED=1`，缺少扩展直接失败。真实release构建及Rust fmt/Clippy命令见根README；独立Python validator仍是进入算子的必要边界。后续大尺寸与紧凑表示验收不由这7项替代。
 
+S4-03 另增加4项实际packed代数验证：全部至多3×3矩阵以独立向量枚举核/像/membership并比较reference canonical RREF/solve；矩形、空形状、秩亏与不可解；63/64/65、127/128/129边界的加乘/action与尾部位；0/1/8/64/1024重复RHS、不变分解数、非法形状/非二元输入/污染padding与只读handle。缺少扩展时明确跳过这4项，native CI强制运行。大尺寸性能不从有限测试推断。
+
 S4-01另增加4项测量回归，检查过滤的互斥成本分段、重复联合输出hash、库内失败与成功查询的区分、
 写出前的LF字节及历史CRLF/Git LF校验映射；
 它们不计入历史129项数学测试。冻结main的重跑、R0采样/RSS与诊断入口见 [性能协议](BENCHMARKS.md)。
