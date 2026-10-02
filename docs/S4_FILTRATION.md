@@ -127,4 +127,3 @@ schema 2往返。此smoke不覆盖native因子构造或尚未交付的#66，也�
 设置HOMOLOGY_NATIVE_REQUIRED=1、使用uv --no-sync后[148项完整回归](../benchmarks/s4_filtration_verification.log)
 全部通过，无跳过。Ruff、文档/链接、示例、构建、隔离wheel导入另实际通过。远端CI及
 最终main验收按实际PR/head记录，不以本地日志代替。
-
