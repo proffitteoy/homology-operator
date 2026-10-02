@@ -6,7 +6,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 当前状态
 
-2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成项目规则、文档入口和验证工具初始化。当前处于 Phase 0 契约准备阶段，文档描述的算子、solver、filtration 和 fixture corpus 尚未实现；没有已发布版本。
+2026-10-01 按 [冷启动计划](docs/冷启动.md) 完成项目规则、文档入口和验证工具初始化。现已建立 Phase 1 reference 工具链；数学算子、solver、filtration 和 fixture corpus 将按 issue 逐项实现，没有已发布版本。
 
 初始化前本地 `HEAD` 与 `origin/main` 均为 `6ddce1b4e4d55c0aaff399c001e684d908026830`。理论来源固定为 [homology-operator-lab 的指定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)，研究代码及其依赖不构成本仓库的运行时依赖。
 
@@ -16,7 +16,7 @@ Boundary-native F2 homology operators with joint persistence and geometric outpu
 
 ## 开始使用
 
-先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。当前只需 Git 和 PowerShell 7 即可检查仓库文档；没有安装包或算子运行命令。
+先读 [项目约定](AGENTS.md) 和 [文档索引](docs/README.md)。reference 使用 Python 3.10+ 标准库与 uv 0.11.5：显式 F2 代数与 Fraction 有理数便于独立审查，不锁定 Phase 4 高性能核心语言。运行时没有第三方依赖，开发依赖由 uv.lock 锁定；PowerShell 7 用于文档检查。开发快照版本 0.0.2.dev0 不是发行。
 
 在仓库根目录运行：
 
@@ -25,16 +25,29 @@ pwsh -NoProfile -File ./scripts/check_docs.ps1
 git diff --check
 ```
 
+
+reference 安装与检查（仓库根目录）：
+
+```powershell
+uv sync --locked --python 3.10
+uv run --locked python -m unittest discover -s tests -v
+uv run --locked ruff check .
+uv run --locked ruff format --check .
+uv build --no-build-isolation
+```
+
+CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。包导入测试只证明工具链可用，不替代后续数学验收。
+
 第一条检查必需文档、UTF-8、冲突标记和本地 Markdown 文件链接，涵盖尚未跟踪的文档；失败时退出码非零。第二条检查已有跟踪文件改动的空白错误。详细范围和数学实现的验收门槛见 [验证说明](docs/VALIDATION.md)。
 
 | 入口 | 当前状态 |
 | --- | --- |
 | 文档检查 | `scripts/check_docs.ps1`，可运行 |
-| 主语言、包管理器和依赖 | 尚未选定；首次 reference 实现时记录，高性能核心按路线图 Phase 4 决定 |
-| 启动、构建、数学测试 | 尚无实现与入口 |
-| Lint、format、typecheck | 尚未配置 |
+| reference 语言与依赖 | Python 3.10+、uv 0.11.5；运行时标准库，开发依赖锁定在 uv.lock |
+| 导入、构建、测试 | uv 安装；Hatchling 打包；unittest，当前首先验证包导入 |
+| 静态检查与格式 | Ruff；未配置独立 typecheck |
 | 配置、迁移、种子数据、部署 | 当前没有对应需求或脚本 |
-| CI、发布、LICENSE | 尚未配置或选定 |
+| CI、发布、LICENSE | Reference checks（Python 3.10/3.12）；未发布，许可证待选 |
 
 ## 仓库入口
 
@@ -46,6 +59,6 @@ git diff --check
 | [docs/development/](docs/development/) | 通用架构模板、约束、代码组织与审计参考材料 |
 | [scripts/check_docs.ps1](scripts/check_docs.ps1) | 文档一致性检查工具 |
 
-`src/`、`tests/`、`benches/` 在架构文档中表示后续组织建议，尚未创建。首个实现按路线图推进：F2 代数与 `ChainWindow` → 合法投影和独立 validator → 同一算子的完整联合读取与小规模 fixture 验证。实现和运行环境建立后同步更新真实命令。
+`src/homology_operator/` 与 `tests/` 已用于包导入验收；其余路线图目录按需求创建。首个实现按路线图推进：F2 代数与 `ChainWindow` → 合法投影和独立 validator → 同一算子的完整联合读取与小规模 fixture 验证。实现和运行环境建立后同步更新真实命令。
 
 `selected_mass` 表示当前投影选定代表的质量，不能声称是最短代表。可行投影、精确拓扑、全局最优伸长、稳定性和性能分别需要相应证据，见 [solver 契约](docs/SOLVER_CONTRACT.md) 和 [开发路线](HOMOLOGY_OPERATOR_ROADMAP.md)。
