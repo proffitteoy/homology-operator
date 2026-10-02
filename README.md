@@ -62,3 +62,9 @@ CI 执行相同入口，并在隔离环境安装 wheel、运行文档检查。�
 `src/homology_operator/` 与 `tests/` 已用于包导入验收；其余路线图目录按需求创建。首个实现按路线图推进：F2 代数与 `ChainWindow` → 合法投影和独立 validator → 同一算子的完整联合读取与小规模 fixture 验证。实现和运行环境建立后同步更新真实命令。
 
 `selected_mass` 表示当前投影选定代表的质量，不能声称是最短代表。可行投影、精确拓扑、全局最优伸长、稳定性和性能分别需要相应证据，见 [solver 契约](docs/SOLVER_CONTRACT.md) 和 [开发路线](HOMOLOGY_OPERATOR_ROADMAP.md)。
+
+## 精确 F2 reference 代数
+
+`from homology_operator import Matrix` 提供带显式形状的不可变矩阵；`from_rows([], ncols=n)` 保留 0×n，`zero(m,0)` 保留 m×0。外部坐标必须为整数 0/1（bool、float、取模输入均拒绝），消元不交换原列。支持 F2 加乘、`apply`、`rref`、`rank`、`kernel_basis`、`image_basis` 与 `solve`；不可解返回 None，空解是 tuple。自由变量置零，pivot 从左到右，结果可复现。
+
+这是显式行存储的小规模 correctness reference，消元为多项式稠密运算，核/像枚举只在独立测试使用；不提供高性能保证。测试穷举所有至多 3×3 的 F2 矩阵，以独立向量枚举核对核、像、秩和可解性。
