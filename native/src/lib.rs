@@ -225,6 +225,8 @@ fn _homology_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(packed::packed_add, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_product, module)?)?;
     module.add_class::<packed::PreparedMatrix>()?;
+    module.add_function(wrap_pyfunction!(packed::compact_actions, module)?)?;
+    module.add_class::<packed::GeometryWorkspace>()?;
     module.add("__version__", "0.0.2.dev0")?;
     Ok(())
 }
