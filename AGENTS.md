@@ -4,8 +4,8 @@
 
 ## 项目事实与入口
 
-- 本仓库是边界数据原生的 F2 同调算子库，目前处于契约准备阶段；尚无数学实现、包管理器、运行环境配置或数学测试。
-- 当前可执行工具只有文档检查脚本，要求 PowerShell 7；不据此锁定 reference backend 或高性能核心的语言。
+- 本仓库是边界数据原生的 F2 同调算子库，目前逐项实现 Phase 1 reference；Python/uv 工具链已建立，数学能力以实际源码和测试为据。
+- reference backend 使用 Python 3.10+ 标准库与 uv；文档检查要求 PowerShell 7；高性能核心语言仍在 Phase 4 决定。
 - 开始任务先读 [README](README.md)、[文档索引](docs/README.md) 和相关契约。路线图中的目录、对象和版本号是开发目标，不能作为已实现的证据。
 - 明确的用户要求优先；仓库的数学契约优先于通用模板和 skills。若以后出现更具体的 `AGENT.md` 或目录级 `AGENTS.md`，还需读取其适用规则。
 
@@ -38,7 +38,7 @@ pwsh -NoProfile -File ./scripts/check_docs.ps1
 git diff --check
 ```
 
-文档检查涵盖未跟踪的 Markdown；`git diff --check` 只补充检查 Git 中已有文件的改动。当前没有启动、构建、数学测试、lint、format、typecheck 或发布命令；新增实现时必须同时提供真实命令和依赖说明。
+文档检查涵盖未跟踪的 Markdown；`git diff --check` 只补充检查 Git 中已有文件的改动。reference 安装、测试、Ruff 与打包命令见 README；尚无 typecheck 或发布命令。新增实现时必须同时提供真实命令和依赖说明。
 
 ## 变更与验证
 

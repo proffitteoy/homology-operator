@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "homology-operator"
+version = "0.0.2.dev0"
+description = "Boundary-native F2 homology operators: single-scale reference implementation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = ["hatchling==1.27.0", "ruff==0.11.13"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/homology_operator"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
