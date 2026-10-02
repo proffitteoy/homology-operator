@@ -6,7 +6,7 @@ from math import isfinite
 from types import MappingProxyType
 from collections.abc import Mapping, Set
 
-from .algebra import Matrix
+from .algebra import Matrix, CyclicAction
 
 
 class InvalidInput(ValueError):
@@ -54,6 +54,29 @@ def matrix_from_data(data):
         return Matrix(data["nrows"], data["ncols"], data["rows"])
     except (TypeError, ValueError) as error:
         raise InvalidInput(str(error)) from error
+
+
+def action_data(action):
+    if isinstance(action, CyclicAction):
+        return {
+            "kind": "CyclicTrace",
+            "version": 1,
+            "m": action.m,
+            "complement": action.complement,
+        }
+    return matrix_data(action)
+
+
+def action_from_data(data):
+    if isinstance(data, Mapping) and data.get("kind") == "CyclicTrace":
+        if (
+            set(data) != {"kind", "version", "m", "complement"}
+            or type(data["version"]) is not int
+            or data["version"] != 1
+        ):
+            raise InvalidInput("unsupported cyclic action handle")
+        return CyclicAction(data["m"], data["complement"])
+    return matrix_from_data(data)
 
 
 @dataclass(frozen=True)

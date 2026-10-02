@@ -187,3 +187,69 @@ class Matrix:
         for row, pivot in enumerate(pivots):
             solution[pivot] = reduced.rows[row][-1]
         return tuple(solution)
+
+
+@dataclass(frozen=True)
+class CyclicAction:
+    """Version-1 handle for pinned T-B1 P_m, or I+P_m, without dense storage.
+
+    The reference certificate currently supports m=2,3,4. Kernel readouts may
+    allocate their output basis; apply needs only linear temporary storage.
+    """
+
+    m: int
+    complement: bool = False
+
+    def __post_init__(self):
+        if type(self.m) is not int or not 2 <= self.m <= 4:
+            raise ValueError("CyclicAction requires 2 <= m <= 4")
+        if type(self.complement) is not bool:
+            raise ValueError("complement must be a boolean")
+
+    @property
+    def nrows(self):
+        return (1 << self.m) - 1
+
+    @property
+    def ncols(self):
+        return self.nrows
+
+    def apply(self, vector):
+        vector = validate_vector(vector, self.ncols)
+        n = self.nrows
+        packed = sum(bit << j for j, bit in enumerate(vector))
+        mask = (1 << n) - 1
+        output = packed if self.complement else 0
+        for i in range(self.m):
+            shift = 1 << i
+            output ^= ((packed << shift) & mask) | (packed >> (n - shift))
+        return tuple((output >> j) & 1 for j in range(n))
+
+    def __matmul__(self, other):
+        if not isinstance(other, Matrix):
+            return NotImplemented
+        if self.ncols != other.nrows:
+            raise ValueError("action product requires matching inner dimensions")
+        return Matrix.from_columns(
+            (self.apply(z) for z in other.transpose().rows), nrows=self.nrows
+        )
+
+    def rank(self):
+        rank = 1 << (self.m - 1)
+        return self.nrows - rank if self.complement else rank
+
+    def kernel_basis(self):
+        # For an idempotent, ker(P)=im(I+P). Stream columns instead of building P.
+        other = CyclicAction(self.m, not self.complement)
+        pivots, selected = {}, []
+        for j in range(self.ncols):
+            z = other.apply(tuple(int(i == j) for i in range(self.ncols)))
+            packed = sum(bit << i for i, bit in enumerate(z))
+            while packed:
+                pivot = packed.bit_length() - 1
+                if pivot not in pivots:
+                    pivots[pivot] = packed
+                    selected.append(z)
+                    break
+                packed ^= pivots[pivot]
+        return tuple(selected)

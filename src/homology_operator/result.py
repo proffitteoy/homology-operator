@@ -8,8 +8,8 @@ import json
 from math import isfinite
 from types import MappingProxyType
 
-from .algebra import Matrix
-from .chain import ChainWindow, matrix_data, matrix_from_data
+from .algebra import Matrix, CyclicAction
+from .chain import ChainWindow, action_data, action_from_data
 
 
 IDENTITY_FIELDS = (
@@ -123,7 +123,10 @@ def input_identity(window):
 def make_identity(
     window, projection, solver_run_id, tie_break_policy="StableBasisOrder"
 ):
-    if not isinstance(projection, Matrix) or (projection.nrows, projection.ncols) != (
+    if not isinstance(projection, (Matrix, CyclicAction)) or (
+        projection.nrows,
+        projection.ncols,
+    ) != (
         window.n,
         window.n,
     ):
@@ -139,7 +142,7 @@ def make_identity(
         {
             "input_id": identity["input_id"],
             "basis_id": identity["basis_id"],
-            "action": matrix_data(projection),
+            "action": action_data(projection),
             "tie_break_policy": tie_break_policy,
         },
     )
@@ -233,7 +236,7 @@ class OperatorResult:
 
     identity: Mapping | None
     input_data: ChainWindow | Mapping | None
-    projection: Matrix | Mapping | None
+    projection: Matrix | CyclicAction | Mapping | None
     solver: Mapping
     certificate: Mapping
     provenance: Mapping
@@ -267,8 +270,8 @@ class OperatorResult:
             if self.projection is None
             else (
                 self.projection
-                if isinstance(self.projection, Matrix)
-                else matrix_from_data(self.projection)
+                if isinstance(self.projection, (Matrix, CyclicAction))
+                else action_from_data(self.projection)
             )
         )
         if not isinstance(self.solver, Mapping):
@@ -427,7 +430,7 @@ class OperatorResult:
             else self.input_data.to_dict(),
             "projection": None
             if self.projection is None
-            else matrix_data(self.projection),
+            else action_data(self.projection),
             "solver": _encode(self.solver),
             "certificate": _encode(self.certificate),
             "provenance": _encode(self.provenance),

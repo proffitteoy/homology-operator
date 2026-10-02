@@ -239,7 +239,7 @@ class OperatorFamily:
         source, target = self.stage(i), self.stage(j)
         source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
         target_kernel = Matrix.from_columns(target.kernel_basis(), target.window.n)
-        chain_action = target.P @ self.inclusion(i, j) @ source_kernel
+        chain_action = target.P @ (self.inclusion(i, j) @ source_kernel)
         coordinates = []
         for column in chain_action.transpose().rows:
             value = target_kernel.solve(column)

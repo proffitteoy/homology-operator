@@ -701,3 +701,15 @@ Solver framework 可视为冻结，至少满足：
 验证来源固定为 `6143729669902ee875b211b58085e954c76cdf88`：PROOF T5、T-A1/T-A3/T-A4及T10，实际阅读了 `global-torus/verify_pruning.py`（Git blob `7a776660b10353928aae6035726a4816b9d53a3c`）、`planar/planar_homology_cut_check.py`（`f6c363e5107b19f6d58bc64320345402a8787e0f`）、`cutting-plane/planar_mincut.py`（`cbb87bff1ab4bb99bacc71c4c001dfc60cc041fd`）。没有移植其浮点容差为精确认证，也没有运行会写研究数据的main。
 
 [rank-2回归](../tests/test_rank2.py) 复用原corpus中全部6个β=2输入及hash，与已有精确真值一致；另按固定PROOF公式生成T-A4宏观割族（δ=1/4、1/10、1/1000，得到 `(2−δ)/(2−2δ)`）和T10秩三反例，文件内记录理论提交及PROOF blob。32组小整数权重与ExhaustiveExactSolver对拍；验证非空消去轨迹、错误结构/终端/分母/标签/颜色、身份与witness篡改、所有state中断位置，以及单尺度和族往返。该有限reference不提供一般规模性能或连续几何最优性结论。
+
+## 24. 可验证handle的循环结构族（S3-05）
+
+`StructuredFamilySolver` 只接受显式声明 `input_structure="CyclicTrace"` 且实际满足固定T-B1的窗口：n=2^m−1、m∈{2,3,4}、A=0、im(D)=ker(P_m)、坐标权重为同一个正整数/有理数。P_m是m个二次幂循环移位的异或；等权的统一缩放不改变Γ。构造先检查D秩与各列被P消去，不依赖source_metadata中的名称。其他结构、变权、浮点、错误边界或更大m返回Unavailable，不回退为另一个solver。
+
+`matrix_free_output=True` 产生只含m与补标志的CyclicAction；false产生同一公式的显式Matrix。StableBasisOrder和StructuredCanonical均选择指定公式，不承诺全体最优解的字典序。P/L的应用使用packed位循环移位，按二元坐标复杂度为O(nm)；构造、输入验证、核基输出与证书验证另计，未做性能优势声明。输入A/D仍是显式矩阵，结果中的版本1handle本身可恢复且身份稳定；不同表示身份不能混用，详见 [结果模型](RESULT_MODEL.md)。
+
+合法性独立验证P²=P、L²=L、AP=0、PD=0和循环同调保持；CyclicAction在全部坐标生成集及完整循环基上验证，不使用“结构成立”布尔标志代替检查。`CyclicTrace`最优性证书另核对逐列公式及列质量m、所有质量≤m的非零向量均不在ker(P)、(I+P)e0是质量m+1的非零边界。于是核距离为m+1；若另一截面Γ<m，整数质量迫使每个坐标输出与原坐标的差为0，投影将成为恒等，与非零边界矛盾。当前Γ=m由全链空间等权下的最大列质量得到；objective witness、精确等界及gap分别复核。
+
+来源为固定研究提交 `6143729669902ee875b211b58085e954c76cdf88` 的PROOF T-B1及 `structured/verify_exact.py`（Git blob `21adb77a258a7342312333c3b77d8a8406ce5037`）。循环码幂等、迹和连续零点的Vandermonde核距离机制属原文注明的经典编码论成分；此实现没有声称新的编码构造。当前m上限源自有限独立距离证书的成本，不把一般公式的适用范围冒充已支持参数。
+
+[结构族测试](../tests/test_structured.py) 的输入由独立列公式生成并记录来源：m=2与通用exhaustive对照，m=3额外枚举4096个截面求得真值3，m=4由独立低重量距离证书给出4。三个m的全部列、秩和核距离实际与固定上游纯函数对照。测试覆盖project/L/同调/几何、显式与结构化表示、禁用dense identity时的构造与快照恢复、族transport、反复往返、handle和证书篡改、身份混用、输入识别及资源失败。solver有state/time/matrix-entry检查点；独立生成集与距离证书重放另计，构造中断无完整验证action时不携带可行或最优声明。

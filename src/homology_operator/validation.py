@@ -2,10 +2,10 @@
 
 from collections.abc import Mapping
 from fractions import Fraction
-from itertools import product
+from itertools import product, combinations
 from math import isfinite
 
-from .algebra import Matrix, validate_vector
+from .algebra import Matrix, CyclicAction, validate_vector
 from .chain import ChainWindow, matrix_from_data
 from .result import QueryResult, content_id, make_identity
 
@@ -20,7 +20,7 @@ class ValidationError(ValueError):
         super().__init__("projection validation failed: " + ", ".join(self.failures))
 
 
-def validate_projection(window: ChainWindow, P: Matrix) -> dict:
+def validate_projection(window: ChainWindow, P: Matrix | CyclicAction) -> dict:
     """Verify legality, including homology preservation on a full cycle basis.
 
     Idempotence and AP=PD=0 do not ensure preservation: the zero projection
@@ -30,30 +30,58 @@ def validate_projection(window: ChainWindow, P: Matrix) -> dict:
     """
     if not isinstance(window, ChainWindow):
         raise ValidationError(("window_type",))
-    if not isinstance(P, Matrix):
+    if not isinstance(P, (Matrix, CyclicAction)):
         raise ValidationError(("projection_type",))
     if (P.nrows, P.ncols) != (window.n, window.n):
         raise ValidationError(("projection_shape",))
 
-    L = Matrix.identity(window.n) + P
-    checks = {
-        "p_idempotent": P @ P == P,
-        "l_idempotent": L @ L == L,
-        "a_p_zero": window.A @ P == Matrix.zero(window.m, window.n),
-        "p_d_zero": P @ window.D == Matrix.zero(window.n, window.p),
-        "cycle_homology_preservation": all(
-            window.D.solve(tuple(left ^ right for left, right in zip(z, P.apply(z))))
-            is not None
+    if isinstance(P, CyclicAction):
+        checks = dict.fromkeys(
+            (
+                "p_idempotent",
+                "l_idempotent",
+                "a_p_zero",
+                "p_d_zero",
+                "cycle_homology_preservation",
+            ),
+            True,
+        )
+        L = CyclicAction(P.m, not P.complement)
+        for j in range(window.n):
+            e = tuple(int(i == j) for i in range(window.n))
+            p, image_l = P.apply(e), L.apply(e)
+            checks["p_idempotent"] &= P.apply(p) == p
+            checks["l_idempotent"] &= L.apply(image_l) == image_l
+            checks["a_p_zero"] &= not any(window.A.apply(p))
+        checks["p_d_zero"] = all(not any(P.apply(z)) for z in window.D.transpose().rows)
+        checks["cycle_homology_preservation"] = all(
+            window.D.solve(tuple(a ^ b for a, b in zip(z, P.apply(z)))) is not None
             for z in window.A.kernel_basis()
-        ),
-    }
+        )
+    else:
+        L = Matrix.identity(window.n) + P
+        checks = {
+            "p_idempotent": P @ P == P,
+            "l_idempotent": L @ L == L,
+            "a_p_zero": window.A @ P == Matrix.zero(window.m, window.n),
+            "p_d_zero": P @ window.D == Matrix.zero(window.n, window.p),
+            "cycle_homology_preservation": all(
+                window.D.solve(
+                    tuple(left ^ right for left, right in zip(z, P.apply(z)))
+                )
+                is not None
+                for z in window.A.kernel_basis()
+            ),
+        }
     failures = tuple(name for name, valid in checks.items() if not valid)
     if failures:
         raise ValidationError(failures)
     return {
         **checks,
         "exact_arithmetic": True,
-        "verification_method": "ExactF2MatrixAndCycleBasis",
+        "verification_method": "ExactF2ActionGeneratorsAndCycleBasis"
+        if isinstance(P, CyclicAction)
+        else "ExactF2MatrixAndCycleBasis",
     }
 
 
@@ -147,11 +175,15 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     proof = certificate.get("optimization")
     if certified and (
         not isinstance(proof, Mapping)
-        or proof.get("kind") not in {"CycleBounds", "ExhaustiveSearch", "Rank2Search"}
+        or proof.get("kind")
+        not in {"CycleBounds", "ExhaustiveSearch", "Rank2Search", "CyclicTrace"}
     ):
         raise ValidationError(("unsupported_optimality_certificate",))
     if certified:
+        if isinstance(projection, CyclicAction) and proof["kind"] != "CyclicTrace":
+            raise ValidationError(("unsupported_structured_certificate",))
         allowed_fields = {
+            "CyclicTrace": {"kind", "m", "kernel_distance"},
             "CycleBounds": {"kind", "nonzero_cycles", "lower_bound_method"},
             "ExhaustiveSearch": {
                 "kind",
@@ -189,6 +221,10 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
         raise ValidationError(("certified_objective_and_upper_bound_required",))
     if level in {"CertifiedInterval", "ExactOptimal"} and lower is None:
         raise ValidationError(("certified_lower_bound_required",))
+    if certified and proof["kind"] == "CyclicTrace":
+        return _validate_cyclic_certificate(
+            window, projection, proof, solver, objective, lower, upper
+        )
     if (
         not certified
         and lower is None
@@ -407,6 +443,63 @@ def _replay_exhaustive(window, projection, proof, cycle_basis, inputs, rank2_cut
     if (current, declared_key) != optimum or current != global_value:
         raise ValidationError(("optimal_projection_or_tie_break",))
     return optimum[0]
+
+
+def _validate_cyclic_certificate(
+    window, projection, proof, solver, objective, lower, upper
+):
+    m = proof.get("m")
+    if (
+        type(m) is not int
+        or not 2 <= m <= 4
+        or type(proof.get("kernel_distance")) is not int
+        or proof["kernel_distance"] != m + 1
+    ):
+        raise ValidationError(("cyclic_parameters",))
+    if (
+        window.arithmetic not in {"ExactInteger", "ExactRational"}
+        or window.n != (1 << m) - 1
+        or window.A.rank() != 0
+        or len(set(window.weights)) != 1
+    ):
+        raise ValidationError(("cyclic_input_structure",))
+    # Formula, full-cube operator norm, and distance obstruction are independent
+    # of the solver's construction; no optimization flag or rank formula is trusted.
+    for j in range(window.n):
+        e = tuple(int(i == j) for i in range(window.n))
+        expected = tuple(
+            int((i - j) % window.n in {1 << s for s in range(m)})
+            for i in range(window.n)
+        )
+        if projection.apply(e) != expected or sum(expected) != m:
+            raise ValidationError(("cyclic_formula",))
+    for weight in range(1, m + 1):
+        for support in combinations(range(window.n), weight):
+            z = tuple(int(i in support) for i in range(window.n))
+            if not any(projection.apply(z)):
+                raise ValidationError(("cyclic_kernel_distance",))
+    e0 = (1,) + (0,) * (window.n - 1)
+    b = tuple(a ^ c for a, c in zip(e0, projection.apply(e0)))
+    if sum(b) != m + 1 or window.D.solve(b) is None or window.D.rank() == 0:
+        raise ValidationError(("cyclic_distance_witness",))
+    if (
+        solver["certificate_level"] != "ExactOptimal"
+        or any(
+            type(x) not in {int, Fraction} or x != m
+            for x in (lower, upper, objective.value)
+        )
+        or objective.state != "Computed"
+        or objective.exact is not True
+    ):
+        raise ValidationError(("cyclic_equal_exact_bounds",))
+    witness = validate_vector(objective.details.get("witness", ()), window.n)
+    if not any(witness) or Fraction(sum(projection.apply(witness)), sum(witness)) != m:
+        raise ValidationError(("objective_witness",))
+    return {
+        "objective_replayed": True,
+        "bounds_verified": True,
+        "optimality_verified": True,
+    }
 
 
 def validate_rank2_structure(window, structure, options):
