@@ -15,9 +15,9 @@
 
 ## 实现状态（2026-10-03 核对）
 
-已核验通过的 `main` CI 基线为 `e920de0a2a9ac92e4f4c46bfe28e39a8212f5769`。
-该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37032308262)
-和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37032308251)
+已核验通过的 `main` CI 基线为 `7fa812d5e76ca80ac16316cb212d133c0639bfd7`。
+该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37111993987)
+和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37111993984)
 均已完成并通过。CI 结论仅绑定这个提交，不覆盖尚未合入该提交的开发工作。
 
 | 范围 | 已有实现或证据 | 边界 |
@@ -30,12 +30,14 @@
 | S4-06 / [PR #81](https://github.com/proffitteoy/homology-operator/pull/81) | 几何批查询、精确权重与 workspace | PR #81 原先只合入 `s4/64-factorized-action`；已由 [PR #85](https://github.com/proffitteoy/homology-operator/pull/85) 集成到 main e920de0 |
 | S4-05 / [PR #84](https://github.com/proffitteoy/homology-operator/pull/84) | 四种限定 native solver、精确质量后备与独立证书重放；159项整合回归、700条有限性能样本 | 已合入 main `63138fc`；认证 solver 输出仍为 Matrix/CyclicAction，后端集成另验收 |
 | S4-07 / [PR #82](https://github.com/proffitteoy/homology-operator/pull/82) | 相邻 transport barcode、历史区间基、受控缓存与 schema 2 共享过滤快照 | 已合入 main `f0c15265`；保留 schema 1 兼容和有限合成性能范围 |
-| S4-08 / #68 | 后端选择/可见后备、取消、旧格式与紧凑恢复、隔离 wheel CI | 本分支实现，验证入口见 [VALIDATION](VALIDATION.md#s4-08-后端集成验收)；尚未合入上述 main |
-| S4 后续 / S5 | GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
+| S4-08 / [PR #86](https://github.com/proffitteoy/homology-operator/pull/86) | 后端选择/可见后备、取消、旧格式与紧凑恢复、隔离 wheel CI | 已合并至上述 main；Windows/Linux强制native和隔离wheel CI通过，见 [VALIDATION](VALIDATION.md#s4-08-后端集成验收) |
+| S4-09 / [验收报告](S4_REPORT.md) | 27配置、1880独立进程、同P/认证/联合输出、完整成本/RSS/消融与S5源码冻结 | 性能门槛通过；4组时间退化，保留可选后端；最终合并/main CI以 [S4 Epic](https://github.com/proffitteoy/homology-operator/issues/59)记录为据 |
+| S5 | GUDHI 三方正确性与正式对照测量 | 本轮没有实施；S4数据不替代S5 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 public，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
-main 已包含 S4-04/05/06/07 与文档 PR #83；本分支正常 merge 同步 main，旧分支与原始测量保留。
-使用说明对应当前源码；整合前 CI、各工作包历史证据与最终整合验收分别记录，S4/S5 总门槛不因此完成。
+上述main已包含S4-01–08；S4-09的生产被测源码也固定在同一7fa812d，
+新增harness/数据/报告的源码身份另列，不冒充新main测量。旧分支与原始数据保留。
+使用说明对应当前源码；整合前CI、各工作包历史证据与最终验收分别记录；S4性能门槛与最终合并/CI分开，S5仍独立验收。
 测试总数以指定 checkout 的实际运行结果为准，历史报告中的计数不作为滚动状态。
 
 ## 开发计划与证据
@@ -55,6 +57,7 @@ main 已包含 S4-04/05/06/07 与文档 PR #83；本分支正常 merge 同步 ma
 | [Phase 1](PHASE1_REPORT.md) | 57 项单尺度测试与迁移证据 |
 | [Phase 2](PHASE2_REPORT.md) | 81 项测试、11 个族/变体的独立 PH 对拍、隔离 wheel |
 | [Phase 3](PHASE3_REPORT.md) | 129 项数学测试、五 solver 与独立证书、冻结对照/no-go、联合验收；基线 `54ce78b` |
+| [S4](S4_REPORT.md) | 正式同语义性能/RSS、消融、失败与退化、源码/构建/原始数据冻结 |
 | [S4/S5 研究材料](research/s4-s5/) | 上传原件和 5,689 例独立 barcode 端点原型；来源/hash 见工作包文档 |
 
 归档的研究原型不是公共 API、生产计算路径或 GUDHI 验收。
