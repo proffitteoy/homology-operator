@@ -27,6 +27,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.5"
-      - run: uv sync --locked --group oracle --python ${{ matrix.python }}
-      - run: uv run --locked --group oracle python -m unittest discover -s tests -p "test_s5*.py" -v
-      - run: uv run --locked --group oracle python scripts/check_s5_inputs.py --output .task-artifacts/s5-inputs.json
+      - run: uv sync --locked --group oracle --group oracle-secondary --python ${{ matrix.python }}
+      - run: uv run --locked --group oracle --group oracle-secondary python -m unittest discover -s tests -p "test_s5*.py" -v
+      - run: uv run --locked --group oracle --group oracle-secondary python scripts/check_s5_inputs.py --output .task-artifacts/s5-inputs.json
+      - run: uv run --locked --group oracle --group oracle-secondary python scripts/check_s5_oracle.py --require-secondary --output .task-artifacts/s5-oracle.json

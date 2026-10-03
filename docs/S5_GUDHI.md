@@ -5,7 +5,7 @@
 [issue #70](https://github.com/proffitteoy/homology-operator/issues/70) 的输入适配器位于
 [tests/oracle/simplicial.py](../tests/oracle/simplicial.py)，不进入运行时包。
 reference 的运行时依赖仍为空；GUDHI 仅在测试 oracle 和后续测量对照路径使用。
-此工作包没有实现 PH oracle、三方联合验收或性能结论，它们由后续 S5 issue 交付。
+S5-01 只验收输入；下方 S5-02 提供 PH oracle。三方联合验收及性能由后续工作包交付。
 
 [冻结 corpus](../tests/fixtures/s5_simplicial.json) 有六个明确构造的复形：空复形、孤点、
 重复 scale 的环/填充、H2 球面/三维填充、受控 H3/四维填充、截断环存活。
@@ -50,3 +50,33 @@ uv run --locked --group oracle python scripts/check_s5_inputs.py --output .task-
 [S5 oracle CI](../.github/workflows/s5-oracle.yml) 在 Windows/Python 3.12 和
 Linux/Python 3.10、3.12 安装锁定组并强制执行真实 GUDHI 测试。
 CI 配置、本地通过和准确 PR head 的远端结果分别报告，不借用 S4 CI 认证新内容。
+
+## S5-02 F2 PH 与区间规范化
+
+[tests/oracle/gudhi_oracle.py](../tests/oracle/gudhi_oracle.py) 主入口直接使用同一显式 SimplexTree，
+再次核对真实输入后显式调用 `persistence(homology_coeff_field=2, min_persistence=0, persistence_dim_max=True)`。
+拒绝安装版本偏离3.11.0；[冻结结果](../benchmarks/s5_oracle_audit.json)记录实际wheel中的编译模块hash，
+wheel来源/下载hash由uv.lock绑定，无本地GUDHI编译。
+
+规范化只使用整数stage，丢弃同stage对角配对，保留跨stage但同原scale的条、None末端和multiplicity。
+由条多重集计数Betti和所有i≤j区间rank，与实际算子/族逐项读取值对拍。
+最高维度选项不补缺失的q+1单形：H2球面仅有三角面时存活，有共同四面体时才死亡。
+不比较算法pairing、基或代表；几何、Γ和证书没有GUDHI真值。
+
+次基线执行真实 `SimplexTree.collapse_edges(nb_iterations=1)` → `expansion(q+1)`，
+以及 `gudhi.sklearn.rips_persistence.RipsPersistence(...).fit_transform([matrix])`。
+只接受顶点stage0且与图的q+1维flag展开完全相同的输入；延迟填充或缺失高维单形返回NotApplicable。
+RipsPersistence使用stage编码的完整edge dissimilarity矩阵、threshold=末stage、显式F2、num_collapses=0和n_jobs=1。
+这里不把stage矩阵声称为欧氏度量；collapse改变链表示，只比较flag拓扑，不声明原链几何保持。
+主基线的输入/参数与这些次入口分别记录。
+
+`oracle-secondary` 组额外锁定scikit-learn1.7.2、SciPy1.15.3、joblib1.5.2和threadpoolctl3.6.0；
+缺依赖时RipsPersistence显式Unavailable。主PH不需要这些可选包。完整实际入口复跑：
+
+```powershell
+uv sync --locked --group oracle --group oracle-secondary --python 3.12
+uv run --locked --group oracle --group oracle-secondary python scripts/check_s5_oracle.py --require-secondary --output .task-artifacts/s5-oracle-recheck.json
+```
+
+本地12项S5测试通过；六个主实例的Betti/barcode/全区间rank与reference族一致，
+实际flag次入口也一致。有限对拍不作为一般性证明、三方完整语义或性能验收。
