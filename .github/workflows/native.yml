@@ -28,7 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.5"
-      - run: uv sync --locked --python ${{ matrix.python }}
+      - run: uv sync --locked --group oracle --python ${{ matrix.python }}
       - run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --manifest-path native/Cargo.toml --check
       - run: cargo clippy --manifest-path native/Cargo.toml --locked --all-targets -- -D warnings
@@ -43,6 +43,7 @@ jobs:
       - name: Require native differential and regression tests
         env:
           HOMOLOGY_NATIVE_REQUIRED: "1"
+          HOMOLOGY_GUDHI_REQUIRED: "1"
         run: uv run --locked --no-sync python -m unittest discover -s tests -v
       - name: Check installed reference and native wheels in isolation
         env:
