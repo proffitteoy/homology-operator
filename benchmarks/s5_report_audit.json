@@ -1,0 +1,140 @@
+{
+  "aggregation_source_commit": "24bac13",
+  "auditor_ast_unchanged_after_format": true,
+  "auditor_execution_lf_sha256": "d517017f3cc7799a483903312bbc3174766d654329f90481ade826d9caa57a55",
+  "environment": {
+    "build": {
+      "maturin": "1.15.0",
+      "profile": "release",
+      "pyo3": "0.29.3",
+      "rust": "1.98.1",
+      "threads": 1
+    },
+    "executable": "C:\\Users\\84025\\.codex\\worktrees\\s5-sequential\\homology-operator\\.venv\\Scripts\\python.exe",
+    "generator_lf_sha256": "87db218afa176a20bc936a3c28717cb78bc9319336e8d5e85234df312b17a2f4",
+    "gudhi": {
+      "gudhi_version": "3.11.0",
+      "installed_compiled_sha256": {
+        "gudhi/_edge_collapse.cp312-win_amd64.pyd": "5596bc3bded9427ccd66d4743553c144a0ee0d332cc04af40fc464d3474e8dfa",
+        "gudhi/_pers_cub_low_dim.cp312-win_amd64.pyd": "0b782cb08b646cd1f1463c76cd4acab3170f89b73379114f79626b4bac472833",
+        "gudhi/_ripser.cp312-win_amd64.pyd": "9c87cb0a8053ee53d6b4cf912a5290a48276216d489c176faf5282b68a50f6e8",
+        "gudhi/bottleneck.cp312-win_amd64.pyd": "73416529d9f397d1d176436457e51d446665bd262b01e8491a0698ff866ee574",
+        "gudhi/clustering/_tomato.cp312-win_amd64.pyd": "33a34bb86bccea8a0d60ee73e90a924fa660895ed77aaea8275142dc864c4381",
+        "gudhi/cubical_complex.cp312-win_amd64.pyd": "82f68d89fe4e286e6c1cb8bd26347e91893d7920966a7ae439b07e0b821a0f49",
+        "gudhi/datasets/generators/_points.cp312-win_amd64.pyd": "ee176a6253b03e403ead76dfbbc687606e7f30486dfb4c4e1ca42b838624bbb1",
+        "gudhi/delaunay_complex.cp312-win_amd64.pyd": "41d0245fb58a63928997f0c67c37bda7995a8551f44bb92427e2560a652d4e25",
+        "gudhi/euclidean_strong_witness_complex.cp312-win_amd64.pyd": "2e98a83fd6e1b068087f39bb80e2e0aa50db318d55ea50b33680934e409ed5be",
+        "gudhi/euclidean_witness_complex.cp312-win_amd64.pyd": "1a28a6e2d0c021cd3bfd6883daed067b2b84d85371835312f3db1c957ef45fb2",
+        "gudhi/gmp-10.dll": "5b1889ad7e94e8878d9f85131a104ac2a3dbeabec1fe90f4e6c9c37921ead726",
+        "gudhi/gmpxx-4.dll": "b1ec9dcb2a7b918b6b07c9385dbae5ea14f92a7c6238da257d40050ddecb8404",
+        "gudhi/hera/bottleneck.cp312-win_amd64.pyd": "7ff21f5f302c2301a3479ca08038defe617233d8749b0824c49a437f3f56379b",
+        "gudhi/hera/wasserstein.cp312-win_amd64.pyd": "e822a62ccca4d31a78b1369b871832585138e22fa1023c33f5ca825fccb83715",
+        "gudhi/mpfr-6.dll": "1deeb6733a9b44ac44a0254920882558836c0c00d440649eb707227fece7160f",
+        "gudhi/nerve_gic.cp312-win_amd64.pyd": "f2cedb320b7fa45296d9682b8d1d5c0950dfe84895fbc2d9d545d7d128aaf6d5",
+        "gudhi/off_utils.cp312-win_amd64.pyd": "2f6913bfa367d14baced800197f852a328f6c8bfa52a4cfd4891ae4c91546e91",
+        "gudhi/periodic_cubical_complex.cp312-win_amd64.pyd": "9391b3475a106e82523112ac4551adebad3999528bd8fa7a8a5bf08bf349819a",
+        "gudhi/reader_utils.cp312-win_amd64.pyd": "ffcdf519b76edcefa3fa465d06be18d923dac2bdfb46ae4c254130cb304f03bf",
+        "gudhi/rips_complex.cp312-win_amd64.pyd": "abf98dc00d2116efa94551c186a11cdcacb9f477d64e80eb0d048589a938c249",
+        "gudhi/simplex_tree.cp312-win_amd64.pyd": "15e5dc7dbb8368fd7f6b6952e394c9990cc2a7bb705a51d6c144185c692a2b6f",
+        "gudhi/strong_witness_complex.cp312-win_amd64.pyd": "84f88e3b6c515de238658024e83a93468465220d946fca6abec59a1bc9b241c3",
+        "gudhi/subsampling.cp312-win_amd64.pyd": "d95a5a639ac14b9d0c9f4a9ca1726ead60510cd34502c8dbd4ec80f7bc2746fb",
+        "gudhi/tangential_complex.cp312-win_amd64.pyd": "1594c802ef21895429e1d0d4cb951361762db5c299078ccc699d256f7e24e39a",
+        "gudhi/witness_complex.cp312-win_amd64.pyd": "821c2e49751f846f4281919564219c453abb5389c927087f1d73f450d44f6754"
+      },
+      "numpy_version": "2.2.6",
+      "origin": "PyPI binary wheel locked by uv.lock; no local GUDHI build",
+      "persistence_options": {
+        "homology_coeff_field": 2,
+        "min_persistence": 0,
+        "persistence_dim_max": true
+      }
+    },
+    "helper_lf_sha256": {
+      "pyproject.toml": "b3a6b30d151b03694be2cbcb0cb8113880d89d7c9e099976333a77427152dd57",
+      "scripts/benchmark_acceptance.py": "0c90b742811755e03497cefc7b8a9a21c13164aeca0d5849e15f0445bc53e290",
+      "scripts/benchmark_reference.py": "6759bb29a230aed94616259bfeae1fa101cfc59804fb0b00ff9ab9715dc82dfb",
+      "scripts/benchmark_s5.py": "7bbb646a955c597a43e65122fabe28c16f0fbfa51f2d098ff3898f470c2d8d13",
+      "scripts/check_s5_correctness.py": "03156dcc1a4169763c357a933cf52130a4d1434fcaeb97165c43abad989299dd",
+      "tests/oracle/gudhi_oracle.py": "5462f12a1c224d4aa55b66cc2dc83416d76e32c08a78467a5dbb91da6905ae0c",
+      "tests/oracle/simplicial.py": "89881f8e2b4ed8bb55e0ef56362e247fc60be851427ddd806074e27532ac9314",
+      "uv.lock": "e2ac56331f9b23cc2ba934d5ce78672165036d9a46fe1f48e6202a48fe7803fb"
+    },
+    "logical_cpus": 22,
+    "measured_function_ast_sha256": {
+      "construct_families": "b8ccdc9413abe8a31255b842b6f50a18ce8ced6fce56b7bc3de9b952b25e172c",
+      "geometry_value": "25ee61ea4465027b5b3e0ab550781117c82400d5310e93bb806e20f6951fe0a7",
+      "read_topology": "d359c681994d0b2d8a981dfc1851ca8e311a4bc4a1dc55a93a7fc67f22b74c1c",
+      "run_worker_case": "04922ee139fcfc195581f53ee38342c8bc702aa709ffc6c06956f5493d5bc6c4",
+      "sample_process": "5b761b6a8712dee26a89549df802e20a407cb6b0b26a5c2c4fe0ac4c463b0654",
+      "worker": "23065308889de7533316171246dac18df79715fd5571eda38f9720762ceea7a8"
+    },
+    "native": {
+      "binary_sha256": "1adaa926012f0265705c8cfe30076d011b328b831963ab5c96fcfa161639c5e6",
+      "extension_path": "C:\\Users\\84025\\.codex\\worktrees\\s5-sequential\\homology-operator\\.venv\\Lib\\site-packages\\_homology_native\\_homology_native.cp312-win_amd64.pyd",
+      "native": "Available",
+      "platform": "Windows-11-10.0.26100-SP0",
+      "reference": "Available",
+      "semantics_version": 1,
+      "threads": 1
+    },
+    "platform": "Windows-11-10.0.26100-SP0",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "production": {
+      "helper_lf_sha256": {
+        "pyproject.toml": "b3a6b30d151b03694be2cbcb0cb8113880d89d7c9e099976333a77427152dd57",
+        "scripts/benchmark_acceptance.py": "0c90b742811755e03497cefc7b8a9a21c13164aeca0d5849e15f0445bc53e290",
+        "scripts/check_s5_correctness.py": "03156dcc1a4169763c357a933cf52130a4d1434fcaeb97165c43abad989299dd",
+        "tests/oracle/gudhi_oracle.py": "5462f12a1c224d4aa55b66cc2dc83416d76e32c08a78467a5dbb91da6905ae0c",
+        "tests/oracle/simplicial.py": "89881f8e2b4ed8bb55e0ef56362e247fc60be851427ddd806074e27532ac9314",
+        "uv.lock": "e2ac56331f9b23cc2ba934d5ce78672165036d9a46fe1f48e6202a48fe7803fb"
+      },
+      "lf_sha256": {
+        "native/src/lib.rs": "7c7058ee26031937bf4185312ae38fadad53455328de2e6998a5e3738c532210",
+        "native/src/packed.rs": "1b42080dcb233468eba5a2bee171b0880eb973b03331b0105c5fcd8308264385",
+        "src/homology_operator/__init__.py": "6f016677d65b6854e5243e3e1714b16b34dcbeeb113103e47aa49949cf5bbed7",
+        "src/homology_operator/algebra.py": "0fb930b197aaf49f07835d17580d2e2397e3fc4920f410204d84ebb591ab5597",
+        "src/homology_operator/chain.py": "d374e150ab870a0f35e1ab6f601b655c83e71b7abee0b6d148f16b1e04aaf469",
+        "src/homology_operator/family.py": "1faa180d7b4809b742b78b63605b0bc57b09d025c8c3f7fff1df744bf8956c0f",
+        "src/homology_operator/native.py": "bb215cd34fac35f5eff59999965f1237e105cbe846e6bcc6ca85a6a394b7af99",
+        "src/homology_operator/operator.py": "2c1a137d2959cef20b5264e7a56d91b6498a1d171cc573b41cc7f354c8d96dd0",
+        "src/homology_operator/result.py": "00a6bfdc95de02cf3c66781b1acc31024fe98de3fa66a356f3207bdee4abd126",
+        "src/homology_operator/solver.py": "ad49a881f5e636dedcd1a6db400563bb14cde34d661097e2230158adb2ecfa29",
+        "src/homology_operator/validation.py": "7f4350c4d693ac11df0072e367002f77462957e0b922e04fd686667efce87e6d"
+      },
+      "production_sha": "7fa812d5e76ca80ac16316cb212d133c0639bfd7"
+    },
+    "python": "3.12.13",
+    "thread_env": {
+      "BLIS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    }
+  },
+  "library_states": {
+    "Computed": 5360,
+    "NotApplicable": 200,
+    "ResourceExhausted": 240,
+    "Unavailable": 240
+  },
+  "manifest_lf_sha256": "284d00807a3ffe8bb25cc39c4481b063c1d37a6d26a3a38d45666f418927e5bd",
+  "measured_checkout_sha": "f4b0d58148c7b94b83dcb5ae5bfe79857deb2c73",
+  "original_summary_changed": false,
+  "process_states": {
+    "completed": 2840
+  },
+  "published_auditor_lf_sha256": "6c52c1d58c36c1ab83fd0792d20ca965f76a0c63e4672f9afc59db767012cd1c",
+  "raw_decompressed_sha256": "f90e00a5f1f29155a6f949c8f2330e5cb48ce82c09fc9c7271f96474fc949f1e",
+  "raw_file_sha256": "e0bc636f595657927889cc1399c667a07b9b07342030175a110a9bef2224cdf0",
+  "rss_budget_exceeded": 0,
+  "rss_missing": 0,
+  "scope_note": "Rebuild from existing frozen raw; no new performance or corpus sampling in S5-06 per user request",
+  "statistics_source": "review-corrected aggregator; raw worker and original summary are unchanged",
+  "successful_process_samples": 2560,
+  "table_sha256": {
+    "s5_phases.csv": "269101dfdfdf670f41d2ed74764a3c9e0f200155b781532a3a2905cff2c0fab4",
+    "s5_statistics.csv": "1b4577d263379118c222b7eb74ffbc1818e782596d0e98c8f1d6e54f6fc725de"
+  }
+}

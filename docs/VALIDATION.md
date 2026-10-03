@@ -259,3 +259,11 @@ reference-only独立wheel的20项集成/旧格式/联合恢复中14项通过，6
 只用于 tests/oracle 与测量对照。新增 S5 workflow 强制安装锁定组，覆盖 Windows3.12/Linux3.10/3.12。
 普通 reference/native 检查缺该组时明确跳过 GUDHI 专项测试；`HOMOLOGY_GUDHI_REQUIRED=1` 阻止静默跳过。
 manifest 的标准库校验和链构造始终执行。S5-01 双边输入导出通过不等于 PH 或性能验收。
+
+### S5-05/06 正式证据与报告重建
+
+[S5报告](S5_REPORT.md)合并交付#74/#75，保存20配置、2840进程全部原值/失败、全部284组median/IQR/配对区间和分段。
+review后对已有raw重新汇总，原summary未变；本次按用户要求取消追加隔离采样/correctness，不能记为新运行。
+report_s5.py使用标准库和本包，在完整Git历史中核对冻结来源并重建两张CSV；真实命令/hash对拍见报告。
+旧正式测量仍只绑定f4b0d58及S4生产源码/原二进制环境；当前review后helper拒绝旧freeze冒名运行。
+本地correctness8项、采样9项、同步后采样10项分别通过，不冒充新的整仓或main CI成绩。

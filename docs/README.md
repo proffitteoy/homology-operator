@@ -32,15 +32,21 @@
 | S4-07 / [PR #82](https://github.com/proffitteoy/homology-operator/pull/82) | 相邻 transport barcode、历史区间基、受控缓存与 schema 2 共享过滤快照 | 已合入 main `f0c15265`；保留 schema 1 兼容和有限合成性能范围 |
 | S4-08 / [PR #86](https://github.com/proffitteoy/homology-operator/pull/86) | 后端选择/可见后备、取消、旧格式与紧凑恢复、隔离 wheel CI | 已合并至上述 main；Windows/Linux强制native和隔离wheel CI通过，见 [VALIDATION](VALIDATION.md#s4-08-后端集成验收) |
 | S4-09 / [验收报告](S4_REPORT.md) | 27配置、1880独立进程、同P/认证/联合输出、完整成本/RSS/消融与S5源码冻结 | 性能门槛通过；4组时间退化，保留可选后端；最终合并/main CI以 [S4 Epic](https://github.com/proffitteoy/homology-operator/issues/59)记录为据 |
-| S5-01 / [输入冻结与双构造器](S5_GUDHI.md) | 六个显式复形的严格 manifest、实际链/GUDHI 导出与 hash 对拍 | 开发 PR，三方正确性和正式测量分别验收 |
+| S5-01 / [输入冻结与双构造器](S5_GUDHI.md) | 六个显式复形的严格 manifest、实际链/GUDHI 导出与 hash 对拍 | 已合并；三方正确性和正式测量分别记录 |
 | S5-02 / [F2 oracle](S5_GUDHI.md#s5-02-f2-ph-与区间规范化) | 显式 F2/最高维度，stage 区间多重集、Betti/全区间 rank 和实际 flag 次入口 | GUDHI 只提供拓扑；有限 correctness，性能另验收 |
 | S5-03 / [三方 corpus](S5_GUDHI.md#s5-03-三方有限-correctness-corpus) | 77 份冻结输入，完整 P/L、几何、transport、认证与恢复；反例保全/删除缩减 | 有限 native/reference/GUDHI 对拍；正式采样仍待 S5-04/05 |
+| S5-04 / [进程采样器](S5_GUDHI.md#s5-04-隔离进程采样器) | 冷/热独立进程、独立绝对 RSS、完整成本/失败和检查点恢复 | smoke 证据；正式 workload/统计在 S5-05 冻结执行 |
+| S5-05 / [冻结正式负载](S5_GUDHI.md#s5-05-冻结规模与正式协议) | 20配置、71路线、2840进程，原值/失败及10区组统计全部保留 | 集成cold/warm存在退化，不作默认替换；综合结论见[S5报告](S5_REPORT.md) |
+| S5-06 / [完整审计报告](S5_REPORT.md) | 与S5-05同PR #92；全部配置、失败/成本/认证、可回溯CSV和真实统计重建入口 | 用户取消追加隔离采样；全部工作包合并/精确main CI仍独立核验 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 public，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
 上述main已包含S4-01–08；S4-09的生产被测源码也固定在同一7fa812d，
 新增harness/数据/报告的源码身份另列，不冒充新main测量。旧分支与原始数据保留。
 使用说明对应当前源码；整合前CI、各工作包历史证据与最终验收分别记录；S4性能门槛与最终合并/CI分开，S5仍独立验收。
 测试总数以指定 checkout 的实际运行结果为准，历史报告中的计数不作为滚动状态。
+
+S5-01/02/03已合入main `6b193b1`；S5-04原PR #91合入S5-03分支，尚未进入main；PR #92同时集成S5-04及S5-05/06，
+上方7fa812d的CI成绩不冒充这些新提交的CI验收。
 
 ## 开发计划与证据
 
@@ -60,6 +66,7 @@
 | [Phase 2](PHASE2_REPORT.md) | 81 项测试、11 个族/变体的独立 PH 对拍、隔离 wheel |
 | [Phase 3](PHASE3_REPORT.md) | 129 项数学测试、五 solver 与独立证书、冻结对照/no-go、联合验收；基线 `54ce78b` |
 | [S4](S4_REPORT.md) | 正式同语义性能/RSS、消融、失败与退化、源码/构建/原始数据冻结 |
+| [S5审计](S5_REPORT.md) | 冻结20配置、2840进程、完整退化/失败、三方正确性与统计重建；#74/#75同PR交付 |
 | [S4/S5 研究材料](research/s4-s5/) | 上传原件和 5,689 例独立 barcode 端点原型；来源/hash 见工作包文档 |
 
 归档的研究原型不是公共 API、生产计算路径或 GUDHI 验收。

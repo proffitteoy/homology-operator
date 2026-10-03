@@ -113,6 +113,92 @@ uv run --locked --no-sync python -m unittest discover -s tests -v
 Native CI安装oracle组，强制同时运行真实native与GUDHI；reference仍可独立安装。
 本轮有限corpus通过不推出一般证明、规模稳定性或性能结论。
 
+## S5-04 隔离进程采样器
+
+[scripts/benchmark_s5.py](../scripts/benchmark_s5.py)串行执行四个独立进程域：cold/timing、warm/timing、cold/rss、warm/rss。
+Cold外层时间覆盖进程启动/导入、整份清单解码、全部预声明重建、标准路径的验证/读取、报告JSON和退出；
+每个block的重建次数明确记录，不能把block总成本当一份独立重建的冷启动。
+Warm只在已有对象上读取请求；setup保留在worker阶段与外层warm进程总成本，warm batch单独计时。
+第一批native workspace准备包含在该批成本，全部重复原值保留；不隐藏重建或转换。
+
+Topology域经合法统一算子/族读取各请求维数完整barcode；GUDHI用同显式复形与固定主参数。
+Joint域复用S4完整pipeline，另行完整读取全部请求维数topology的validated构造也明确计费。
+它包含solver输出和算子的独立验证、两批几何/复用、tracking、序列化、恢复重验、恢复后几何与全P/L生成元。
+互斥outer阶段与各次数nested阶段分开记录，不能双加；外层尚未分配开销显式保留。
+GUDHI基线无需额外导入本库或构造链算子，公共manifest验证和实际SimplexTree核查仍计入成本。
+Warm GUDHI读取已计算PH对象的各次数区间；两个次入口没有相同stored-object API，warm显式NotApplicable。
+
+RSS是独立同负载worker的OS绝对历史峰值，Windows使用PeakWorkingSetSize；Linux/macOS声明ru_maxrss单位。
+采集覆盖结果记录构造和一次JSON分配，最终输出/退出之后没有额外观测。缺值为null，不扣启动基线。
+时间域无profiler、tracemalloc或trace；子进程数和native固定单线程，BLAS/OpenMP环境变量均1。
+worker墙钟限180秒；RSS预声明2GiB仅作执行后绝对峰值预算评估，不冒充OS硬内存上限。
+成功、库内ResourceExhausted/Unavailable/NotApplicable/Mismatch、process_timeout/oom/killed/error和取消分别保留。
+SIGKILL不自行推断为OOM；OOM需要MemoryError证据。timeout不作为成功耗时。
+
+固定seed调度且每条样本保存case/fixture hash、block/scope/mode、solver/认证/预算、source/build/environment和所有失败。
+标准reference/native只在每个重复同完整输出、solver/认证时生成配对比值；Joint/GUDHI明示额外信息成本。
+至少10个独立区组才给10000次固定seed配对log-median bootstrap 95%区间；少样本只列原值/median/IQR。
+续跑必须同清单/source/build/environment；旧样本不得重选，原报告hash另存。原子检查点失败保全旧文件和完整临时数据。
+`--cancel-file`在worker之间协作停止，活动worker可由Ctrl+C终止，已有完整样本保全。
+正式模式拒绝未预提交的清单、改动的helper/source/build/environment或少于10区组。
+
+[首轮smoke原样本](../benchmarks/s5_harness_smoke_v1.json)保留了资源状态JSON mapping序列化失败。
+修复只规范化记录；[修正后smoke](../benchmarks/s5_harness_smoke.json)按同输入重新采样，失败仍以真实库状态保留。
+五项采样边界回归覆盖真实子进程timeout/kill、记录OOM、缺RSS/输出差异禁比值、warm重复差异、
+resource状态在timing/RSS均可序列化和检查点失败保全。这些smoke不是正式性能统计。
+
+```powershell
+uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s5_harness_smoke_manifest.json --phase smoke --output .task-artifacts/s5-smoke-recheck.json
+```
+
+正式负载、规模网格、重复次数与pilot在S5-05冻结，不能用正式结果选路线。
+
+## S5-05 冻结规模与正式协议
+
+[预声明pilot](../benchmarks/s5_performance_pilot_manifest.json)和[完整pilot原值](../benchmarks/s5_performance_pilot.json)
+包含20配置、71个case/route、284个独立进程，全部完成，成功结果无拓扑/同输出差异。
+[正式清单](../benchmarks/s5_performance_frozen_manifest.json)沿用全部输入/路线/solver/预算，无性能筛选；
+10区组×cold/warm×timing/rss共2840进程。cold每进程5次重建，预声明grid/long/VR/q1024为1次；warm5次。
+查询量0/1/8/64/1024、整数/有理/浮点/大整数、ExactOptimal及明确失败配置分组。
+
+规模覆盖10/18列双行网格（H1链37/69、末端β=1）、K4,4/K5,5（β=9/16）、16/32阶段长过滤，
+以及10/18顶点显式欧氏VR（H1链20/54）。维数、nnz、消元fill-in、rank/β逐阶段保存在scale_metadata。
+这是有限显式稠密边界实现的规模网格，不证明一般中型VR或稀疏复杂度。
+R0/reference/全后端和q8的显式native、因子scalar、HC workspace消融均保留；VR真实次入口另列。
+没有并行worker性能主张；本轮仅预声明单线程串行采样。
+
+生产Python/Rust源码固定S4 `7fa812d5e76ca80ac16316cb212d133c0639bfd7`，R0固定`54ce78b`；
+worker及外层计时函数AST与pilot保持相同，父记录改为每条append-only journal、每10条聚合检查点，
+启动/取消/结束也写检查点。续跑同时加载journal中检查点后的完整样本，避免重复或丢失；
+六项采样回归包含真实run_plan取消与过时检查点续跑。
+正式运行前提交清单和helper，测量时拒绝身份变化；pilot与formal不混入同一统计。
+
+```powershell
+# 正式旧freeze只对应f4b0d58，review后的当前helper不能冒用该身份。
+# 如需新采样，先在原测量提交的隔离checkout恢复完全匹配的构建/环境；见S5_REPORT。
+uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s5_performance_frozen_manifest.json --phase formal --output .task-artifacts/s5-formal-recheck.json
+```
+
+正式结果已完整保存；综合审计与一键统计重建由[S5-05/06合并报告](S5_REPORT.md)交付。
+
+### S5-05 正式原始证据
+
+被测checkout `f4b0d58148c7b94b83dcb5ae5bfe79857deb2c73`，生产源码仍是冻结S4。
+2026-10-03 UTC 13:12:19–14:13:07，2840个独立进程全部正常退出；
+记录5360个Computed、240个ResourceExhausted、240个Unavailable和200个NotApplicable，
+这些是worker内部重建记录数，不能与进程数混用。reference/拓扑配对差异均0；RSS预算超限0。
+
+[完整原始JSON的gzip](../benchmarks/s5_performance_formal.json.gz)无损保留全部106757401字节、所有重复/失败及原summary；
+[原summary与archive hash](../benchmarks/s5_performance_formal_summary.json)便于读取全部284组统计。
+解压后SHA256为`f90e00a5f1f29155a6f949c8f2330e5cb48ce82c09fc9c7271f96474fc949f1e`。
+原summary属于当时冻结harness；后续review修正的身份门禁和重新汇总另保存，不改写测量来源。
+
+本次结果没有支持统一启用集成后端：grid18的cold集成/reference配对median比为1.329，
+95%区间[1.247,1.378]；path32为1.303，[1.241,1.341]。
+q1024的cold为1.047，[1.030,1.069]，warm为1.086，[1.055,1.102]，均保留退化。
+q8的cold Joint/GUDHI PH额外信息成本比为7.882；两者输出不同，不称PH加速。
+完整median、Q1/Q3端点和固定seed的10区组配对bootstrap均保存在原summary，pilot没有参与统计。
+正式域只覆盖本工作站、预声明规模和单线程串行执行；综合成本/认证边界与统计复现见[S5报告](S5_REPORT.md)。
 ### S5-03 review 后的失败分类与现场
 
 correctness整体状态由每项实际comparison派生：只有所请求的reference/native比较全部完成才是Passed；
@@ -126,3 +212,19 @@ correctness通过run_pipeline的可选capture保存本次实际请求/manifest�
 缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。
 
 review修复源码`aea7940`的8项correctness回归通过（45.556秒），[独立新审计](../benchmarks/s5_correctness_review_audit.json)重新检查全部77份，77 Passed/Compared，原归档未覆盖。
+
+### S5-04 review 后的比值准入
+
+summarize在过滤无metric之前统计语义Mismatch，任何一个这样的区组都会否决比值/CI；
+普通timeout/资源失败继续单列，不变成成功耗时。
+同输出身份另外核对实际solver方法/config、停止状态与certificate_level，warm批hash也绑定这些证据。
+Native前缀及已独立验证的Feasible Matrix/Factorized/HC表示规范化，其余请求、预算、算术、
+objective、并列策略和实际认证保留；缺证据或不同方法/认证不生成同认证比值。
+cold Joint的额外topology构造失败时保留本次statuses/details/resource_usage/diagnostics和前一Joint记录，
+不再read_topology(None)并改写为process_error。
+
+9项采样回归通过，包含经run_plan标记的10个正常配对+1个Mismatch、真实isolated的Greedy/NativeFeasible
+认证不同、额外构造故障注入经run_plan→summarize、原真实子进程失败边界。
+旧性能raw和原summary仍原样保留；重新汇总使用新准入但不宣称执行过新worker。
+
+S5-06按用户要求直接合入PR #92，复用以上已完成correctness/采样与review后重新汇总；[完整报告与命令](S5_REPORT.md)不新增隔离采样成绩。
