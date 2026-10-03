@@ -174,10 +174,12 @@ worker及外层计时函数AST与pilot保持相同，父记录改为每条append
 正式运行前提交清单和helper，测量时拒绝身份变化；pilot与formal不混入同一统计。
 
 ```powershell
+# 正式旧freeze只对应f4b0d58，review后的当前helper不能冒用该身份。
+# 如需新采样，先在原测量提交的隔离checkout恢复完全匹配的构建/环境；见S5_REPORT。
 uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s5_performance_frozen_manifest.json --phase formal --output .task-artifacts/s5-formal-recheck.json
 ```
 
-正式结果、配对统计与全部失败在S5-05采样完成后提交，综合审计/隔离复现由S5-06交付。
+正式结果已完整保存；综合审计与一键统计重建由[S5-05/06合并报告](S5_REPORT.md)交付。
 
 ### S5-05 正式原始证据
 
@@ -196,7 +198,7 @@ uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s
 q1024的cold为1.047，[1.030,1.069]，warm为1.086，[1.055,1.102]，均保留退化。
 q8的cold Joint/GUDHI PH额外信息成本比为7.882；两者输出不同，不称PH加速。
 完整median、Q1/Q3端点和固定seed的10区组配对bootstrap均保存在原summary，pilot没有参与统计。
-正式域只覆盖本工作站、预声明规模和单线程串行执行；综合成本/认证边界与独立复现由S5-06提供。
+正式域只覆盖本工作站、预声明规模和单线程串行执行；综合成本/认证边界与统计复现见[S5报告](S5_REPORT.md)。
 ### S5-03 review 后的失败分类与现场
 
 correctness整体状态由每项实际comparison派生：只有所请求的reference/native比较全部完成才是Passed；
@@ -224,3 +226,5 @@ cold Joint的额外topology构造失败时保留本次statuses/details/resource_
 9项采样回归通过，包含经run_plan标记的10个正常配对+1个Mismatch、真实isolated的Greedy/NativeFeasible
 认证不同、额外构造故障注入经run_plan→summarize、原真实子进程失败边界。
 旧性能raw和原summary仍原样保留；重新汇总使用新准入但不宣称执行过新worker。
+
+S5-06按用户要求直接合入PR #92，复用以上已完成correctness/采样与review后重新汇总；[完整报告与命令](S5_REPORT.md)不新增隔离采样成绩。
