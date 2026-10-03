@@ -70,6 +70,7 @@ def make_manifest(baseline_root):
         limits=None,
         structure="GeneralChainWindow",
         matrix_free=False,
+        options=None,
         repeats=5,
     ):
         ids = []
@@ -99,6 +100,7 @@ def make_manifest(baseline_root):
                 "resource_limits": vars(limits or ResourceLimits()),
                 "input_structure": structure,
                 "matrix_free_output": matrix_free,
+                "solver_options": _thaw_metadata(options or {}),
                 "query_count": count,
                 "queries": queries,
                 "routes": list(routes),
@@ -219,6 +221,7 @@ def make_manifest(baseline_root):
             limits=problem.resource_limits,
             structure=problem.input_structure,
             matrix_free=problem.matrix_free_output,
+            options=problem.solver_options,
         )
     add("failure/feasible_entries0", (k4,), limits=ResourceLimits(matrix_entry_limit=0))
     metadata = {}
@@ -354,7 +357,7 @@ def run_pipeline(manifest, case, route, baseline_root):
                 "representation": "HC" if route == "hc_workspace" else "Factorized"
             }
             if compact
-            else {},
+            else case.get("solver_options", {}),
         )
         solutions.append(solve_projection(problem, method))
     done("solve_dispatch_mandatory_validation")
@@ -565,6 +568,7 @@ def run_pipeline(manifest, case, route, baseline_root):
     done("streamed_full_chain_restore_audit")
     encoded = canonical_json(semantic)
     done("semantic_digest")
+    details["operator_identities"] = [op.identity for op in operators]
     details["geometry"] = geometry_details
     details["serialized_utf8_bytes"] = sum(len(w.encode()) for w in wires)
     details["action_entries"] = [
@@ -704,7 +708,9 @@ def summarize(manifest, samples):
                         statistics.median(ratios) > 1.20
                     )
                     item["admission_improvement"] = (
-                        len(ratios) >= 10 and item["bootstrap_95_interval"][1] < 1
+                        equal
+                        and len(ratios) >= 10
+                        and item["bootstrap_95_interval"][1] < 1
                     )
                 else:
                     item.update(admission_improvement=False)
@@ -776,6 +782,8 @@ def main():
     if args.output is None or args.output.exists():
         parser.error("a new --output path is required")
     manifest = json.loads(args.manifest.read_text("utf-8"))
+    if args.case and args.phase != "pilot":
+        parser.error("formal sampling cannot filter cases")
     for source, key in ((args.baseline_root, "baseline"), (ROOT, "candidate")):
         if (
             measured_snapshot(source, manifest[key]["revision"], key == "candidate")
@@ -810,7 +818,7 @@ def main():
             Path(info["extension_path"]).read_bytes()
         ).hexdigest()
     }
-    for path in (ROOT / ".task-artifacts/native-wheels").glob("*.whl"):
+    for path in (ROOT / ".task-artifacts/s4-09-native-wheels").glob("*.whl"):
         binary_hashes[path.name] = sha256(path.read_bytes()).hexdigest()
     blocks = 1 if args.phase == "pilot" else manifest["blocks"]
     report = {
@@ -841,7 +849,9 @@ def main():
     }
     for mode in ("timing", "rss"):
         for block in range(blocks):
-            cases = list(manifest["cases"])
+            cases = [
+                c for c in manifest["cases"] if not args.case or c["id"] == args.case
+            ]
             random.Random(manifest["seed"] + block).shuffle(cases)
             for case in cases:
                 routes = list(case["routes"])
