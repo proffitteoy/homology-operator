@@ -35,6 +35,7 @@
 | S5-01 / [输入冻结与双构造器](S5_GUDHI.md) | 六个显式复形的严格 manifest、实际链/GUDHI 导出与 hash 对拍 | 开发 PR，三方正确性和正式测量分别验收 |
 | S5-02 / [F2 oracle](S5_GUDHI.md#s5-02-f2-ph-与区间规范化) | 显式 F2/最高维度，stage 区间多重集、Betti/全区间 rank 和实际 flag 次入口 | GUDHI 只提供拓扑；有限 correctness，性能另验收 |
 | S5-03 / [三方 corpus](S5_GUDHI.md#s5-03-三方有限-correctness-corpus) | 77 份冻结输入，完整 P/L、几何、transport、认证与恢复；反例保全/删除缩减 | 有限 native/reference/GUDHI 对拍；正式采样仍待 S5-04/05 |
+| S5-04 / [进程采样器](S5_GUDHI.md#s5-04-隔离进程采样器) | 冷/热独立进程、独立绝对 RSS、完整成本/失败和检查点恢复 | smoke 证据；正式 workload/统计在 S5-05 冻结执行 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 public，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
 上述main已包含S4-01–08；S4-09的生产被测源码也固定在同一7fa812d，
