@@ -34,6 +34,10 @@ jobs:
           uv venv .task-artifacts/wheel-env --python ${{ matrix.python }}
           uv pip install --python .task-artifacts/wheel-env/bin/python dist/*.whl
           .task-artifacts/wheel-env/bin/python -I -c "import homology_operator; print(homology_operator.__version__)"
+          .task-artifacts/wheel-env/bin/python -I -c "from homology_operator.native import backend_info; info=backend_info(); assert info['native']=='Unavailable', info; print(info)"
+          .task-artifacts/wheel-env/bin/python -I -m unittest discover -s tests -p test_integration.py -v
+          .task-artifacts/wheel-env/bin/python -I -m unittest discover -s tests -p test_legacy_results.py -v
+          .task-artifacts/wheel-env/bin/python -I -m unittest discover -s tests -p test_s4_integration.py -v
       - run: pwsh -NoProfile -File ./scripts/check_docs.ps1
       - run: git diff --check
       - name: Check whitespace in the complete pull request

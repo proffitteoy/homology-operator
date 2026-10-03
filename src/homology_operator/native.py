@@ -50,7 +50,7 @@ def backend_info():
         "reference": "Available",
         "native": "Available",
         "semantics_version": extension.__semantics_version__,
-        "extension_path": extension.__file__,
+        "extension_path": getattr(extension, "_homology_native", extension).__file__,
         "platform": platform.platform(),
         "threads": 1,
     }
@@ -620,12 +620,18 @@ def geometry_batch(
         and operator.window.n * (2 * len(cycles) + len(pairs))
         > limits.matrix_entry_limit
     ):
+        for z in cycles:
+            operator._cycle(z)
         return QueryResult(
             "ResourceExhausted",
             identity=operator.identity,
             details={
                 "reason": "matrix_entry_limit",
-                "resource_usage": {"states": 0, "limits": asdict(limits)},
+                "resource_usage": {
+                    "states": 0,
+                    "limits": asdict(limits),
+                    "wall_time": perf_counter() - started,
+                },
             },
         )
     try:

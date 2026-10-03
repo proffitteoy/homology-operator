@@ -163,6 +163,12 @@ class IntegrationTests(unittest.TestCase):
 @unittest.skipIf(extension is None, "compatible native wheel not installed")
 class NativeIntegrationTests(unittest.TestCase):
     def test_named_factorized_dispatch_and_cancelled_construction(self):
+        info = backend_info()
+        self.assertEqual(
+            info["extension_path"],
+            getattr(extension, "_homology_native", extension).__file__,
+        )
+        self.assertTrue(info["extension_path"].endswith((".pyd", ".so")))
         w = window()
         token = CancellationToken()
         token.cancel()
@@ -186,7 +192,8 @@ class NativeIntegrationTests(unittest.TestCase):
         self.assertEqual(result.method, "NativeFactorizedSolver")
 
     def test_native_span_cancel_releases_gil_and_reports_completed_states(self):
-        flag = extension.CancellationFlag()
+        token = CancellationToken()
+        flag = token._native_handle()
         n, dimension = 8192, 16
         basis = []
         for i in range(dimension):
@@ -209,7 +216,7 @@ class NativeIntegrationTests(unittest.TestCase):
         self.assertTrue(ready.wait(2))
         time.sleep(0.005)
         started = time.perf_counter()
-        flag.cancel()
+        token.cancel()
         worker.join(2)
         self.assertFalse(worker.is_alive(), "native cancellation did not return")
         self.assertFalse(errors, errors)
@@ -251,6 +258,20 @@ class NativeIntegrationTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             geometry_batch(op, cycles, cancellation=object())
+        noncycle = replace(
+            w,
+            A=Matrix.from_rows(((1, 0, 0),)),
+            basis_previous=("v",),
+            D=Matrix.zero(3, 0),
+            basis_next=(),
+        )
+        invalid_op = HomologyOperator(
+            noncycle, solve_projection(ProjectionProblem(noncycle))
+        )
+        with self.assertRaisesRegex(ValueError, "cycle"):
+            geometry_batch(
+                invalid_op, ((1, 0, 0),), limits=ResourceLimits(matrix_entry_limit=0)
+            )
 
     def test_compact_single_and_both_family_schemas_restore_without_dense_or_native(
         self,
