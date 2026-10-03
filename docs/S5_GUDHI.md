@@ -178,3 +178,22 @@ uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s
 ```
 
 正式结果、配对统计与全部失败在S5-05采样完成后提交，综合审计/隔离复现由S5-06交付。
+
+### S5-05 正式原始证据
+
+被测checkout `f4b0d58148c7b94b83dcb5ae5bfe79857deb2c73`，生产源码仍是冻结S4。
+2026-10-03 UTC 13:12:19–14:13:07，2840个独立进程全部正常退出；
+记录5360个Computed、240个ResourceExhausted、240个Unavailable和200个NotApplicable，
+这些是worker内部重建记录数，不能与进程数混用。reference/拓扑配对差异均0；RSS预算超限0。
+
+[完整原始JSON的gzip](../benchmarks/s5_performance_formal.json.gz)无损保留全部106757401字节、所有重复/失败及原summary；
+[原summary与archive hash](../benchmarks/s5_performance_formal_summary.json)便于读取全部284组统计。
+解压后SHA256为`f90e00a5f1f29155a6f949c8f2330e5cb48ce82c09fc9c7271f96474fc949f1e`。
+原summary属于当时冻结harness；后续review修正的身份门禁和重新汇总另保存，不改写测量来源。
+
+本次结果没有支持统一启用集成后端：grid18的cold集成/reference配对median比为1.329，
+95%区间[1.247,1.378]；path32为1.303，[1.241,1.341]。
+q1024的cold为1.047，[1.030,1.069]，warm为1.086，[1.055,1.102]，均保留退化。
+q8的cold Joint/GUDHI PH额外信息成本比为7.882；两者输出不同，不称PH加速。
+完整median、Q1/Q3端点和固定seed的10区组配对bootstrap均保存在原summary，pilot没有参与统计。
+正式域只覆盖本工作站、预声明规模和单线程串行执行；综合成本/认证边界与独立复现由S5-06提供。
