@@ -59,11 +59,111 @@ class CorrectnessCorpusTests(unittest.TestCase):
             self.assertEqual(record["results"]["injected_oracle"], {"betti": 2})
             self.assertIn("not global", record["minimality"])
 
+    def test_original_failure_is_saved_first_and_minimization_keeps_its_category(self):
+        manifest = synthetic_manifest(
+            "failure_class", [((0,), 0), ((1,), 0), ((2,), 0), ((0, 1), 1)], [0, 1], q=0
+        )
+        original = {
+            "state": "Mismatch",
+            "failure_category": "geometry",
+            "run_id": "original-run",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+
+            def evaluate(candidate):
+                self.assertEqual(len(list(Path(directory).glob("*.original.json"))), 1)
+                return {
+                    "state": "Mismatch",
+                    "failure_category": "geometry"
+                    if any(len(s["vertices"]) == 2 for s in candidate["simplices"])
+                    else "different-topology-failure",
+                    "run_id": "reproduction-run",
+                }
+
+            path = archive_mismatch(directory, manifest, evaluate, original)
+            record = json.loads(path.read_text("utf-8"))
+            self.assertEqual(record["original_result"], original)
+            self.assertEqual(len(record["minimal_manifest"]["simplices"]), 3)
+            self.assertEqual(record["results"]["failure_category"], "geometry")
+
 
 @unittest.skipUnless(
     GUDHI_AVAILABLE and NATIVE_AVAILABLE, "three-way check requires GUDHI and native"
 )
 class TriadTests(unittest.TestCase):
+    def test_matching_exhausted_or_interrupted_runs_cannot_pass(self):
+        from unittest.mock import patch
+
+        manifest = synthetic_manifest(
+            "seventeen_isolated", [((v,), 0) for v in range(17)], [0], q=0
+        )
+        row = check_manifest(manifest, certified=True)
+        self.assertEqual(row["state"], "ResourceExhausted")
+        self.assertTrue(
+            any(not c["reference"]["completed"] for c in row["joint_comparisons"])
+        )
+        interrupted = {
+            "completed": False,
+            "output_hash": "same-interruption",
+            "statuses": [{"status": "Interrupted"}],
+            "details": {},
+        }
+        with patch("check_s5_correctness.run_pipeline", return_value=interrupted):
+            row = check_manifest(manifest)
+        self.assertEqual(row["state"], "Interrupted")
+
+    def test_mismatch_retains_original_exact_request_wires_and_run_identity(self):
+        from unittest.mock import patch
+        import check_s5_correctness as checker
+
+        manifest = make_corpus(random_cases=0)["manifests"][1]
+        pipeline = checker.run_pipeline
+        captured = []
+
+        def run(*args, **kwargs):
+            result = pipeline(*args, **kwargs)
+            if args[1]["solver"] == "ExhaustiveExactSolver":
+                captured.append(kwargs["capture"])
+                if args[2] == "reference":
+                    result["output_hash"] = "injected-exact-mismatch"
+            return result
+
+        with (
+            patch.object(checker, "run_pipeline", side_effect=run),
+            self.assertRaises(ValueError) as raised,
+        ):
+            check_manifest(manifest, require_native=True, certified=True)
+        results = raised.exception.results
+        self.assertIn("ExhaustiveExactSolver", raised.exception.failure_category)
+        for route in ("reference", "native"):
+            capture = results[route + "_capture"]
+            self.assertEqual(
+                capture["request"]["requested_certificate_level"], "ExactOptimal"
+            )
+            self.assertEqual(
+                capture["request"]["resource_limits"]["wall_time_limit"], 20.0
+            )
+            wire = capture["snapshot_wires"][0]
+            self.assertIn(capture["solutions"][0]["solver"]["solver_run_id"], wire)
+            self.assertIn("joint_batch", wire)
+            self.assertIn(checker.CANDIDATE, wire)
+        self.assertEqual(
+            results["reference_capture"]["solutions"], captured[0]["solutions"]
+        )
+
+    def test_independent_projection_failure_retains_actual_context(self):
+        from unittest.mock import patch
+
+        manifest = make_corpus(random_cases=0)["manifests"][1]
+        with (
+            patch("oracle.reference.verify_projection", return_value=False),
+            self.assertRaises(ValueError) as raised,
+        ):
+            check_manifest(manifest, require_native=True)
+        self.assertIn("window", raised.exception.results)
+        self.assertIn("projection", raised.exception.results)
+        self.assertIn("solver_run_id", raised.exception.results["identity"])
+
     def test_structural_and_random_corpus_same_topology_full_action_joint_and_restore(
         self,
     ):
