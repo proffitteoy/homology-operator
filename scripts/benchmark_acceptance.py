@@ -305,7 +305,7 @@ def restore_operator(record, revision):
     return op
 
 
-def run_pipeline(manifest, case, route, baseline_root):
+def run_pipeline(manifest, case, route, baseline_root, capture=None):
     from homology_operator import (
         ChainWindow,
         HomologyOperator,
@@ -320,6 +320,13 @@ def run_pipeline(manifest, case, route, baseline_root):
     )
     from homology_operator.result import canonical_json
 
+    if capture is not None:
+        capture.update(
+            manifest=json.loads(json.dumps(manifest)),
+            request=json.loads(canonical_json(case)),
+            route=route,
+        )
+
     phases = {}
     stamp = perf_counter()
 
@@ -328,6 +335,8 @@ def run_pipeline(manifest, case, route, baseline_root):
         now = perf_counter()
         phases[name] = now - stamp
         stamp = now
+        if capture is not None:
+            capture["last_completed_phase"] = name
 
     windows = [
         ChainWindow.from_dict(manifest["windows"][key]) for key in case["fixture_ids"]
@@ -361,6 +370,24 @@ def run_pipeline(manifest, case, route, baseline_root):
         )
         solutions.append(solve_projection(problem, method))
     done("solve_dispatch_mandatory_validation")
+    if capture is not None:
+        from homology_operator.chain import action_data
+
+        capture["solutions"] = json.loads(
+            canonical_json(
+                [
+                    {
+                        "solver": solution.solver_metadata(),
+                        "identity": solution.identity,
+                        "certificate": solution.certificate,
+                        "projection": action_data(solution.projection)
+                        if solution.projection is not None
+                        else None,
+                    }
+                    for solution in solutions
+                ]
+            )
+        )
     statuses = [
         {
             "status": s.status,
@@ -395,6 +422,9 @@ def run_pipeline(manifest, case, route, baseline_root):
         ]
     }
     semantic = {"statuses": statuses}
+    if capture is not None:
+        capture["semantic"] = semantic
+        capture["operator_identities"] = [op.identity for op in operators]
     if len(operators) != len(windows):
         semantic["missing_action"] = True
         done("semantic_digest")
@@ -500,8 +530,12 @@ def run_pipeline(manifest, case, route, baseline_root):
 
     workspaces = {}
     first = geometry(operators, workspaces)
+    if capture is not None:
+        capture["geometry_first"] = first
     done("geometry_first_including_preparation")
     second = geometry(operators, workspaces)
+    if capture is not None:
+        capture["geometry_second"] = second
     if canonical_json(first) != canonical_json(second):
         raise ValueError("warm geometry changed the same P output")
     semantic["geometry"] = first
@@ -537,6 +571,8 @@ def run_pipeline(manifest, case, route, baseline_root):
         else [op.to_result() for op in operators]
     )
     wires = [record.to_json() for record in records]
+    if capture is not None:
+        capture["snapshot_wires"] = wires
     done("snapshot_serialization_mandatory_validation")
     if family is not None:
         record = OperatorFamilyResult.from_json(wires[0])

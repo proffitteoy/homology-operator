@@ -80,3 +80,49 @@ uv run --locked --group oracle --group oracle-secondary python scripts/check_s5_
 
 本地12项S5测试通过；六个主实例的Betti/barcode/全区间rank与reference族一致，
 实际flag次入口也一致。有限对拍不作为一般性证明、三方完整语义或性能验收。
+
+## S5-03 三方有限 correctness corpus
+
+[冻结77份manifest](../tests/fixtures/s5_correctness.json)含13份结构/权重变体和seed=20261003的64份随机闭合2复形，
+随机顶点数3–5、四个stage、正单位权。结构实例包括断连/两个H1类、一个死亡一个末存活、同stage单形、
+重复scale、坐标反序、整数/有理/浮点重权和真实二维坐标欧氏边长，以及原H0–H3实例。
+来源/生成参数、每份input hash与corpus hash冻结，原六份输入没有改写。
+
+[三方脚本](../scripts/check_s5_correctness.py)逐份审计实际输入、所有请求次数的Betti/barcode/全区间rank，
+并检查transport composition。n≤10的窗口另外用原独立oracle枚举全部ambient链和循环验证四个投影条件。
+Native↔reference复用S4已验收的完整联合pipeline：全部坐标生成元P/L（包括非循环）、几何批/复用、tracking、
+合法性、objective/bounds/认证状态、序列化、恢复重验和恢复后几何。结构exact权输入另覆盖Exhaustive与Greedy；
+四种限定solver、非法AD、零投影、身份混用和证书/快照篡改继续由整仓既有独立回归验收。
+人工一般AD=0旧fixture保留原代数oracle与来源，GUDHI=NotApplicable，不替换输入。
+
+[完整结果](../benchmarks/s5_correctness_audit.json)保留77份结果、双方hash/状态/六身份/后备/成本、源码逐文件hash和实际native二进制身份。
+生产Python/Rust源码必须逐文件等于S4冻结7fa812d；harness的checkout提交和helper内容hash另列。
+缺native显式记录Unavailable；`--require-native`禁止将仅两方通过当三方通过。
+差异保存原manifest、双方结果、快照与类别，并在保持闭包的最大单形删除操作下缩减。
+最小性声明仅为该删除域的不可再缩减，绝不声称全局最小；没有真实差异时不伪造反例。
+
+```powershell
+uv sync --locked --group oracle --group oracle-secondary --python 3.12
+# 按INTERFACE安装匹配解释器的冻结S4 release native wheel，随后保留安装：
+$env:HOMOLOGY_NATIVE_REQUIRED = '1'
+$env:HOMOLOGY_GUDHI_REQUIRED = '1'
+uv run --locked --no-sync python scripts/check_s5_correctness.py --require-native --output .task-artifacts/s5-correctness-recheck.json
+uv run --locked --no-sync python -m unittest discover -s tests -v
+```
+
+Native CI安装oracle组，强制同时运行真实native与GUDHI；reference仍可独立安装。
+本轮有限corpus通过不推出一般证明、规模稳定性或性能结论。
+
+### S5-03 review 后的失败分类与现场
+
+correctness整体状态由每项实际comparison派生：只有所请求的reference/native比较全部完成才是Passed；
+双方同样ResourceExhausted、Unavailable或中断也不能记通过，CLI保存结果并以非零退出。
+默认预算的17个孤点认证样本明确为ResourceExhausted；原77份归档全部实际完成的成功结论保持原样。
+
+correctness通过run_pipeline的可选capture保存本次实际请求/manifest、solver配置/认证/身份/原projection、
+渐进语义结果、geometry批和可用snapshot wires；wire包含原joint_batch和原solver_run_id，不重新求解替代。
+独立投影与transport失败另保存实际窗口/action/身份或原族快照及失败链。
+归档先独立写入不可覆盖的.original.json，再仅接受同failure_category的删除缩减；
+缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。
+
+review修复源码`aea7940`的8项correctness回归通过（45.556秒），[独立新审计](../benchmarks/s5_correctness_review_audit.json)重新检查全部77份，77 Passed/Compared，原归档未覆盖。

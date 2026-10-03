@@ -4,7 +4,6 @@ This adapter lives outside the runtime package. GUDHI supplies no operator,
 geometry, or solver result. Integer stages, not original scales, are filtrations.
 """
 
-from copy import deepcopy
 from fractions import Fraction
 from hashlib import sha256
 from itertools import combinations
@@ -218,7 +217,7 @@ def validate_manifest(manifest):
 
 
 def freeze_manifest(payload):
-    manifest = deepcopy(payload)
+    manifest = json.loads(json.dumps(payload, allow_nan=False))
     manifest["input_hash"] = manifest_hash(manifest)
     return validate_manifest(manifest)
 
