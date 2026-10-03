@@ -68,8 +68,8 @@ ProjectionProblem(window, resource_limits=ResourceLimits(),
                   objective="MinimumStretch", requested_certificate_level="Feasible",
                   tie_break_policy="StableBasisOrder", arithmetic_policy=None,
                   input_structure="GeneralChainWindow", matrix_free_output=False,
-                  deterministic=True, solver_options={})
-solve_projection(problem, backend="FeasibleSolver") → ProjectionSolution
+                  deterministic=True, solver_options={}, cancellation=None)
+solve_projection(problem, backend="FeasibleSolver", *, fallback=False) → ProjectionSolution
 HomologyOperator(window, solution, repository_revision="unknown")
 ```
 
@@ -100,8 +100,11 @@ assert solution.certificate_level == "ExactOptimal"
 `Rank2ExactSolver`、`StructuredFamilySolver`。也可传入提供 `capabilities()` / `solve(problem)` 的对象；
 S4-05 四个限定 solver 另有 `NativeExhaustiveExactSolver`、`NativeGreedyCertifiedSolver`、
 `NativeRank2ExactSolver`、`NativeStructuredFamilySolver` 字符串入口，或使用现有类的 `native=True`。
-`NativeFeasibleSolver` 与 `NativeFactorizedSolver` 仍采用对象调用。
-未知后端或不支持的请求返回 Unavailable，不静默选择其他 solver。
+`NativeFeasibleSolver` 与 `NativeFactorizedSolver` 同时支持字符串和对象调用。
+未知后端或不支持的请求返回 Unavailable。显式 `fallback=True` 仅在 native 可行原型或四种限定
+solver 返回 Unavailable 时尝试同名 reference solver，保留支持域/认证请求，并在
+`resource_usage.backend_selection` 保存 requested、selected、fallback_reason；对象的 `native=True` 同样适用。
+`NativeFactorizedSolver` 没有 reference 后备，不把 matrix_free 请求降级成显式矩阵。
 
 统一调度核对 capability、配置、并列策略、算术和报告预算，再独立验证返回投影与证书。
 算子构造再次检查 `P²=P`、`AP=0`、`PD=0` 和循环同调保持；失败抛 `ValidationError`。
@@ -260,7 +263,7 @@ statistics 是分解/非零位/存储 word 的诊断，不是峰值 RSS。
 这组多字工具不解除上节单字宽可行原型的限制，也未自动替换全部 reference 路径。
 
 缺扩展时，native solver/批查询返回 Unavailable；直接创建 PreparedMatrix 或调用 packed 工具抛 ImportError。
-没有隐式 reference fallback。无效矩阵、RHS 或坐标明确拒绝。
+直接 packed 工具没有后备；solver 仅支持前述显式同 solver 后备。无效矩阵、RHS 或坐标明确拒绝。
 
 ### 因子化 action（S4-04）
 
@@ -347,3 +350,34 @@ QueryResult.details 分开记录准备/输入转换/原生/绑定/decode/权重�
 准备子项不与准备总量重复相加，结果冻结计入调用者完整计时。statistics() 的 completed_batches
 是原生步骤完成数，Python 浮点后备失败后也可能增加；projection_buffer_growths 用于检查复用。
 0/1/8/64/1024 的历史完整成本与退化见 [性能协议](BENCHMARKS.md)。
+
+## 后端可用性与协作取消（S4-08）
+
+`homology_operator.native.backend_info()` 报告实际 extension 路径、平台、语义版本和可用性；
+缺少或不兼容扩展为 Unavailable。native ABI 语义版本为1，旧 wheel 需要重建；reference 导入不依赖 Rust。
+支持平台仍以本页 CI 矩阵为准，本地 Windows CPython 3.12 是额外验证，不扩大正式矩阵。
+
+```python
+from homology_operator import CancellationToken, ProjectionProblem, solve_projection
+
+token = CancellationToken()
+problem = ProjectionProblem(window, cancellation=token)
+# 另一线程可以调用 token.cancel()；token 是一次性运行状态，不进入配置 hash 或快照。
+solution = solve_projection(problem, "NativeFeasibleSolver", fallback=True)
+```
+
+取消在 solver checkpoint、native 可行构造、packed 分解和 span 枚举中检查；原生长循环释放 GIL。
+solver 以 ResourceExhausted 和 diagnostics 中的 cancelled 报告，合法中断候选仍必须经过独立验证。
+`geometry_batch(op, cycles, pairs=(), workspace=None, limits=None, cancellation=None)` 支持同一 token，
+显式 limits 使用 ResourceLimits；state 单位为完成的循环投影数加 pair 数。
+失败返回 ResourceExhausted、value=None、details.reason 与实际 resource_usage；空批且 state_limit=0 可合法 Computed。
+默认 limits=None 保留原无预算批查询行为；取消/时间在原生循环及 Python 输出解码后检查，逻辑条目先检查。
+`PreparedMatrix(matrix, cancellation=token)` 只在准备阶段检查 token；取消抛内部预算异常，不返回可用的半成品。
+
+`apply_batch`、PreparedMatrix 的后续代数操作、过滤查询及独立 validator/证书重放未提供取消参数。
+单步 Python 代数、输入验证、转换、workspace 准备、输出冻结也没有硬抢占保证；
+geometry 的显式 wall 上限包含本次准备/转换的经过时间，但只能在检查点返回。
+没有 RSS/OOM 硬控制，库内 cancelled/state_limit/wall_time_limit/matrix_entry_limit 与进程 timeout/OOM 分开。
+必需独立验证、绑定、序列化和恢复重验/重放仍计入完整调用成本，不能因取消而省略。
+solver.resource_usage.wall_time 是该 solver 的预算经过时间；后备失败尝试与调度/算子构造/恢复
+需由调用者测量完整墙钟，不能把选中 solver 的 wall_time 当作全部入口成本。

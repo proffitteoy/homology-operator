@@ -448,6 +448,70 @@ class OperatorResult:
             allow_nan=False,
         )
 
+    def to_operator(self):
+        """Restore the recorded P and queried history, without invoking a solver."""
+        from .operator import HomologyOperator
+        from .solver import ProjectionSolution
+
+        if self.status != "Ready":
+            raise ValueError("only a Ready result can restore an operator")
+        metadata = self.solver
+        solution = ProjectionSolution(
+            metadata["status"],
+            self.identity["solver_run_id"],
+            self.projection,
+            self.identity,
+            metadata["certificate_level"],
+            QueryResult.from_dict(
+                metadata.get(
+                    "objective",
+                    QueryResult("NotComputed", identity=self.identity).to_dict(),
+                )
+            ),
+            self.certificate,
+            metadata.get("resource_usage", {}),
+            tie_break_policy=metadata.get("tie_break_policy", "StableBasisOrder"),
+            method=metadata.get("method", "FeasibleSolver"),
+            arithmetic_policy=metadata.get("arithmetic_policy"),
+            lower_bound=metadata.get("lower_bound"),
+            upper_bound=metadata.get("upper_bound"),
+            solver_config=metadata.get("solver_config"),
+            diagnostics=metadata.get("diagnostics", ()),
+        )
+        operator = HomologyOperator(
+            self.input_data,
+            solution,
+            self.provenance.get("repository_revision", "unknown"),
+        )
+        object.__setattr__(operator, "_provenance", self.provenance)
+        for name, query in self.query_results.items():
+            if query.state != "Computed":
+                continue
+            method = query.details.get("query")
+            if method is not None:
+                arguments = query.details.get("arguments")
+                if not isinstance(arguments, tuple) or name != content_id(
+                    method, arguments
+                ):
+                    raise ValueError("invalid persisted query arguments")
+                try:
+                    expected = operator.readout(method, *arguments)
+                except (TypeError, ValueError) as error:
+                    raise ValueError("invalid persisted query arguments") from error
+                if (
+                    canonical_json(expected.value) != canonical_json(query.value)
+                    or expected.exact != query.exact
+                ):
+                    raise ValueError("persisted query differs from its projection")
+            elif name in {"betti", "kernel_basis"}:
+                if canonical_json(query.value) != canonical_json(
+                    getattr(operator, name)()
+                ):
+                    raise ValueError("persisted topology differs from its projection")
+        operator._queries.clear()
+        operator._queries.update(self.query_results)
+        return operator
+
     @classmethod
     def from_dict(cls, data):
         fields = {
@@ -463,7 +527,7 @@ class OperatorResult:
         }
         if not isinstance(data, Mapping) or set(data) != fields:
             raise ValueError("invalid operator result fields")
-        return cls(
+        result = cls(
             data["identity"],
             data["input_data"],
             data["projection"],
@@ -474,6 +538,9 @@ class OperatorResult:
             data["schema_version"],
             data["query_results"],
         )
+        if result.status == "Ready":
+            result.to_operator()
+        return result
 
     @classmethod
     def from_json(cls, text):

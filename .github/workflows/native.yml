@@ -44,3 +44,23 @@ jobs:
         env:
           HOMOLOGY_NATIVE_REQUIRED: "1"
         run: uv run --locked --no-sync python -m unittest discover -s tests -v
+      - name: Check installed reference and native wheels in isolation
+        env:
+          HOMOLOGY_NATIVE_REQUIRED: "1"
+        run: |
+          $pythonPath = uv run --locked --no-sync python -c "import sys; print(sys.executable)"
+          uv build --no-build-isolation
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          uv venv .task-artifacts/installed-env --python $pythonPath
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $installedPython = if ($IsWindows) { '.task-artifacts/installed-env/Scripts/python.exe' } else { '.task-artifacts/installed-env/bin/python' }
+          $referenceWheel = Get-ChildItem dist/*.whl
+          $nativeWheel = Get-ChildItem .task-artifacts/native-wheels/*.whl
+          uv pip install --python $installedPython $referenceWheel.FullName $nativeWheel.FullName
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $installedPython -I -c "from homology_operator.native import backend_info; info = backend_info(); assert info['native'] == 'Available', info; print(info)"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $installedPython -I -m unittest discover -s tests -p test_integration.py -v
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $installedPython -I -m unittest discover -s tests -p test_legacy_results.py -v
+          exit $LASTEXITCODE

@@ -12,3 +12,5 @@ benchmarks/s4_solver_pilot.json text eol=lf
 benchmarks/s4_compact_action.json text eol=lf
 benchmarks/s4_compact_verification.log text eol=lf
 benchmarks/s4_geometry_workspace.json text eol=lf
+tests/fixtures/legacy_results.json text eol=lf
+benchmarks/s4_integration_verification.log text eol=lf

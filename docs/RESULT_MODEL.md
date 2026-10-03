@@ -85,7 +85,11 @@ record.require_same_identity(restored)
 assert restored.to_dict() == record.to_dict()
 ```
 
-`from_json` 返回已验证的结果记录，不重新求解，也没有 `OperatorResult.to_operator()` 方法。
+`from_json` 返回已验证记录；Ready 记录可调用 `to_operator()`，使用保存的 P、配置、run 和 provenance，
+不重新求解。读取及转换都重新验证投影/认证，并重放带官方 query/arguments 的 Computed 标量历史、
+betti 和已计算核基，拒绝同身份但值被篡改的记录；未读取的 kernel/stretch 保持 NotComputed。
+自定义无参数绑定的查询仅复核状态与身份，不宣称其任意内容获得数学认证。
+失败记录不能转换为算子。恢复重验/重放有实际成本，调用者需计入完整恢复计时。
 
 ## 构造状态、求解状态与认证
 
@@ -208,6 +212,9 @@ solver_run 保留在 provenance 中，不进入可复用内容键。调用者应
 仅以 A/D hash 缓存几何不安全，不同 P 或权重需分开。
 
 resource_usage 保存实际 states、wall_time、limits 和后端提供的诊断。
+CancellationToken 是运行期状态，不进入 solver_config、内容身份或 JSON。取消原因是 cancelled，
+不将 ResourceExhausted 改成合法0；外部 timeout/OOM 由执行入口另记。
+显式后备的 requested/selected/reason 保存在 resource_usage.backend_selection。
 缺少 CPU/RSS 等指标不伪造为 0；逻辑条目、stored_words 或 tracemalloc 都不是操作系统峰值 RSS。
 solver 预算、独立验证/恢复成本和外部 timeout/OOM 按 [性能协议](BENCHMARKS.md) 分别记录。
 

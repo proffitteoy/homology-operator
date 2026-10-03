@@ -3,9 +3,36 @@
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 use std::time::Instant;
 
 mod packed;
+
+#[pyclass(frozen)]
+pub struct CancellationFlag {
+    state: Arc<AtomicBool>,
+}
+
+#[pymethods]
+impl CancellationFlag {
+    #[new]
+    fn new() -> Self {
+        Self {
+            state: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    fn cancel(&self) {
+        self.state.store(true, Ordering::Relaxed);
+    }
+
+    fn is_cancelled(&self) -> bool {
+        self.state.load(Ordering::Relaxed)
+    }
+}
 
 fn mask(n: usize) -> u64 {
     if n == 64 { u64::MAX } else { (1_u64 << n) - 1 }
@@ -43,6 +70,7 @@ fn multiply(a: &[u64], b: &[u64]) -> Vec<u64> {
 }
 
 struct Budget {
+    cancellation: Option<Arc<AtomicBool>>,
     started: Instant,
     states: usize,
     state_limit: usize,
@@ -52,6 +80,13 @@ struct Budget {
 
 impl Budget {
     fn step(&mut self) -> Result<(), &'static str> {
+        if self
+            .cancellation
+            .as_ref()
+            .is_some_and(|flag| flag.load(Ordering::Relaxed))
+        {
+            return Err("cancelled");
+        }
         if self.states >= self.state_limit {
             return Err("state_limit");
         }
@@ -124,7 +159,9 @@ type Construction = (Vec<u64>, Vec<u64>, Vec<u64>, usize, f64, Option<String>);
 
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
+#[pyo3(signature=(a, m, n, d, p, state_limit, wall_limit, entry_limit, cancellation=None))]
 fn construct(
+    py: Python<'_>,
     a: Vec<u64>,
     m: usize,
     n: usize,
@@ -133,6 +170,7 @@ fn construct(
     state_limit: usize,
     wall_limit: f64,
     entry_limit: usize,
+    cancellation: Option<PyRef<'_, CancellationFlag>>,
 ) -> PyResult<Construction> {
     check(&a, m, n)?;
     check(&d, n, p)?;
@@ -144,44 +182,48 @@ fn construct(
     if multiply(&a, &d).iter().any(|&row| row != 0) {
         return Err(PyValueError::new_err("AD must be zero"));
     }
-    let mut budget = Budget {
-        started: Instant::now(),
-        states: 0,
-        state_limit,
-        wall_limit,
-        entry_limit,
-    };
-    let result = (|| {
-        budget.step()?;
-        budget.entries(m * n + n * p + n * m + p * n + 4 * n * n)?;
-        let g = inverse(&a, n, &mut budget)?;
-        let u = inverse(&d, p, &mut budget)?;
-        budget.step()?;
-        let r: Vec<_> = identity(n)
-            .iter()
-            .zip(multiply(&g, &a))
-            .map(|(x, y)| x ^ y)
-            .collect();
-        let q: Vec<_> = identity(n)
-            .iter()
-            .zip(multiply(&d, &u))
-            .map(|(x, y)| x ^ y)
-            .collect();
-        let projection = multiply(&q, &r);
-        budget.step()?;
-        Ok::<_, &'static str>((g, u, projection))
-    })();
-    let wall = budget.started.elapsed().as_secs_f64();
-    Ok(match result {
-        Ok((g, u, projection)) => (g, u, projection, budget.states, wall, None),
-        Err(reason) => (
-            vec![],
-            vec![],
-            vec![],
-            budget.states,
-            wall,
-            Some(reason.to_owned()),
-        ),
+    let cancellation = cancellation.map(|flag| flag.state.clone());
+    py.detach(move || {
+        let mut budget = Budget {
+            cancellation,
+            started: Instant::now(),
+            states: 0,
+            state_limit,
+            wall_limit,
+            entry_limit,
+        };
+        let result = (|| {
+            budget.step()?;
+            budget.entries(m * n + n * p + n * m + p * n + 4 * n * n)?;
+            let g = inverse(&a, n, &mut budget)?;
+            let u = inverse(&d, p, &mut budget)?;
+            budget.step()?;
+            let r: Vec<_> = identity(n)
+                .iter()
+                .zip(multiply(&g, &a))
+                .map(|(x, y)| x ^ y)
+                .collect();
+            let q: Vec<_> = identity(n)
+                .iter()
+                .zip(multiply(&d, &u))
+                .map(|(x, y)| x ^ y)
+                .collect();
+            let projection = multiply(&q, &r);
+            budget.step()?;
+            Ok::<_, &'static str>((g, u, projection))
+        })();
+        let wall = budget.started.elapsed().as_secs_f64();
+        Ok(match result {
+            Ok((g, u, projection)) => (g, u, projection, budget.states, wall, None),
+            Err(reason) => (
+                vec![],
+                vec![],
+                vec![],
+                budget.states,
+                wall,
+                Some(reason.to_owned()),
+            ),
+        })
     })
 }
 
@@ -220,18 +262,20 @@ fn actions(projection: Vec<u64>, n: usize, vectors: Vec<u64>) -> PyResult<Batch>
 
 #[pymodule]
 fn _homology_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_class::<CancellationFlag>()?;
     module.add_function(wrap_pyfunction!(construct, module)?)?;
     module.add_function(wrap_pyfunction!(actions, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_add, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_product, module)?)?;
     module.add_class::<packed::PreparedMatrix>()?;
+    module.add_function(wrap_pyfunction!(packed::compact_actions, module)?)?;
+    module.add_class::<packed::GeometryWorkspace>()?;
+
     module.add_function(wrap_pyfunction!(packed::span_objective, module)?)?;
     module.add_function(wrap_pyfunction!(packed::span_table, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_apply, module)?)?;
     module.add_function(wrap_pyfunction!(packed::cyclic_batch, module)?)?;
-
-    module.add_function(wrap_pyfunction!(packed::compact_actions, module)?)?;
-    module.add_class::<packed::GeometryWorkspace>()?;
     module.add("__version__", "0.0.2.dev0")?;
+    module.add("__semantics_version__", 1)?;
     Ok(())
 }

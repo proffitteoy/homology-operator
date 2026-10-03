@@ -21,7 +21,6 @@ from .result import (
     _freeze,
     canonical_json,
 )
-from .solver import ProjectionSolution
 
 
 def _ordered(value, name):
@@ -929,43 +928,7 @@ def _restore_family(data):
         if record.status != "Ready":
             stages.append(record)
             continue
-        metadata = record.solver
-        solution = ProjectionSolution(
-            metadata["status"],
-            record.identity["solver_run_id"],
-            record.projection,
-            record.identity,
-            metadata["certificate_level"],
-            QueryResult.from_dict(
-                metadata.get(
-                    "objective",
-                    QueryResult("NotComputed", identity=record.identity).to_dict(),
-                )
-            ),
-            record.certificate,
-            metadata.get("resource_usage", {}),
-            tie_break_policy=metadata.get("tie_break_policy", "StableBasisOrder"),
-            method=metadata.get("method", "FeasibleSolver"),
-            arithmetic_policy=metadata.get("arithmetic_policy"),
-            lower_bound=metadata.get("lower_bound"),
-            upper_bound=metadata.get("upper_bound"),
-            solver_config=metadata.get("solver_config"),
-            diagnostics=metadata.get("diagnostics", ()),
-        )
-        operator = HomologyOperator(
-            record.input_data,
-            solution,
-            record.provenance.get("repository_revision", "unknown"),
-        )
-        object.__setattr__(operator, "_provenance", record.provenance)
-        # Preserve queried states for the next snapshot. These entries are history,
-        # not substitutes for recomputing an operator action or a kernel basis.
-        operator._queries.update(record.query_results)
-        kernel = record.query_results.get("kernel_basis")
-        if kernel is not None and kernel.state == "Computed":
-            if canonical_json(kernel.value) != canonical_json(operator.kernel_basis()):
-                raise ValueError("persisted stage kernel does not match its projection")
-        stages.append(operator)
+        stages.append(record.to_operator())
     family = OperatorFamily(
         _decode(data["scales"]),
         windows,

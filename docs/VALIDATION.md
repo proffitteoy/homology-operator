@@ -182,3 +182,60 @@ Rust 单测/fmt/Clippy、Ruff、文档检查、reference sdist/wheel、真实无
 整体研究门槛仍保留：可复现 reference、同输出优化与独立的稳定性/任务价值验证。
 稳定性需声明网格族/权重/拓扑对应/恢复条件；应用需同预算 PH-only 与其他几何基线，
 不能由形状正则、正权或小实例测试直接推出。
+
+### S4-08 后端集成验收
+
+本分支正常 merge 同步已完成前置的 main `e920de0`，不重写原工作包的性能数据。
+[集成原始日志](../benchmarks/s4_integration_verification.log) 保存计算源码、逐文件 LF hash、
+实际加载的扩展/wheel hash、完整命令与结果；129项是 Phase 3 历史基线，当前计数另记。
+reference/native 的入口与取消支持边界见 [API](INTERFACE.md#后端可用性与协作取消s4-08)。
+
+新增17项（9项集成、8项旧格式兼容）核对显式后端选择/同 solver 后备、非法/旧 ABI、
+取消与预算原因区分、无重求解恢复、官方参数绑定的质量篡改拒绝、查询历史和六身份、
+65维 Factorized/HC 不展开完整 P/L 的恢复、族 schema 1/2、真实另一线程取消原生枚举。
+7份旧快照的来源/hash见 [FIXTURES](FIXTURES.md#s4-08-冻结旧快照)。
+S4-04–07 的联合回归同时保留并运行，不替换它们的不变量和 oracle 检查。
+
+本地 Windows x64 / CPython 3.12.13，Rust 1.98.1、PyO3 0.29.3、maturin 1.15.0：
+计算源码 `e295ea17e1f694ff8c43607cf3bed870e741f41d` 的189项强制native全回归通过，
+无跳过（179.368秒）。随后修正 backend_info 的真实 `.pyd` 路径、预算提前返回的非循环拒绝和
+失败经过时间；最终计算源码为 `9596723`，189项强制native回归再次全部通过，无跳过（167.089秒）；
+隔离两个wheel的17项全部通过；无扩展环境14项通过、6项原生测试明确跳过。
+后续验收追加在同一日志，不覆盖首次结果。
+Rust fmt/Clippy(-D warnings)与精确比值单测通过，reference sdist/wheel和native release wheel构建通过。
+两示例、Ruff check/format和文档/完整diff whitespace检查另实际运行。
+
+隔离安装从 site-packages 导入，用 Python `-I` 排除源码与环境变量路径污染。
+安装两个wheel时强制native，运行9项集成和8项旧格式；另建只装reference的环境，
+确认 backend_info 为 Unavailable，运行reference边界/旧格式/S4联合测试，原生项明确跳过。
+此外实际native构造65维Factorized/HC的单尺度及两版族快照，在另一无扩展环境恢复并重验，
+输出hash一致。日志保存具体快照wire hash与生成/恢复命令；UUID/time导致wire hash每次可不同，
+不据此宣称性能。两个表示的读取输出均为
+`portable-output:76c9c01dec4a743edd09ae718014430976a292f607200b362e5aa7ee667b61b1`。
+
+复跑打包边界（Windows；Linux将 Scripts/python.exe 换为 bin/python）：
+
+```powershell
+uv build --no-build-isolation
+uv venv .task-artifacts/installed-env --python .venv/Scripts/python.exe
+uv pip install --python .task-artifacts/installed-env/Scripts/python.exe dist/homology_operator-0.0.2.dev0-py3-none-any.whl .task-artifacts/native-wheels/homology_operator_native-0.0.2.dev0-cp312-cp312-win_amd64.whl
+$env:HOMOLOGY_NATIVE_REQUIRED = '1'
+& .task-artifacts/installed-env/Scripts/python.exe -I -m unittest discover -s tests -p test_integration.py -v
+& .task-artifacts/installed-env/Scripts/python.exe -I -m unittest discover -s tests -p test_legacy_results.py -v
+# 无扩展隔离环境：只安装reference wheel，移除强制native变量。
+Remove-Item Env:HOMOLOGY_NATIVE_REQUIRED
+uv venv .task-artifacts/reference-env --python .venv/Scripts/python.exe
+uv pip install --python .task-artifacts/reference-env/Scripts/python.exe dist/homology_operator-0.0.2.dev0-py3-none-any.whl
+& .task-artifacts/reference-env/Scripts/python.exe -I -m unittest discover -s tests -p test_integration.py -v
+& .task-artifacts/reference-env/Scripts/python.exe -I -m unittest discover -s tests -p test_legacy_results.py -v
+& .task-artifacts/reference-env/Scripts/python.exe -I -m unittest discover -s tests -p test_s4_integration.py -v
+```
+
+wheel文件名必须匹配实际解释器/平台；CI分别在Windows Python3.10和Linux Python3.12构建后选择产物，
+reference CI的两种Python版本另验证真实无扩展安装。远端结果绑定最终PR精确head，不以本地成绩替代。
+
+取消样本只验证协作响应：8192坐标、16维循环基、quota=100000，另一线程发出cancel后返回
+cancelled且实际states在0与65535之间，验收上界为2秒。日志保留3次实际延迟/states与复跑源代码，
+不承诺一般规模的最坏延迟。库内失败原因、外层timeout/OOM和合法0分别表达；本轮没有故意制造进程OOM。
+矩阵条目是逻辑预算，非RSS；独立validator、证书重放、冻结/转换及恢复重算都有成本，仍需完整计时。
+本轮完成绑定/安装/恢复一致性检查，不提供新的端到端提速结论，S4-09与S5仍独立验收。
