@@ -65,3 +65,15 @@ python -c "import sys; sys.path.insert(0, 'tests/oracle'); from reference import
 该回归记录还冻结22个精确输入在固定 verify.py `model(optimize=False)` 下的贪心 objective、按 packed 原坐标表示的生成元、β理论上界及认证等级，保留全部原最优记录。β=0 的 native 算子 objective 为0，不能直接复制上游截面记账1。K4 stage 4 的贪心为4/3、最优为9/8；理论来源为固定 T4 中注明的 Rossman 贪心回缩加权同调版本。
 
 当前回归记录 UTF-8/LF 原始文件 SHA256 为 `1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1`。单尺度与族的已查询快照、证书篡改及反复往返由 test_solver.py 核验；通用下界、完整搜索和贪心证书的范围见 [solver 契约](SOLVER_CONTRACT.md)。Phase 1/2 的历史报告与输入 hash 保持原验收含义。
+
+## S4-08 冻结旧快照
+
+[legacy_results.json](../tests/fixtures/legacy_results.json) 来自本库
+`88f69661859fe7475705fb76589cf30674b63746` 的实际序列化入口，文件内保存来源仓库、逐源码
+SHA256 和各记录规范 wire hash。UTF-8/LF 文件 SHA256 为
+`ee79ac1b3525dc8e9f88c8404d9bb53c79ce346cc20e90df99b42ef5e9b44c4a`。
+共7份：未读取 Matrix、已读取精确 Matrix、CyclicTrace、EmptyDomain、预算失败、重复尺度族和 Partial 族。
+UUID、timestamp、wall time 经过合成固定，仅用于可重复兼容验证，不是性能样本。
+[test_legacy_results.py](../tests/test_legacy_results.py) 核对来源/hash、旧 schema 原版本重发、
+无重求解恢复、历史/缺失状态及篡改拒绝；新版 Factorized/HC 与族 schema 1/2 联合恢复另由
+[test_integration.py](../tests/test_integration.py) 和 [S4 联合测试](../tests/test_s4_integration.py) 验证。

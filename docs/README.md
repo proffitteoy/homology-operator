@@ -13,11 +13,11 @@
 | 判断 solver 支持域与最优证书 | [solver 契约](SOLVER_CONTRACT.md) |
 | 贡献、测试、构建或复跑实验 | [验证说明](VALIDATION.md)、[性能协议](BENCHMARKS.md) |
 
-## 实现状态（2026-10-02 核对）
+## 实现状态（2026-10-03 核对）
 
-本次整合前已核验通过的 `main` CI 基线为 `f0c15265b000941d1caa20030593eb84f3be969a`。
-该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37026644876)
-和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37026645087)
+已核验通过的 `main` CI 基线为 `e920de0a2a9ac92e4f4c46bfe28e39a8212f5769`。
+该提交的 [Reference checks](https://github.com/proffitteoy/homology-operator/actions/runs/37032308262)
+和 [Native prototype checks](https://github.com/proffitteoy/homology-operator/actions/runs/37032308251)
 均已完成并通过。CI 结论仅绑定这个提交，不覆盖尚未合入该提交的开发工作。
 
 | 范围 | 已有实现或证据 | 边界 |
@@ -27,14 +27,14 @@
 | S4-02 / PR #78 | 可选 safe Rust 可行构造及批查询 | 原型三个链空间最多 64 维；真实窗口记录包含退化 |
 | S4-03 / PR #79 | 多字 packed F2、`PreparedMatrix`、多 RHS 与复用消融 | 不解除单字宽 `NativeFeasibleSolver` 的限制；不代表全算子加速 |
 | S4-04 / [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) | `6c40b93` 提供 `CompactAction` / `NativeFactorizedSolver`、因子与 HC 表示、测试和测量记录 | 已合并；保留同 P 语义与有限测量，非 S4 总验收 |
-| S4-06 / [PR #81](https://github.com/proffitteoy/homology-operator/pull/81) | 几何批查询、精确权重与 workspace | PR #81 原先只合入 `s4/64-factorized-action`；本次整合将其增量纳入同一源码，最终成绩以整合 head/CI 为准 |
+| S4-06 / [PR #81](https://github.com/proffitteoy/homology-operator/pull/81) | 几何批查询、精确权重与 workspace | PR #81 原先只合入 `s4/64-factorized-action`；已由 [PR #85](https://github.com/proffitteoy/homology-operator/pull/85) 集成到 main e920de0 |
 | S4-05 / [PR #84](https://github.com/proffitteoy/homology-operator/pull/84) | 四种限定 native solver、精确质量后备与独立证书重放；159项整合回归、700条有限性能样本 | 已合入 main `63138fc`；认证 solver 输出仍为 Matrix/CyclicAction，后端集成另验收 |
 | S4-07 / [PR #82](https://github.com/proffitteoy/homology-operator/pull/82) | 相邻 transport barcode、历史区间基、受控缓存与 schema 2 共享过滤快照 | 已合入 main `f0c15265`；保留 schema 1 兼容和有限合成性能范围 |
-| S4 后续 / S5 | 后端集成、GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
-| 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 private，未选择 LICENSE，发行/API 兼容政策未冻结 |
+| S4-08 / #68 | 后端选择/可见后备、取消、旧格式与紧凑恢复、隔离 wheel CI | 本分支实现，验证入口见 [VALIDATION](VALIDATION.md#s4-08-后端集成验收)；尚未合入上述 main |
+| S4 后续 / S5 | GUDHI 对拍及正式测量 | 仍需逐项实现和验收 |
+| 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 public，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
-本次整合以 `f0c15265` 为第一父节点，纳入 PR #81 的合并提交 `0b21461`；
-S4-04/05/07 与文档 PR #83 已在第一父节点中，不重复重放。旧分支与原始测量保留。
+main 已包含 S4-04/05/06/07 与文档 PR #83；本分支正常 merge 同步 main，旧分支与原始测量保留。
 使用说明对应当前源码；整合前 CI、各工作包历史证据与最终整合验收分别记录，S4/S5 总门槛不因此完成。
 测试总数以指定 checkout 的实际运行结果为准，历史报告中的计数不作为滚动状态。
 

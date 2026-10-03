@@ -804,3 +804,16 @@ native 记录在无扩展环境可由完整 reference 重放恢复，公开
 
 构建、测试和复跑见 [README](../README.md)、[验证说明](VALIDATION.md) 与
 [有限性能协议](BENCHMARKS.md)。该实现不重开一般搜索 no-go，也不代表 S4 整体退出。
+
+## 28. 后端调度与协作取消（S4-08）
+
+默认不后备；显式 fallback=True 仅对 NativeFeasible 和四种限定 native solver 的 Unavailable
+尝试同一个 reference solver，保留全部请求并重新 capability 检查与独立验证。记录实际选择和原因，
+不降低认证，也不把 matrix-free NativeFactorized 输出退化为 dense。工具链与 ABI 见 [API](INTERFACE.md)。
+
+ProjectionProblem.cancellation 可接受一次性 CancellationToken，不属于数学配置或缓存身份。
+原生长循环释放 GIL，用原子标记在构造/packed 准备/span checkpoint 停止；reference 使用原预算检查点。
+cancelled、state_limit、wall_time_limit、matrix_entry_limit 都是库内 ResourceExhausted 的不同原因。
+state 仍计实际完成单位；中断候选沿用原 solver 的 bounds/认证规则，停止不成为 ExactOptimal 的证据。
+独立验证/证书重放、转换与恢复不会跳过；这些步骤及单步代数没有全流程硬抢占或 RSS 保证。
+批几何的受控入口和不支持取消的入口明确列于 API；进程 timeout/OOM 需由外层记录，不能冒充库返回。
