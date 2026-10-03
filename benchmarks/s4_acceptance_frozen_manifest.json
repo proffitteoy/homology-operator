@@ -125840,5 +125840,13 @@
     "legacy_family": "candidate reference scalar pipeline, only family.py loaded from R0"
   },
   "cost_scope": "import/manifest/input/solver/mandatory validators/topology/joint queries/two batches/snapshot/recovery/requery/streamed P,L generator audit/JSON output/exit; no profiler",
-  "history": "one common identity-bound joint record per stage; official scalar readout APIs used without per-query history; restore explicitly rechecks all requested geometry"
+  "history": "one common identity-bound joint record per stage; official scalar readout APIs used without per-query history; restore explicitly rechecks all requested geometry",
+  "freeze_after_pilot": {
+    "pilot_lf_sha256": {
+      "s4_acceptance_pilot_v1.json": "255bb67849c08fa42080b40dd4695f2cf8c02059b9e8eaae7f3e8b3923bea777",
+      "s4_acceptance_pilot_rank2.json": "f8fb221fd6a7d8cb3ebda7f3c736f6ba6d4829ff48c341b940f3c46bd9be3a1b"
+    },
+    "correction": "pilot v1 omitted required ThreeTerminalCut solver_options; restored from the original solver fixture before freezing; v1 retained, corrected case independently rerun; no performance-based case/route removal",
+    "workload_changes": "no removed cases/routes; same query counts, resource limits, worker timeout and repeat plan"
+  }
 }
