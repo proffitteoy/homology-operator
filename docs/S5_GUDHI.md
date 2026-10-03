@@ -152,3 +152,29 @@ uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s
 ```
 
 正式负载、规模网格、重复次数与pilot在S5-05冻结，不能用正式结果选路线。
+
+## S5-05 冻结规模与正式协议
+
+[预声明pilot](../benchmarks/s5_performance_pilot_manifest.json)和[完整pilot原值](../benchmarks/s5_performance_pilot.json)
+包含20配置、71个case/route、284个独立进程，全部完成，成功结果无拓扑/同输出差异。
+[正式清单](../benchmarks/s5_performance_frozen_manifest.json)沿用全部输入/路线/solver/预算，无性能筛选；
+10区组×cold/warm×timing/rss共2840进程。cold每进程5次重建，预声明grid/long/VR/q1024为1次；warm5次。
+查询量0/1/8/64/1024、整数/有理/浮点/大整数、ExactOptimal及明确失败配置分组。
+
+规模覆盖10/18列双行网格（H1链37/69、末端β=1）、K4,4/K5,5（β=9/16）、16/32阶段长过滤，
+以及10/18顶点显式欧氏VR（H1链20/54）。维数、nnz、消元fill-in、rank/β逐阶段保存在scale_metadata。
+这是有限显式稠密边界实现的规模网格，不证明一般中型VR或稀疏复杂度。
+R0/reference/全后端和q8的显式native、因子scalar、HC workspace消融均保留；VR真实次入口另列。
+没有并行worker性能主张；本轮仅预声明单线程串行采样。
+
+生产Python/Rust源码固定S4 `7fa812d5e76ca80ac16316cb212d133c0639bfd7`，R0固定`54ce78b`；
+worker及外层计时函数AST与pilot保持相同，父记录改为每条append-only journal、每10条聚合检查点，
+启动/取消/结束也写检查点。续跑同时加载journal中检查点后的完整样本，避免重复或丢失；
+六项采样回归包含真实run_plan取消与过时检查点续跑。
+正式运行前提交清单和helper，测量时拒绝身份变化；pilot与formal不混入同一统计。
+
+```powershell
+uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s5_performance_frozen_manifest.json --phase formal --output .task-artifacts/s5-formal-recheck.json
+```
+
+正式结果、配对统计与全部失败在S5-05采样完成后提交，综合审计/隔离复现由S5-06交付。

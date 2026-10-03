@@ -9,7 +9,7 @@ from math import cos, sin, pi, dist
 from pathlib import Path
 import sys
 
-from benchmark_s5 import digest, frozen_environment
+from benchmark_s5 import digest, frozen_environment, sampling_fingerprint
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
@@ -341,7 +341,7 @@ def make_plan():
             "cold_repeats": "5 except predeclared grid/long/VR/q1024=1",
             "warm_repeats": 5,
             "selection": "no route/case/threshold selection by pilot or formal performance",
-            "scale_scope": "finite dense boundary grid; VR10/18 vertices, grid20/36 vertices, max chain69/VR90; no universal scale claim",
+            "scale_scope": "finite dense boundary grid; VR10/18 vertices, grid20/36 vertices, actual chain dimensions in scale_metadata; no universal scale claim",
             "cost_scope": "same explicit frontend, mandatory validation, full requested outputs; topology and joint workloads separated",
         },
     }
@@ -388,6 +388,32 @@ def main():
             args.freeze_pilot.read_bytes().replace(b"\r\n", b"\n")
         ).hexdigest()
         plan["pilot_manifest_hash"] = report["plan_hash"]
+        pilot_revision = "d16eb3d"
+        import subprocess
+
+        pilot_source = subprocess.check_output(
+            ["git", "show", f"{pilot_revision}:scripts/benchmark_s5.py"],
+            cwd=ROOT,
+            text=True,
+        )
+        if (
+            sha256(pilot_source.replace("\r\n", "\n").encode()).hexdigest()
+            != report["environment"]["helper_lf_sha256"]["scripts/benchmark_s5.py"]
+        ):
+            raise ValueError("pilot harness source identity differs")
+        measured = sampling_fingerprint(pilot_source)
+        if measured != sampling_fingerprint(
+            (ROOT / "scripts/benchmark_s5.py").read_text("utf-8")
+        ):
+            raise ValueError("measured worker functions changed; cannot reuse pilot")
+        plan["freeze_notes"] = {
+            "pilot_harness_commit": pilot_revision,
+            "measured_worker_ast_sha256": measured,
+            "changes": "parent adds append-only sample journal and checkpoints every ten rows; worker/outer timing AST unchanged; general AD=0 fixture hash added to metadata; textual VR90 estimate corrected to actual54, no input/route/solver/parameter changes",
+        }
+        plan["predeclaration"]["scale_scope"] = (
+            "finite dense boundary grid; VR10/18 vertices and20/54 edges, grid20/36 vertices and37/69 edges; actual shapes in scale_metadata; no universal scale claim"
+        )
         plan["freeze_environment"] = frozen_environment()
     else:
         plan = make_plan()

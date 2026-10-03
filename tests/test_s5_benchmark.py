@@ -156,6 +156,101 @@ class S5SamplingTests(unittest.TestCase):
         }
         self.assertIsNone(output_key(row))
 
+    def test_cancel_and_stale_checkpoint_resume_journal_without_duplicate_samples(self):
+        from unittest.mock import patch
+        import benchmark_s5 as sampler
+
+        case = {
+            "id": "general",
+            "input_id": "general",
+            "input_hash": "fixture-hash",
+            "routes": ["reference"],
+            "solver": "FeasibleSolver",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {},
+            "workload": "Topology",
+            "query_count": 0,
+            "expected_topology_hash": "topology",
+        }
+        plan = {
+            "inputs": {},
+            "cases": [case],
+            "blocks": 1,
+            "seed": 73,
+            "threads": {},
+            "process_wall_seconds": 5,
+            "rss_budget_bytes": 1000,
+            "statistics": {"minimum_paired_blocks": 10},
+        }
+        sampled = {
+            "process_state": "completed",
+            "end_to_end_seconds": 1,
+            "result": {
+                "initialization_seconds": 0,
+                "peak_rss_bytes": 100,
+                "records": [
+                    {
+                        "completed": True,
+                        "state": "Computed",
+                        "output_hash": "same",
+                        "topology_hash": "topology",
+                        "worker_pipeline_seconds": 0.5,
+                        "warm_records": [{"output_hash": "same", "seconds": 0.1}],
+                    }
+                ],
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cancel = root / "cancel"
+            output = root / "first.json"
+            count = 0
+
+            def sample(*args):
+                nonlocal count
+                count += 1
+                if count == 2:
+                    cancel.touch()
+                return deepcopy(sampled)
+
+            with (
+                patch.object(sampler, "ROOT", root),
+                patch.object(sampler, "frozen_environment", return_value={}),
+                patch.object(sampler.subprocess, "check_output", return_value="head"),
+                patch.object(sampler, "sample_process", side_effect=sample),
+            ):
+                first = sampler.run_plan(
+                    plan, root / "plan.json", output, root, "smoke", cancel_file=cancel
+                )
+                self.assertEqual(first["stop_reason"], "cancelled between workers")
+                self.assertEqual(len(first["rows"]), 2)
+                self.assertTrue(
+                    all(r["input_hash"] == "fixture-hash" for r in first["rows"])
+                )
+                # Model a crash after append, before the aggregate checkpoint.
+                stale = deepcopy(first)
+                stale["rows"] = stale["rows"][:1]
+                output.write_text(json.dumps(stale), "utf-8")
+                cancel.unlink()
+                resumed = sampler.run_plan(
+                    plan,
+                    root / "plan.json",
+                    root / "resumed.json",
+                    root,
+                    "smoke",
+                    resume=output,
+                )
+                self.assertEqual(count, 4)
+                self.assertEqual(len(resumed["rows"]), 4)
+                self.assertEqual(
+                    len({(r["scope"], r["mode"]) for r in resumed["rows"]}), 4
+                )
+                self.assertEqual(
+                    sum(g["successful_samples"] for g in resumed["summary"]), 4
+                )
+                with self.assertRaisesRegex(ValueError, "never overwritten"):
+                    sampler.run_plan(plan, root / "plan.json", output, root, "smoke")
+
     def test_checkpoint_failure_preserves_previous_and_complete_temporary_data(self):
         from unittest.mock import patch
         from benchmark_acceptance import checkpoint_json

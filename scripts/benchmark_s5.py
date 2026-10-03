@@ -678,6 +678,24 @@ def smoke_plan():
     }
 
 
+def sampling_fingerprint(source):
+    import ast
+
+    names = {
+        "worker",
+        "run_worker_case",
+        "construct_families",
+        "read_topology",
+        "geometry_value",
+        "sample_process",
+    }
+    return {
+        node.name: sha256(ast.dump(node, include_attributes=False).encode()).hexdigest()
+        for node in ast.parse(source).body
+        if isinstance(node, ast.FunctionDef) and node.name in names
+    }
+
+
 def frozen_environment():
     from homology_operator.native import backend_info
     from oracle.gudhi_oracle import environment
@@ -721,6 +739,16 @@ def frozen_environment():
             "threads": 1,
         },
         "thread_env": THREAD_ENV,
+        "measured_function_ast_sha256": sampling_fingerprint(
+            Path(__file__).read_text("utf-8")
+        ),
+        "generator_lf_sha256": sha256(
+            (ROOT / "scripts/prepare_s5_performance.py")
+            .read_bytes()
+            .replace(b"\r\n", b"\n")
+        ).hexdigest()
+        if (ROOT / "scripts/prepare_s5_performance.py").exists()
+        else None,
     }
 
 
@@ -803,6 +831,44 @@ def run_plan(plan, path, output, baseline_root, phase, resume=None, cancel_file=
             raise ValueError("resume identity differs; do not mix observations")
         report["rows"] = previous["rows"]
         report["resumed_from_sha256"] = sha256(resume.read_bytes()).hexdigest()
+    if resume and previous.get("journal_path"):
+        saved_journal = Path(previous["journal_path"])
+        if saved_journal.exists():
+            lines = saved_journal.read_text("utf-8").splitlines()
+            header = json.loads(lines[0])
+            if header["plan_hash"] != report["plan_hash"] or environment_identity(
+                header["environment"]
+            ) != environment_identity(environment):
+                raise ValueError("sample journal identities differ")
+            journal_rows = [json.loads(line)["row"] for line in lines[1:]]
+            known = {
+                (r["case"], r["route"], r["block"], r["scope"], r["mode"])
+                for r in report["rows"]
+            }
+            for row in journal_rows:
+                key = (
+                    row["case"],
+                    row["route"],
+                    row["block"],
+                    row["scope"],
+                    row["mode"],
+                )
+                if key not in known:
+                    report["rows"].append(row)
+                    known.add(key)
+    from uuid import uuid4
+
+    journal = (
+        ROOT / ".task-artifacts" / (output.stem + "." + uuid4().hex + ".samples.jsonl")
+    )
+    journal.parent.mkdir(parents=True, exist_ok=True)
+    with journal.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(
+            json.dumps({"plan_hash": report["plan_hash"], "environment": environment})
+            + "\n"
+        )
+    report["journal_path"] = str(journal)
+    checkpoint_json(output, report)
     completed = {
         (r["case"], r["route"], r["block"], r["scope"], r["mode"])
         for r in report["rows"]
@@ -847,7 +913,8 @@ def run_plan(plan, path, output, baseline_root, phase, resume=None, cancel_file=
         row = {
             "case": case["id"],
             "input_id": case["input_id"],
-            "input_hash": plan["inputs"].get(case["input_id"], {}).get("input_hash"),
+            "input_hash": plan["inputs"].get(case["input_id"], {}).get("input_hash")
+            or case.get("input_hash"),
             "route": route,
             "block": block,
             "scope": scope,
@@ -886,7 +953,11 @@ def run_plan(plan, path, output, baseline_root, phase, resume=None, cancel_file=
                     - pipeline
                 )
         report["rows"].append(row)
-        checkpoint_json(output, report)
+        with journal.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps({"row": row}, allow_nan=False) + "\n")
+            stream.flush()
+        if len(report["rows"]) % 10 == 0 or sampled["process_state"] == "cancelled":
+            checkpoint_json(output, report)
         print(
             f"{len(report['rows'])}/{len(schedule)} {case['id']} {route} {scope}/{mode}: {sampled['process_state']}",
             flush=True,
