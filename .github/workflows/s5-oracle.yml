@@ -1,0 +1,32 @@
+name: S5 GUDHI oracle
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  oracle:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.12"
+    runs-on: ${{ matrix.os }}
+    env:
+      HOMOLOGY_GUDHI_REQUIRED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.5"
+      - run: uv sync --locked --group oracle --python ${{ matrix.python }}
+      - run: uv run --locked --group oracle python -m unittest discover -s tests -p "test_s5*.py" -v
+      - run: uv run --locked --group oracle python scripts/check_s5_inputs.py --output .task-artifacts/s5-inputs.json

@@ -77,3 +77,9 @@ UUID、timestamp、wall time 经过合成固定，仅用于可重复兼容验证
 [test_legacy_results.py](../tests/test_legacy_results.py) 核对来源/hash、旧 schema 原版本重发、
 无重求解恢复、历史/缺失状态及篡改拒绝；新版 Factorized/HC 与族 schema 1/2 联合恢复另由
 [test_integration.py](../tests/test_integration.py) 和 [S4 联合测试](../tests/test_s4_integration.py) 验证。
+
+## S5 显式单纯复形 manifest
+
+[六份初始冻结输入](../tests/fixtures/s5_simplicial.json)及[完整双边构造导出](../benchmarks/s5_input_audit.json)
+记录人工显式单形出生列表、来源/hash、原scale、stage、坐标、正权与截断。它们没有复用或改写上述迁移fixture。
+契约、失效输入和复跑入口见 [S5 GUDHI](S5_GUDHI.md)。一般AD=0窗口无适配时NotApplicable。
