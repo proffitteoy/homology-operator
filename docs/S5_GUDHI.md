@@ -112,3 +112,43 @@ uv run --locked --no-sync python -m unittest discover -s tests -v
 
 Native CI安装oracle组，强制同时运行真实native与GUDHI；reference仍可独立安装。
 本轮有限corpus通过不推出一般证明、规模稳定性或性能结论。
+
+## S5-04 隔离进程采样器
+
+[scripts/benchmark_s5.py](../scripts/benchmark_s5.py)串行执行四个独立进程域：cold/timing、warm/timing、cold/rss、warm/rss。
+Cold外层时间覆盖进程启动/导入、整份清单解码、全部预声明重建、标准路径的验证/读取、报告JSON和退出；
+每个block的重建次数明确记录，不能把block总成本当一份独立重建的冷启动。
+Warm只在已有对象上读取请求；setup保留在worker阶段与外层warm进程总成本，warm batch单独计时。
+第一批native workspace准备包含在该批成本，全部重复原值保留；不隐藏重建或转换。
+
+Topology域经合法统一算子/族读取各请求维数完整barcode；GUDHI用同显式复形与固定主参数。
+Joint域复用S4完整pipeline，另行完整读取全部请求维数topology的validated构造也明确计费。
+它包含solver输出和算子的独立验证、两批几何/复用、tracking、序列化、恢复重验、恢复后几何与全P/L生成元。
+互斥outer阶段与各次数nested阶段分开记录，不能双加；外层尚未分配开销显式保留。
+GUDHI基线无需额外导入本库或构造链算子，公共manifest验证和实际SimplexTree核查仍计入成本。
+Warm GUDHI读取已计算PH对象的各次数区间；两个次入口没有相同stored-object API，warm显式NotApplicable。
+
+RSS是独立同负载worker的OS绝对历史峰值，Windows使用PeakWorkingSetSize；Linux/macOS声明ru_maxrss单位。
+采集覆盖结果记录构造和一次JSON分配，最终输出/退出之后没有额外观测。缺值为null，不扣启动基线。
+时间域无profiler、tracemalloc或trace；子进程数和native固定单线程，BLAS/OpenMP环境变量均1。
+worker墙钟限180秒；RSS预声明2GiB仅作执行后绝对峰值预算评估，不冒充OS硬内存上限。
+成功、库内ResourceExhausted/Unavailable/NotApplicable/Mismatch、process_timeout/oom/killed/error和取消分别保留。
+SIGKILL不自行推断为OOM；OOM需要MemoryError证据。timeout不作为成功耗时。
+
+固定seed调度且每条样本保存case/fixture hash、block/scope/mode、solver/认证/预算、source/build/environment和所有失败。
+标准reference/native只在每个重复同完整输出、solver/认证时生成配对比值；Joint/GUDHI明示额外信息成本。
+至少10个独立区组才给10000次固定seed配对log-median bootstrap 95%区间；少样本只列原值/median/IQR。
+续跑必须同清单/source/build/environment；旧样本不得重选，原报告hash另存。原子检查点失败保全旧文件和完整临时数据。
+`--cancel-file`在worker之间协作停止，活动worker可由Ctrl+C终止，已有完整样本保全。
+正式模式拒绝未预提交的清单、改动的helper/source/build/environment或少于10区组。
+
+[首轮smoke原样本](../benchmarks/s5_harness_smoke_v1.json)保留了资源状态JSON mapping序列化失败。
+修复只规范化记录；[修正后smoke](../benchmarks/s5_harness_smoke.json)按同输入重新采样，失败仍以真实库状态保留。
+五项采样边界回归覆盖真实子进程timeout/kill、记录OOM、缺RSS/输出差异禁比值、warm重复差异、
+resource状态在timing/RSS均可序列化和检查点失败保全。这些smoke不是正式性能统计。
+
+```powershell
+uv run --locked --no-sync python scripts/benchmark_s5.py --manifest benchmarks/s5_harness_smoke_manifest.json --phase smoke --output .task-artifacts/s5-smoke-recheck.json
+```
+
+正式负载、规模网格、重复次数与pilot在S5-05冻结，不能用正式结果选路线。
