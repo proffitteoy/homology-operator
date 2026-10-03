@@ -197,3 +197,30 @@ q1024的cold为1.047，[1.030,1.069]，warm为1.086，[1.055,1.102]，均保留�
 q8的cold Joint/GUDHI PH额外信息成本比为7.882；两者输出不同，不称PH加速。
 完整median、Q1/Q3端点和固定seed的10区组配对bootstrap均保存在原summary，pilot没有参与统计。
 正式域只覆盖本工作站、预声明规模和单线程串行执行；综合成本/认证边界与独立复现由S5-06提供。
+### S5-03 review 后的失败分类与现场
+
+correctness整体状态由每项实际comparison派生：只有所请求的reference/native比较全部完成才是Passed；
+双方同样ResourceExhausted、Unavailable或中断也不能记通过，CLI保存结果并以非零退出。
+默认预算的17个孤点认证样本明确为ResourceExhausted；原77份归档全部实际完成的成功结论保持原样。
+
+correctness通过run_pipeline的可选capture保存本次实际请求/manifest、solver配置/认证/身份/原projection、
+渐进语义结果、geometry批和可用snapshot wires；wire包含原joint_batch和原solver_run_id，不重新求解替代。
+独立投影与transport失败另保存实际窗口/action/身份或原族快照及失败链。
+归档先独立写入不可覆盖的.original.json，再仅接受同failure_category的删除缩减；
+缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。
+
+review修复源码`aea7940`的8项correctness回归通过（45.556秒），[独立新审计](../benchmarks/s5_correctness_review_audit.json)重新检查全部77份，77 Passed/Compared，原归档未覆盖。
+
+### S5-04 review 后的比值准入
+
+summarize在过滤无metric之前统计语义Mismatch，任何一个这样的区组都会否决比值/CI；
+普通timeout/资源失败继续单列，不变成成功耗时。
+同输出身份另外核对实际solver方法/config、停止状态与certificate_level，warm批hash也绑定这些证据。
+Native前缀及已独立验证的Feasible Matrix/Factorized/HC表示规范化，其余请求、预算、算术、
+objective、并列策略和实际认证保留；缺证据或不同方法/认证不生成同认证比值。
+cold Joint的额外topology构造失败时保留本次statuses/details/resource_usage/diagnostics和前一Joint记录，
+不再read_topology(None)并改写为process_error。
+
+9项采样回归通过，包含经run_plan标记的10个正常配对+1个Mismatch、真实isolated的Greedy/NativeFeasible
+认证不同、额外构造故障注入经run_plan→summarize、原真实子进程失败边界。
+旧性能raw和原summary仍原样保留；重新汇总使用新准入但不宣称执行过新worker。

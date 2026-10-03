@@ -308,6 +308,20 @@ def run_worker_case(plan, case, route, scope, baseline_root):
         # Separate full requested topology readout: this extra validated construction is charged.
         families, statuses, details = construct_families(manifest, case, route)
         done("full_topology_additional_validated_construction")
+        if families is None:
+            states = {s["status"] for s in statuses}
+            return {
+                "completed": False,
+                "state": "ResourceExhausted"
+                if "ResourceExhausted" in states
+                else "Unavailable"
+                if "Unavailable" in states
+                else "Failed",
+                "statuses": statuses,
+                "details": json.loads(canonical_json(details)),
+                "records": records,
+                "phases_seconds": phases,
+            }
         topology_value = read_topology(families)
         done("all_requested_topology_readout")
         encoded = canonical_json(
@@ -354,6 +368,10 @@ def run_worker_case(plan, case, route, scope, baseline_root):
             started = perf_counter()
             topology_value = read()
             semantic = {"topology": topology_value}
+            if families is not None:
+                semantic["solver_evidence"] = solver_evidence(
+                    {"statuses": statuses, "details": details}
+                )
             metadata = []
             if families is not None and case["workload"] != "Topology":
                 semantic["geometry"], metadata = geometry_value(
@@ -513,7 +531,51 @@ def output_key(row):
     hashes = [r["output_hash"] for r in records]
     if row["scope"] == "warm":
         hashes = [w["output_hash"] for r in records for w in r["warm_records"]]
-    return hashes[0] if hashes and len(set(hashes)) == 1 else None
+    if not hashes or len(set(hashes)) != 1:
+        return None
+    evidence = [solver_evidence(r) for r in records]
+    if any(e is None for e in evidence):
+        return None
+    evidence_hashes = [digest(e) for e in evidence]
+    if len(set(evidence_hashes)) != 1:
+        return None
+    return digest({"output_hash": hashes[0], "solver_evidence": evidence[0]})
+
+
+def solver_evidence(record):
+    """Compare actual methods/configuration and certification, not requested labels."""
+    from homology_operator.result import canonical_json
+
+    if record.get("records"):
+        nested = [solver_evidence(r) for r in record["records"]]
+        return nested if all(r is not None for r in nested) else None
+    statuses = record.get("statuses")
+    details = record.get("details")
+    if not statuses or details is None:
+        return None
+    if all(s["status"] == "Computed" for s in statuses):
+        return {"statuses": statuses, "oracle_options": details}
+    solutions = details.get("solutions") if isinstance(details, dict) else details
+    configs = []
+    for solution in solutions or []:
+        original = solution.get("solver_config", solution.get("config"))
+        config = json.loads(canonical_json(original))
+        method = solution.get("method")
+        if not config or method is None:
+            return None
+
+        # These are representations of the same verified feasible construction.
+        def normalize_method(value):
+            name = value.removeprefix("Native")
+            return "FeasibleSolver" if name == "FactorizedSolver" else name
+
+        config["method"] = normalize_method(config["method"])
+        config.pop("matrix_free_output", None)
+        config["solver_options"].pop("representation", None)
+        configs.append({"method": normalize_method(method), "config": config})
+    if len(configs) != len(statuses):
+        return None
+    return {"statuses": statuses, "actual_solvers": configs}
 
 
 def metric(row):
@@ -576,17 +638,27 @@ def summarize(plan, rows):
                         ratios, mismatches = [], 0
                         for row in samples:
                             peer = peers.get(row["block"])
-                            if (
-                                peer is None
-                                or metric(row) is None
-                                or metric(peer) is None
-                            ):
-                                continue
                             if baseline == "reference" and route in {
                                 "gudhi",
                                 "edge_collapse",
                                 "rips_persistence",
                             }:
+                                continue
+                            # run_plan marks a semantic discrepancy incomplete. It
+                            # still vetoes a ratio, even though it has no metric.
+                            if any(
+                                record.get("state") == "Mismatch"
+                                for sample in (row, peer)
+                                if sample is not None
+                                for record in sample.get("result", {}).get(
+                                    "records", []
+                                )
+                            ):
+                                mismatches += 1
+                                continue
+                            if peer is None:
+                                continue
+                            if metric(row) is None or metric(peer) is None:
                                 continue
                             if baseline == "reference":
                                 compatible = output_key(row) is not None and output_key(
