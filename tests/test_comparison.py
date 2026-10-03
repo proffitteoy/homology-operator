@@ -273,5 +273,180 @@ class ComparisonTests(unittest.TestCase):
         )
 
 
+class AcceptanceTests(unittest.TestCase):
+    @staticmethod
+    def harness():
+        import sys
+
+        directory = str(Path(__file__).resolve().parents[1] / "scripts")
+        sys.path.insert(0, directory)
+        try:
+            import benchmark_acceptance
+
+            return benchmark_acceptance
+        finally:
+            sys.path.remove(directory)
+
+    def test_checkpoint_preserves_previous_data_when_atomic_replace_fails(self):
+        from unittest.mock import patch
+
+        harness = self.harness()
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            path.write_text('{"previous":true}', encoding="utf-8")
+            with patch.object(Path, "replace", side_effect=OSError(22, "locked")):
+                with patch("time.sleep"):
+                    with self.assertRaises(OSError):
+                        harness.checkpoint_json(path, {"new": True})
+            self.assertEqual(json.loads(path.read_text("utf-8")), {"previous": True})
+            saved = list(Path(directory).glob("*.json.tmp"))
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(json.loads(saved[0].read_text("utf-8")), {"new": True})
+            harness.checkpoint_json(path, {"new": True})
+            self.assertEqual(json.loads(path.read_text("utf-8")), {"new": True})
+
+    def test_admission_requires_all_successful_same_output_process_blocks(self):
+        harness = self.harness()
+        manifest = {"cases": [{"id": "case", "routes": ["r0", "candidate"]}]}
+
+        def sample(route, block, output="same", completed=True):
+            return {
+                "case": "case",
+                "route": route,
+                "block": block,
+                "mode": "timing",
+                "process_state": "completed",
+                "cold_block_seconds": 1 if route == "r0" else 0.5,
+                "result": {
+                    "records": [{"completed": completed, "output_hash": output}]
+                },
+            }
+
+        rows = [
+            sample(route, block) for block in range(10) for route in ("r0", "candidate")
+        ]
+        result = harness.summarize(manifest, rows)[2]
+        self.assertTrue(result["admission_improvement"])
+        self.assertEqual(result["paired_blocks"], 10)
+        self.assertFalse(
+            harness.summarize(manifest, rows[:-2])[2]["admission_improvement"]
+        )
+        rows[-1] = sample("candidate", 9, completed=False)
+        result = harness.summarize(manifest, rows)[2]
+        self.assertFalse(result["admission_improvement"])
+        self.assertEqual(result["complete_blocks"], 9)
+        rows[-1] = sample("candidate", 9, output="different")
+        result = harness.summarize(manifest, rows)[2]
+        self.assertFalse(result["same_output"])
+        self.assertFalse(result["admission_improvement"])
+        # Ten matching blocks plus a mismatch must still fail admission.
+        rows.extend((sample("r0", 10), sample("candidate", 10)))
+        self.assertFalse(harness.summarize(manifest, rows)[2]["admission_improvement"])
+        empty = harness.summarize(
+            manifest, [sample("r0", 0), sample("candidate", 0, completed=False)]
+        )[2]
+        self.assertIsNone(empty["same_output"])
+        self.assertIsNone(empty["median"])
+
+    def test_separate_rss_and_non_deterministic_repeats_cannot_be_admitted(self):
+        harness = self.harness()
+        manifest = {"cases": [{"id": "case", "routes": ["r0", "candidate"]}]}
+        rows = []
+        for block in range(10):
+            for route in ("r0", "candidate"):
+                rows.append(
+                    {
+                        "case": "case",
+                        "route": route,
+                        "block": block,
+                        "mode": "rss",
+                        "process_state": "completed",
+                        "result": {
+                            "peak_rss_bytes": 100 if route == "r0" else 150,
+                            "records": [{"completed": True, "output_hash": "same"}],
+                        },
+                    }
+                )
+        result = harness.summarize(manifest, rows)[3]
+        self.assertTrue(result["median_regression_over_20_percent"])
+        self.assertFalse(result["admission_improvement"])
+        rows[-1]["result"]["records"].append(
+            {"completed": True, "output_hash": "changed"}
+        )
+        self.assertFalse(harness.summarize(manifest, rows)[3]["same_output"])
+        for row in rows:
+            row["result"]["peak_rss_bytes"] = None
+        missing = harness.summarize(manifest, rows)[3]
+        self.assertIsNone(missing["median"])
+        self.assertEqual(missing["paired_blocks"], 0)
+
+    def test_joint_acceptance_replays_recovery_and_audits_noncycle_extension(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        harness = self.harness()
+        w = ChainWindow(
+            1,
+            Matrix.from_rows(((1, 0),)),
+            Matrix.zero(2, 0),
+            ("v",),
+            ("a", "b"),
+            (),
+            (2, 3),
+        )
+        manifest = {"windows": {"w": w.to_dict()}, "candidate": {"revision": "test"}}
+        case = {
+            "fixture_ids": ["w"],
+            "solver": "FeasibleSolver",
+            "resource_limits": {},
+            "requested_certificate_level": "Feasible",
+            "input_structure": "GeneralChainWindow",
+            "matrix_free_output": False,
+            "scales": None,
+            "queries": [{"stage": 0, "z": [0, 1], "y": [0, 0]}],
+        }
+        first = harness.run_pipeline(manifest, case, "reference", Path())
+        second = harness.run_pipeline(manifest, case, "reference", Path())
+        self.assertTrue(first["completed"])
+        self.assertEqual(first["output_hash"], second["output_hash"])
+        identity = first["details"]["operator_identities"][0]
+        self.assertEqual(
+            set(identity),
+            {
+                "input_id",
+                "basis_id",
+                "weight_id",
+                "projection_id",
+                "operator_id",
+                "solver_run_id",
+            },
+        )
+        restore = harness.restore_operator
+
+        def corrupted(record, revision):
+            op = restore(record, revision)
+            names = (
+                "window",
+                "P",
+                "project",
+                "class_representative",
+                "selected_mass",
+                "support",
+                "class_distance",
+                "shared_support",
+                "union_support",
+            )
+            proxy = SimpleNamespace(**{name: getattr(op, name) for name in names})
+            # Geometry on cycles stays correct; corruption only affects e0 outside ker(A).
+            proxy.apply_operator = (
+                lambda z: (0, 0) if tuple(z) == (1, 0) else op.apply_operator(z)
+            )
+            return proxy
+
+        with patch.object(harness, "restore_operator", side_effect=corrupted):
+            with self.assertRaisesRegex(ValueError, "restored full-chain P/L differs"):
+                harness.run_pipeline(manifest, case, "reference", Path())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,3784 @@
+{
+  "schema_version": 1,
+  "phase": "pilot",
+  "created_at": "2026-10-03T09:40:18.015877+00:00",
+  "manifest_sha256_lf": "60ae268d6dce938cafdcd7ca3f77d202b72ede5eb4ba3f51fb2b5e78a726ac93",
+  "harness_revision": "0d1dc12fe8ca9ca0dc6582501b711f373bd9cc6b",
+  "harness_lf_sha256": {
+    "scripts/benchmark_acceptance.py": "ab99feda98527dec080a776905d09aa8d1d854c5615b9c43174a5eadd1acc7af",
+    "scripts/benchmark_reference.py": "6759bb29a230aed94616259bfeae1fa101cfc59804fb0b00ff9ab9715dc82dfb",
+    "scripts/benchmark_native.py": "d40e0e7cb9608a3e2350d0d2e033115e90ccf4cfd45d2736d47d8c7da818e239",
+    "scripts/benchmark_compact.py": "a5721a32f9c4f868393a2f6aff730a996649df34bec42d8f0a86594cc88d03e4"
+  },
+  "baseline": {
+    "revision": "54ce78bccdcba619ffa2a4d76aeb450bfd24270e",
+    "lf_sha256": {
+      "src/homology_operator/__init__.py": "ac8e3119f9a6a15b3330769ed18656e84209a59f16a94005b63aea2216549f82",
+      "src/homology_operator/algebra.py": "3289bf88534e072222550d6c387c73851c8177a7c8ca8989f80efab3db605740",
+      "src/homology_operator/chain.py": "6d4c0e09ab5cc943fc0680e66acf715352a695f6aa4b7f4cf635f1522c605015",
+      "src/homology_operator/family.py": "331256ae66316866273978081aead421ab0c77bd2d551d077c42d9bb242a6fd2",
+      "src/homology_operator/operator.py": "57bd463579b168137783ae07b51e58507a4862233672c3dbf0510fd2c417ae11",
+      "src/homology_operator/result.py": "04dbae591a4e3a210d1f4df18e6776aa06030462b0565d0b7d6e3fcc05abd1fe",
+      "src/homology_operator/solver.py": "91e3c0ac665c76ff4529359cb209b8ea4ffc2321e5eacef39def7b1e47fdadb5",
+      "src/homology_operator/validation.py": "5deff7029dfc486e59665fa0f439622ee2406d9a17694e5211d6a952b3a494d3",
+      "tests/fixtures/reference.json": "593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2",
+      "tests/fixtures/solver_reference.json": "1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1",
+      "scripts/compare_solvers.py": "c9a94a24aa78f50a90088617a0f50a26c052b8a0daf1fc134dd9570357ba0553",
+      "pyproject.toml": "1b262e1e5a3298756491ba3669b631affdb6b2eee23c5149f42d91e6cb093e5d",
+      "uv.lock": "0adcbdecc1d7e2ab753224fe6503aaf9ecaf3af6fb8ae68affa10ee0a336dfc8"
+    },
+    "snapshot_sha256": "46294693bd6c26ae5abdcee87f7873c6963541f74e18ec97211136dd301e2d4b"
+  },
+  "candidate": {
+    "revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7",
+    "lf_sha256": {
+      "src/homology_operator/__init__.py": "6f016677d65b6854e5243e3e1714b16b34dcbeeb113103e47aa49949cf5bbed7",
+      "src/homology_operator/algebra.py": "0fb930b197aaf49f07835d17580d2e2397e3fc4920f410204d84ebb591ab5597",
+      "src/homology_operator/chain.py": "d374e150ab870a0f35e1ab6f601b655c83e71b7abee0b6d148f16b1e04aaf469",
+      "src/homology_operator/family.py": "1faa180d7b4809b742b78b63605b0bc57b09d025c8c3f7fff1df744bf8956c0f",
+      "src/homology_operator/native.py": "bb215cd34fac35f5eff59999965f1237e105cbe846e6bcc6ca85a6a394b7af99",
+      "src/homology_operator/operator.py": "2c1a137d2959cef20b5264e7a56d91b6498a1d171cc573b41cc7f354c8d96dd0",
+      "src/homology_operator/result.py": "00a6bfdc95de02cf3c66781b1acc31024fe98de3fa66a356f3207bdee4abd126",
+      "src/homology_operator/solver.py": "ad49a881f5e636dedcd1a6db400563bb14cde34d661097e2230158adb2ecfa29",
+      "src/homology_operator/validation.py": "7f4350c4d693ac11df0072e367002f77462957e0b922e04fd686667efce87e6d",
+      "tests/fixtures/reference.json": "593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2",
+      "tests/fixtures/solver_reference.json": "1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1",
+      "scripts/compare_solvers.py": "c9a94a24aa78f50a90088617a0f50a26c052b8a0daf1fc134dd9570357ba0553",
+      "pyproject.toml": "d4ecd8f6b07df69c9017d0372f99b1dafc9a68567fb8f2de8a117a71a039f9cb",
+      "uv.lock": "0adcbdecc1d7e2ab753224fe6503aaf9ecaf3af6fb8ae68affa10ee0a336dfc8"
+    },
+    "snapshot_sha256": "da40394facee1033d0e56a5838125b2bf96883452f7b2498a2571f0627497017",
+    "native_lf_sha256": {
+      "native/src/lib.rs": "7c7058ee26031937bf4185312ae38fadad53455328de2e6998a5e3738c532210",
+      "native/src/packed.rs": "1b42080dcb233468eba5a2bee171b0880eb973b03331b0105c5fcd8308264385",
+      "native/Cargo.toml": "9be78e991b38c8d4c7dc96cd7189d473a316cf64bba36e77d440732b3e21f6f0",
+      "native/Cargo.lock": "6083e3bbe9fefcc8de088d1e2c4a8f8ee88130c11866a0eb61b01a899d09a672",
+      "native/pyproject.toml": "35a5ff7e0e19c466e749fc0f7b24e3f70ea06461d89a6b34bbf34b6dc3014161"
+    }
+  },
+  "native_binary_sha256": {
+    "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Lib\\site-packages\\_homology_native\\_homology_native.cp312-win_amd64.pyd": "1adaa926012f0265705c8cfe30076d011b328b831963ab5c96fcfa161639c5e6",
+    "homology_operator_native-0.0.2.dev0-cp312-cp312-win_amd64.whl": "400b6eef0c077c51345ba883a9e882ab7bf148c6932fdc34772ffc8046e7dcc3"
+  },
+  "environment": {
+    "python": "3.12.13 (main, Apr  7 2026, 20:53:22) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+    "platform": "Windows-11-10.0.26100-SP0",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "native": {
+      "reference": "Available",
+      "native": "Available",
+      "semantics_version": 1,
+      "extension_path": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Lib\\site-packages\\_homology_native\\_homology_native.cp312-win_amd64.pyd",
+      "platform": "Windows-11-10.0.26100-SP0",
+      "threads": 1
+    },
+    "threads": 1
+  },
+  "protocol": {
+    "statistics": {
+      "bootstrap_resamples": 10000,
+      "confidence": 0.95,
+      "unit": "paired independent process block; median log ratio",
+      "time": "cold whole process block including all rebuild repeats",
+      "rss": "separate same-repetition fresh process absolute peak"
+    },
+    "admission": {
+      "benefit": "at least one predeclared successful same-output group: CI entirely below 1 for cold block or absolute RSS",
+      "default_replacement_regression_limit": 1.2,
+      "policy": "all groups retained; any >20% median regression blocks a global default replacement"
+    },
+    "cost_scope": "import/manifest/input/solver/mandatory validators/topology/joint queries/two batches/snapshot/recovery/requery/streamed P,L generator audit/JSON output/exit; no profiler",
+    "route_policy": {
+      "r0": "pinned Phase3 source; reference scalar geometry; legacy family/schema1",
+      "reference": "candidate source; reference solver/scalar; adjacent family/schema2",
+      "integrated": "explicit native certified solver, or Factorized Feasible; reusable geometry workspace for supported action; adjacent family/schema2",
+      "native_explicit": "candidate NativeFeasibleSolver, workspace geometry; width>64 is a declared Unavailable probe",
+      "factorized_scalar": "candidate Factorized plus scalar geometry",
+      "factorized_batch": "candidate Factorized plus transient native geometry workspace",
+      "hc_workspace": "candidate HC plus reusable native geometry workspace",
+      "legacy_family": "candidate reference scalar pipeline, only family.py loaded from R0"
+    }
+  },
+  "samples": [
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "cold_block_seconds": 0.15132340000036493,
+      "result": {
+        "case": "certified/cut_rank2",
+        "import_manifest_seconds": 0.020982500000172877,
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\src\\homology_operator\\__init__.py",
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 1.4300000172341242e-05,
+                  "conversion_seconds": 3.3099999200203456e-05,
+                  "decode_seconds": 2.690000292204786e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 3.889999698003521e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 1.2e-05,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 1,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                },
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 6.89999968422344e-06,
+                  "conversion_seconds": 3.1600000511389226e-05,
+                  "decode_seconds": 2.270000277349027e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 3.329999708512332e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 5.6e-06,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 2,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                },
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 7.499999874713831e-06,
+                  "conversion_seconds": 2.9599999834317714e-05,
+                  "decode_seconds": 2.190000031987438e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 3.409999953873921e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 6.1e-06,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 1,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "58c45413-8d96-48c1-8c29-f67fe71f8a4a",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9444,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "NativeRank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "NativeRank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "certificate_replay_backend": "packed-rust-v1",
+                    "execution_backend": "packed-rust-v1",
+                    "independent_validation_seconds": 0.0034365000001344015,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "native_detail": {
+                      "native_kernel_seconds": 2.4400000256719068e-05,
+                      "packed_products": 9,
+                      "prepared_decompositions": 2,
+                      "span_table_calls": 1
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.0017034000002240646
+                  },
+                  "solver_run_id": "58c45413-8d96-48c1-8c29-f67fe71f8a4a"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "phases_seconds": {
+              "barcode_transport_certificates": 4.000003173132427e-07,
+              "class_tracking": 3.9999940781854093e-07,
+              "family_validation": 1.3999997463542968e-06,
+              "geometry_first_including_preparation": 0.0009061999999175896,
+              "geometry_second": 0.001049800000146206,
+              "input_conversion": 0.00016369999957532855,
+              "operator_mandatory_validation": 0.005856699999640114,
+              "restore_geometry_audit": 0.0010744000001068343,
+              "restore_mandatory_validation": 0.015201999999590043,
+              "semantic_digest": 0.00014559999999619322,
+              "snapshot_serialization_mandatory_validation": 0.0058654000004025875,
+              "solve_dispatch_mandatory_validation": 0.008505400000103691,
+              "streamed_full_chain_restore_audit": 9.020000015880214e-05,
+              "topology": 3.5200000638724305e-05
+            },
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "integrated",
+        "source_revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "integrated",
+      "mode": "timing",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'integrated', '--mode', 'timing', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    },
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "cold_block_seconds": 0.16598380000050383,
+      "result": {
+        "case": "certified/cut_rank2",
+        "import_manifest_seconds": 0.025034299999788345,
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\src\\homology_operator\\__init__.py",
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "ccb3f2bc-80a8-48a7-9321-97909684168b",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9054,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "Rank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "Rank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.0031851000003371155
+                  },
+                  "solver_run_id": "ccb3f2bc-80a8-48a7-9321-97909684168b"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "phases_seconds": {
+              "barcode_transport_certificates": 4.000003173132427e-07,
+              "class_tracking": 5.000001692678779e-07,
+              "family_validation": 8.999995770864189e-07,
+              "geometry_first_including_preparation": 0.000576800000089861,
+              "geometry_second": 0.000768699999753153,
+              "input_conversion": 0.0001720000000204891,
+              "operator_mandatory_validation": 0.006848899999567948,
+              "restore_geometry_audit": 0.0008866000007401453,
+              "restore_mandatory_validation": 0.020411699999385746,
+              "semantic_digest": 0.00013080000007903436,
+              "snapshot_serialization_mandatory_validation": 0.006789500000195403,
+              "solve_dispatch_mandatory_validation": 0.010092500000610016,
+              "streamed_full_chain_restore_audit": 8.439999965048628e-05,
+              "topology": 3.550000019458821e-05
+            },
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "reference",
+        "source_revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "reference",
+      "mode": "timing",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'reference', '--mode', 'timing', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    },
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "cold_block_seconds": 0.15906730000006064,
+      "result": {
+        "case": "certified/cut_rank2",
+        "import_manifest_seconds": 0.02220480000050884,
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.task-artifacts\\s4-09-r0\\source\\src\\homology_operator\\__init__.py",
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "bbcf8fd6-9328-4d10-a629-24f2b3403cde",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9053,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "Rank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "Rank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.001701399999546993
+                  },
+                  "solver_run_id": "bbcf8fd6-9328-4d10-a629-24f2b3403cde"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "phases_seconds": {
+              "barcode_transport_certificates": 3.0000046535860747e-07,
+              "class_tracking": 2.0000061340397224e-07,
+              "family_validation": 1.2999998943996616e-06,
+              "geometry_first_including_preparation": 0.0006159000004117843,
+              "geometry_second": 0.0007389999991573859,
+              "input_conversion": 0.00014029999965714524,
+              "operator_mandatory_validation": 0.006894999999531137,
+              "restore_geometry_audit": 0.0008380999997825711,
+              "restore_mandatory_validation": 0.014393399999789835,
+              "semantic_digest": 0.00014699999974254752,
+              "snapshot_serialization_mandatory_validation": 0.007720200000221666,
+              "solve_dispatch_mandatory_validation": 0.007619800000611576,
+              "streamed_full_chain_restore_audit": 8.720000005268957e-05,
+              "topology": 3.689999994094251e-05
+            },
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "r0",
+        "source_revision": "54ce78bccdcba619ffa2a4d76aeb450bfd24270e"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "r0",
+      "mode": "timing",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'r0', '--mode', 'timing', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    },
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "result": {
+        "case": "certified/cut_rank2",
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\src\\homology_operator\\__init__.py",
+        "peak_rss_bytes": 27926528,
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 1.2100000108161475e-05,
+                  "conversion_seconds": 3.730000025825575e-05,
+                  "decode_seconds": 3.110000125161605e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 4.3999998524668626e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 8.1e-06,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 1,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                },
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 7.700000255182385e-06,
+                  "conversion_seconds": 3.7799999518028926e-05,
+                  "decode_seconds": 2.6599999728205148e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 4.450000051292591e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 3.8e-06,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 2,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                },
+                {
+                  "arithmetic_policy": "ExactRational",
+                  "binding_seconds": 6.599999303242657e-06,
+                  "conversion_seconds": 2.880000010918593e-05,
+                  "decode_seconds": 2.0899999981338624e-05,
+                  "geometry_fallback": "arbitrary Fraction",
+                  "geometry_fallback_seconds": 3.290000040578889e-05,
+                  "integer_overflow_count": 0,
+                  "native_seconds": 3.7e-06,
+                  "preparation_costs": null,
+                  "preparation_seconds": 0.0,
+                  "projection_applications": 16,
+                  "rounding_policy": null,
+                  "threads": 1,
+                  "weight_fallback_count": 24,
+                  "workspace_reused": true,
+                  "workspace_statistics": {
+                    "completed_batches": 1,
+                    "projection_buffer_growths": 1,
+                    "projection_capacity_words": 16
+                  }
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "95d6761d-d687-42e1-b495-42deb5e8382e",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9442,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "NativeRank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "NativeRank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "certificate_replay_backend": "packed-rust-v1",
+                    "execution_backend": "packed-rust-v1",
+                    "independent_validation_seconds": 0.00427159999981086,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "native_detail": {
+                      "native_kernel_seconds": 2.0700000277429353e-05,
+                      "packed_products": 9,
+                      "prepared_decompositions": 2,
+                      "span_table_calls": 1
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.0018515000001571025
+                  },
+                  "solver_run_id": "95d6761d-d687-42e1-b495-42deb5e8382e"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "integrated",
+        "rss_failure": null,
+        "rss_method": "Windows GetProcessMemoryInfo.PeakWorkingSetSize",
+        "source_revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "integrated",
+      "mode": "rss",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'integrated', '--mode', 'rss', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    },
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "result": {
+        "case": "certified/cut_rank2",
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\src\\homology_operator\\__init__.py",
+        "peak_rss_bytes": 27631616,
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "e914fcbd-8908-43db-a70e-f4b56f0d0502",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9054,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "Rank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "Rank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.0017090000001189765
+                  },
+                  "solver_run_id": "e914fcbd-8908-43db-a70e-f4b56f0d0502"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "reference",
+        "rss_failure": null,
+        "rss_method": "Windows GetProcessMemoryInfo.PeakWorkingSetSize",
+        "source_revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "reference",
+      "mode": "rss",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'reference', '--mode', 'rss', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    },
+    {
+      "process_state": "completed",
+      "exit_code": 0,
+      "result": {
+        "case": "certified/cut_rank2",
+        "loaded_source": "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.task-artifacts\\s4-09-r0\\source\\src\\homology_operator\\__init__.py",
+        "peak_rss_bytes": 27127808,
+        "records": [
+          {
+            "completed": true,
+            "details": {
+              "action_entries": [
+                25
+              ],
+              "geometry": [
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                },
+                {
+                  "route": "scalar",
+                  "unsupported_native_action": false
+                }
+              ],
+              "operator_identities": [
+                {
+                  "basis_id": "basis:726e9187a648705b6933ce844b249a5cc65227f817ef13cd7773995b14cfa3db",
+                  "input_id": "input:44057580ba7ec7dabbd0a28340464a3b71ea6aa149855b31f9e285ac182180ba",
+                  "operator_id": "operator:c89e8f7b2f2990be20c014cfcf2ca763a441ceb3013defe6dace5853cd33ec83",
+                  "projection_id": "projection:5e0f934adc5693cc5555a5ce604db963476e6896386eef0f922dde4dbcd2a19b",
+                  "solver_run_id": "315b214e-9b79-4959-9fcc-9d1425d48e44",
+                  "weight_id": "weight:a12e64f167e2533f4fc72ffa816f787ac11ec7ba39b7e3818b6d5dde463c1147"
+                }
+              ],
+              "serialized_utf8_bytes": 9054,
+              "solutions": [
+                {
+                  "config": {
+                    "arithmetic_policy": "ExactRational",
+                    "deterministic": true,
+                    "input_structure": "ThreeTerminalCut",
+                    "matrix_free_output": false,
+                    "method": "Rank2ExactSolver",
+                    "objective": "MinimumStretch",
+                    "requested_certificate_level": "ExactOptimal",
+                    "resource_limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "solver_options": {
+                      "dual_edges": [
+                        [
+                          3,
+                          0
+                        ],
+                        [
+                          3,
+                          1
+                        ],
+                        [
+                          3,
+                          4
+                        ],
+                        [
+                          4,
+                          0
+                        ],
+                        [
+                          4,
+                          2
+                        ]
+                      ],
+                      "dual_vertex_count": 5,
+                      "terminals": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "tie_break_policy": "StableBasisOrder"
+                  },
+                  "diagnostics": [],
+                  "method": "Rank2ExactSolver",
+                  "resource_usage": {
+                    "candidates_visited": 9,
+                    "limits": {
+                      "matrix_entry_limit": 1000000,
+                      "state_limit": 100000,
+                      "wall_time_limit": 10.0
+                    },
+                    "nonzero_cycle_inputs": 15,
+                    "states": 36,
+                    "wall_time": 0.0017540999997436302
+                  },
+                  "solver_run_id": "315b214e-9b79-4959-9fcc-9d1425d48e44"
+                }
+              ]
+            },
+            "output_hash": "83e3cf4818b2994ca4e394c5d296b7ec4777e6a9a3f1ed137ce1f1d8b64a7210",
+            "statuses": [
+              {
+                "bounds": [
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  },
+                  {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                ],
+                "certificate_level": "ExactOptimal",
+                "gap": {
+                  "absolute": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  },
+                  "relative": {
+                    "$fraction": [
+                      0,
+                      1
+                    ]
+                  }
+                },
+                "objective": {
+                  "exact": true,
+                  "state": "Computed",
+                  "value": {
+                    "$fraction": [
+                      7,
+                      6
+                    ]
+                  }
+                },
+                "status": "Solved"
+              }
+            ]
+          }
+        ],
+        "repeats": 1,
+        "route": "r0",
+        "rss_failure": null,
+        "rss_method": "Windows GetProcessMemoryInfo.PeakWorkingSetSize",
+        "source_revision": "54ce78bccdcba619ffa2a4d76aeb450bfd24270e"
+      },
+      "stderr": "",
+      "case": "certified/cut_rank2",
+      "route": "r0",
+      "mode": "rss",
+      "block": 0,
+      "repeats": 1,
+      "command": [
+        "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import runpy,sys;sys.path.insert(0,'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts');sys.argv=['C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py', '--manifest', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\benchmarks\\\\s4_acceptance_frozen_manifest.json', '--baseline-root', 'C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\.task-artifacts\\\\s4-09-r0\\\\source', '--worker', '--case', 'certified/cut_rank2', '--route', 'r0', '--mode', 'rss', '--repeats', '1'];runpy.run_path('C:\\\\Users\\\\84025\\\\.codex\\\\worktrees\\\\s4-68-integration\\\\homology-operator\\\\scripts\\\\benchmark_acceptance.py',run_name='__main__')"
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "case": "k4/q0",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "native_explicit",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q0",
+      "route": "native_explicit",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q8",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "native_explicit",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "native_explicit",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "factorized_scalar",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "factorized_scalar",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "factorized_batch",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q64",
+      "route": "factorized_batch",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "native_explicit",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "k4/q1024",
+      "route": "native_explicit",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/rational",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/bigint",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "geometry/euclidean_float",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h0_interval_stage_1",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h2_euclidean_one_hole",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "dimension/h3_euclidean_one_hole",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q8",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "hc_workspace",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "hc_workspace",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "factorized_scalar",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "factorized_scalar",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "factorized_batch",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta2/q64",
+      "route": "factorized_batch",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "native_explicit",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q8",
+      "route": "native_explicit",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "hc_workspace",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n65/beta64/q64",
+      "route": "hc_workspace",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "wide/n129/beta2/q64",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "legacy_family",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/constant/s48",
+      "route": "legacy_family",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "legacy_family",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s48",
+      "route": "legacy_family",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "legacy_family",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "family/growing/s96",
+      "route": "legacy_family",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_exact",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_greedy",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "cold_block_seconds",
+      "median": 0.15906730000006064,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 1.0,
+      "bootstrap_95_interval": [
+        1.0,
+        1.0
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "peak_rss_bytes",
+      "median": 27127808,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 1.0,
+      "bootstrap_95_interval": [
+        1.0,
+        1.0
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "cold_block_seconds",
+      "median": 0.16598380000050383,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 1.0434815955286885,
+      "bootstrap_95_interval": [
+        1.0434815955286885,
+        1.0434815955286885
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "peak_rss_bytes",
+      "median": 27631616,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 1.0185716442699684,
+      "bootstrap_95_interval": [
+        1.0185716442699684,
+        1.0185716442699684
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "cold_block_seconds",
+      "median": 0.15132340000036493,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 0.9513168325627407,
+      "bootstrap_95_interval": [
+        0.9513168325627407,
+        0.9513168325627407
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cut_rank2",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {
+        "completed": 1
+      },
+      "complete_blocks": 1,
+      "metric": "peak_rss_bytes",
+      "median": 27926528,
+      "iqr": null,
+      "same_output": true,
+      "paired_blocks": 1,
+      "paired_median_ratio": 1.0294428506719009,
+      "bootstrap_95_interval": [
+        1.0294428506719009,
+        1.0294428506719009
+      ],
+      "median_regression_over_20_percent": false,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/cyclic_m4",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_bigint",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/k4_interrupted",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "certified/floating_unavailable",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "r0",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "r0",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "reference",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "reference",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "integrated",
+      "mode": "timing",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "cold_block_seconds",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    },
+    {
+      "case": "failure/feasible_entries0",
+      "route": "integrated",
+      "mode": "rss",
+      "process_counts": {},
+      "complete_blocks": 0,
+      "metric": "peak_rss_bytes",
+      "median": null,
+      "iqr": null,
+      "same_output": null,
+      "paired_blocks": 0,
+      "admission_improvement": false
+    }
+  ]
+}

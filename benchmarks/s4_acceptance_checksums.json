@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "mathematical_source": {
+    "revision": "7fa812d5e76ca80ac16316cb212d133c0639bfd7",
+    "lf_sha256": {
+      "src/homology_operator/__init__.py": "6f016677d65b6854e5243e3e1714b16b34dcbeeb113103e47aa49949cf5bbed7",
+      "src/homology_operator/algebra.py": "0fb930b197aaf49f07835d17580d2e2397e3fc4920f410204d84ebb591ab5597",
+      "src/homology_operator/chain.py": "d374e150ab870a0f35e1ab6f601b655c83e71b7abee0b6d148f16b1e04aaf469",
+      "src/homology_operator/family.py": "1faa180d7b4809b742b78b63605b0bc57b09d025c8c3f7fff1df744bf8956c0f",
+      "src/homology_operator/native.py": "bb215cd34fac35f5eff59999965f1237e105cbe846e6bcc6ca85a6a394b7af99",
+      "src/homology_operator/operator.py": "2c1a137d2959cef20b5264e7a56d91b6498a1d171cc573b41cc7f354c8d96dd0",
+      "src/homology_operator/result.py": "00a6bfdc95de02cf3c66781b1acc31024fe98de3fa66a356f3207bdee4abd126",
+      "src/homology_operator/solver.py": "ad49a881f5e636dedcd1a6db400563bb14cde34d661097e2230158adb2ecfa29",
+      "src/homology_operator/validation.py": "7f4350c4d693ac11df0072e367002f77462957e0b922e04fd686667efce87e6d",
+      "tests/fixtures/reference.json": "593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2",
+      "tests/fixtures/solver_reference.json": "1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1",
+      "scripts/compare_solvers.py": "c9a94a24aa78f50a90088617a0f50a26c052b8a0daf1fc134dd9570357ba0553",
+      "pyproject.toml": "d4ecd8f6b07df69c9017d0372f99b1dafc9a68567fb8f2de8a117a71a039f9cb",
+      "uv.lock": "0adcbdecc1d7e2ab753224fe6503aaf9ecaf3af6fb8ae68affa10ee0a336dfc8"
+    },
+    "snapshot_sha256": "da40394facee1033d0e56a5838125b2bf96883452f7b2498a2571f0627497017",
+    "native_lf_sha256": {
+      "native/src/lib.rs": "7c7058ee26031937bf4185312ae38fadad53455328de2e6998a5e3738c532210",
+      "native/src/packed.rs": "1b42080dcb233468eba5a2bee171b0880eb973b03331b0105c5fcd8308264385",
+      "native/Cargo.toml": "9be78e991b38c8d4c7dc96cd7189d473a316cf64bba36e77d440732b3e21f6f0",
+      "native/Cargo.lock": "6083e3bbe9fefcc8de088d1e2c4a8f8ee88130c11866a0eb61b01a899d09a672",
+      "native/pyproject.toml": "35a5ff7e0e19c466e749fc0f7b24e3f70ea06461d89a6b34bbf34b6dc3014161"
+    }
+  },
+  "baseline": {
+    "revision": "54ce78bccdcba619ffa2a4d76aeb450bfd24270e",
+    "lf_sha256": {
+      "src/homology_operator/__init__.py": "ac8e3119f9a6a15b3330769ed18656e84209a59f16a94005b63aea2216549f82",
+      "src/homology_operator/algebra.py": "3289bf88534e072222550d6c387c73851c8177a7c8ca8989f80efab3db605740",
+      "src/homology_operator/chain.py": "6d4c0e09ab5cc943fc0680e66acf715352a695f6aa4b7f4cf635f1522c605015",
+      "src/homology_operator/family.py": "331256ae66316866273978081aead421ab0c77bd2d551d077c42d9bb242a6fd2",
+      "src/homology_operator/operator.py": "57bd463579b168137783ae07b51e58507a4862233672c3dbf0510fd2c417ae11",
+      "src/homology_operator/result.py": "04dbae591a4e3a210d1f4df18e6776aa06030462b0565d0b7d6e3fcc05abd1fe",
+      "src/homology_operator/solver.py": "91e3c0ac665c76ff4529359cb209b8ea4ffc2321e5eacef39def7b1e47fdadb5",
+      "src/homology_operator/validation.py": "5deff7029dfc486e59665fa0f439622ee2406d9a17694e5211d6a952b3a494d3",
+      "tests/fixtures/reference.json": "593fb2784a2b5ea25bc62d7ee3c0180fa3185fefc6b42cf87a7203f7b111d7e2",
+      "tests/fixtures/solver_reference.json": "1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1",
+      "scripts/compare_solvers.py": "c9a94a24aa78f50a90088617a0f50a26c052b8a0daf1fc134dd9570357ba0553",
+      "pyproject.toml": "1b262e1e5a3298756491ba3669b631affdb6b2eee23c5149f42d91e6cb093e5d",
+      "uv.lock": "0adcbdecc1d7e2ab753224fe6503aaf9ecaf3af6fb8ae68affa10ee0a336dfc8"
+    },
+    "snapshot_sha256": "46294693bd6c26ae5abdcee87f7873c6963541f74e18ec97211136dd301e2d4b"
+  },
+  "harness_revision": "9f3537f21a17800377d711ca8717439bcc48f6d5",
+  "harness_lf_sha256": {
+    "scripts/benchmark_acceptance.py": "0c90b742811755e03497cefc7b8a9a21c13164aeca0d5849e15f0445bc53e290",
+    "scripts/benchmark_reference.py": "6759bb29a230aed94616259bfeae1fa101cfc59804fb0b00ff9ab9715dc82dfb",
+    "scripts/benchmark_native.py": "d40e0e7cb9608a3e2350d0d2e033115e90ccf4cfd45d2736d47d8c7da818e239",
+    "scripts/benchmark_compact.py": "a5721a32f9c4f868393a2f6aff730a996649df34bec42d8f0a86594cc88d03e4"
+  },
+  "resume": {
+    "previous_report_sha256": "d0dcb0ceb3f698053e5111bc5056b0ff26f676f1be1c23bbe5c1cd0876498ebc",
+    "previous_harness_revision": "e2882369d10ca2e8ad72b186cb8abe530b85247f",
+    "previous_harness_lf_sha256": {
+      "scripts/benchmark_acceptance.py": "ab99feda98527dec080a776905d09aa8d1d854c5615b9c43174a5eadd1acc7af",
+      "scripts/benchmark_reference.py": "6759bb29a230aed94616259bfeae1fa101cfc59804fb0b00ff9ab9715dc82dfb",
+      "scripts/benchmark_native.py": "d40e0e7cb9608a3e2350d0d2e033115e90ccf4cfd45d2736d47d8c7da818e239",
+      "scripts/benchmark_compact.py": "a5721a32f9c4f868393a2f6aff730a996649df34bec42d8f0a86594cc88d03e4"
+    },
+    "retained_processes": 297,
+    "measured_function_ast_sha256": {
+      "restore_operator": "7101ed2a6abcffae18c635c774ab8d1eff66d37d9fbbf2940c5b24fb50d494fc",
+      "run_pipeline": "8178274689c77bb55043337a8ab5d7d0744fac69728aa318742480b060ca54b2",
+      "worker": "f8579200370d8e990742b4f1580b11ed957fe3983a4468faf8bebf35155a23c7",
+      "sample_process": "c1ed2db50f2ea1496b456feef5d58a6c1792c053e02e287bba68b74a9a7dd7b1"
+    },
+    "reason": "parent checkpoint write raised Windows OSError errno22; complete prior samples retained; worker/math/manifest/binary/statistics unchanged"
+  },
+  "native_binary_sha256": {
+    "C:\\Users\\84025\\.codex\\worktrees\\s4-68-integration\\homology-operator\\.venv\\Lib\\site-packages\\_homology_native\\_homology_native.cp312-win_amd64.pyd": "1adaa926012f0265705c8cfe30076d011b328b831963ab5c96fcfa161639c5e6",
+    "homology_operator_native-0.0.2.dev0-cp312-cp312-win_amd64.whl": "400b6eef0c077c51345ba883a9e882ab7bf148c6932fdc34772ffc8046e7dcc3"
+  },
+  "build": {
+    "rust": "1.98.1",
+    "maturin": "1.15.0",
+    "profile": "release",
+    "locked": true
+  },
+  "artifacts": {
+    "s4_acceptance_manifest.json": {
+      "lf_sha256": "8fb3194b7b5c7a49e1abde9427a5d6aa199ed307093238e0f90fd55f10819b44",
+      "lf_bytes": 1970306
+    },
+    "s4_acceptance_frozen_manifest.json": {
+      "lf_sha256": "0fd552569f3658ef9471a22d9653ea3c1d9d19b148a92276450d15de2ba5a043",
+      "lf_bytes": 1972097
+    },
+    "s4_acceptance_pilot_v1.json": {
+      "lf_sha256": "255bb67849c08fa42080b40dd4695f2cf8c02059b9e8eaae7f3e8b3923bea777",
+      "lf_bytes": 3987185
+    },
+    "s4_acceptance_pilot_rank2.json": {
+      "lf_sha256": "f8fb221fd6a7d8cb3ebda7f3c736f6ba6d4829ff48c341b940f3c46bd9be3a1b",
+      "lf_bytes": 117389
+    },
+    "s4_acceptance_interrupted.json": {
+      "lf_sha256": "d0dcb0ceb3f698053e5111bc5056b0ff26f676f1be1c23bbe5c1cd0876498ebc",
+      "lf_bytes": 11808576
+    },
+    "s4_acceptance_formal.json": {
+      "lf_sha256": "ce5eff361f1b16d93f5468244245e15c0ff23fdd1f69aa806560e9cabc82bedb",
+      "lf_bytes": 73136754
+    },
+    "s4_acceptance_summary.csv": {
+      "lf_sha256": "e8d837384924ff19e7d6264ee47007210344c343d972a5d93b4bf58379bd0df2",
+      "lf_bytes": 31084
+    },
+    "s4_acceptance_verification.log": {
+      "lf_sha256": "c9e6e81b87757c3a5b0697e264e5f7f7c9e9140749ddb89835aea94921424cdd",
+      "lf_bytes": 28394
+    }
+  },
+  "installed_reference_wheel_sha256": {
+    "homology_operator-0.0.2.dev0-py3-none-any.whl": "015801c3f6be43fab7827a0780cbf2857cfcc29b7600ff2dde4cbccc007f8bcd"
+  },
+  "local_validation": {
+    "forced_native_tests": 193,
+    "skipped": 0,
+    "seconds": 125.177,
+    "isolated_reference_passed": 14,
+    "isolated_reference_native_skipped": 6,
+    "isolated_both_wheels_passed": 20,
+    "rust_unit_tests": 1
+  }
+}
