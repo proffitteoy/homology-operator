@@ -6,9 +6,11 @@ docs/research/s4-s5/*.md whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 benchmarks/s4_r0_*.json text eol=lf
 benchmarks/s4_native_prototype.json text eol=lf
 benchmarks/s4_packed_ablation.json text eol=lf
+
+benchmarks/s4_solver_pilot.json text eol=lf
+
 benchmarks/s4_compact_action.json text eol=lf
 benchmarks/s4_compact_verification.log text eol=lf
 benchmarks/s4_geometry_workspace.json text eol=lf
-
-
-benchmarks/s4_solver_pilot.json text eol=lf
+tests/fixtures/legacy_results.json text eol=lf
+benchmarks/s4_integration_verification.log text eol=lf

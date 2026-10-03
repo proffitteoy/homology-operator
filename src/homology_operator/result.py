@@ -494,7 +494,10 @@ class OperatorResult:
                     method, arguments
                 ):
                     raise ValueError("invalid persisted query arguments")
-                expected = operator.readout(method, *arguments)
+                try:
+                    expected = operator.readout(method, *arguments)
+                except (TypeError, ValueError) as error:
+                    raise ValueError("invalid persisted query arguments") from error
                 if (
                     canonical_json(expected.value) != canonical_json(query.value)
                     or expected.exact != query.exact

@@ -409,6 +409,17 @@ def solve_projection(problem, backend="FeasibleSolver", *, fallback=False):
             diagnostics=("fallback must be boolean",),
             method=method,
         )
+    if (
+        type(backend)
+        in (
+            ExhaustiveExactSolver,
+            GreedyCertifiedSolver,
+            Rank2ExactSolver,
+            StructuredFamilySolver,
+        )
+        and backend.native
+    ):
+        method = "Native" + method
     requested_method = method
     if isinstance(backend, str):
         from .native import NativeFeasibleSolver, NativeFactorizedSolver

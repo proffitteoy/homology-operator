@@ -3,6 +3,8 @@
 from dataclasses import replace
 from fractions import Fraction
 import os
+import sys
+from types import SimpleNamespace
 import threading
 import time
 import unittest
@@ -10,6 +12,8 @@ from unittest.mock import patch
 
 from homology_operator import (
     CancellationToken,
+    ExhaustiveExactSolver,
+    GreedyCertifiedSolver,
     ChainWindow,
     HomologyOperator,
     Matrix,
@@ -45,15 +49,17 @@ def window(n=3):
 class IntegrationTests(unittest.TestCase):
     def test_explicit_backend_selection_and_visible_same_solver_fallback(self):
         problem = ProjectionProblem(window())
-        for name in (
-            "NativeFeasibleSolver",
-            "NativeExhaustiveExactSolver",
-            "NativeGreedyCertifiedSolver",
+        for backend, name in (
+            ("NativeFeasibleSolver", "NativeFeasibleSolver"),
+            ("NativeExhaustiveExactSolver", "NativeExhaustiveExactSolver"),
+            ("NativeGreedyCertifiedSolver", "NativeGreedyCertifiedSolver"),
+            (ExhaustiveExactSolver(native=True), "NativeExhaustiveExactSolver"),
+            (GreedyCertifiedSolver(native=True), "NativeGreedyCertifiedSolver"),
         ):
             with patch("homology_operator.native._extension", side_effect=ImportError):
-                unavailable = solve_projection(problem, name)
+                unavailable = solve_projection(problem, backend)
                 self.assertEqual(unavailable.status, "Unavailable")
-                recovered = solve_projection(problem, name, fallback=True)
+                recovered = solve_projection(problem, backend, fallback=True)
                 self.assertIsNotNone(recovered.projection)
                 selection = recovered.resource_usage["backend_selection"]
                 self.assertEqual(selection["requested"], name)
@@ -115,6 +121,12 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(info["reference"], "Available")
             self.assertEqual(info["native"], "Unavailable")
             self.assertIn("old wheel", info["reason"])
+
+        for old in (SimpleNamespace(), SimpleNamespace(__semantics_version__=0)):
+            with patch.dict(sys.modules, {"_homology_native": old}):
+                with self.assertRaisesRegex(ImportError, "rebuild"):
+                    _extension()
+                self.assertEqual(backend_info()["native"], "Unavailable")
 
     def test_public_restore_preserves_p_run_provenance_and_history_without_resolve(
         self,
