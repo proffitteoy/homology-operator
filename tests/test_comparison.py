@@ -287,6 +287,24 @@ class AcceptanceTests(unittest.TestCase):
         finally:
             sys.path.remove(directory)
 
+    def test_checkpoint_preserves_previous_data_when_atomic_replace_fails(self):
+        from unittest.mock import patch
+
+        harness = self.harness()
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            path.write_text('{"previous":true}', encoding="utf-8")
+            with patch.object(Path, "replace", side_effect=OSError(22, "locked")):
+                with patch("time.sleep"):
+                    with self.assertRaises(OSError):
+                        harness.checkpoint_json(path, {"new": True})
+            self.assertEqual(json.loads(path.read_text("utf-8")), {"previous": True})
+            saved = list(Path(directory).glob("*.json.tmp"))
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(json.loads(saved[0].read_text("utf-8")), {"new": True})
+            harness.checkpoint_json(path, {"new": True})
+            self.assertEqual(json.loads(path.read_text("utf-8")), {"new": True})
+
     def test_admission_requires_all_successful_same_output_process_blocks(self):
         harness = self.harness()
         manifest = {"cases": [{"id": "case", "routes": ["r0", "candidate"]}]}

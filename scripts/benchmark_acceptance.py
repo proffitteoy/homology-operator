@@ -757,6 +757,46 @@ def sample_process(command, timeout):
         }
 
 
+def checkpoint_json(path, report):
+    """Keep the previous complete checkpoint if a Windows reader locks the target."""
+    from tempfile import NamedTemporaryFile
+    from time import sleep
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        newline="\n",
+        dir=path.parent,
+        suffix=".json.tmp",
+        delete=False,
+    ) as stream:
+        json.dump(report, stream, indent=2, ensure_ascii=False)
+        stream.write("\n")
+        temporary = Path(stream.name)
+    for attempt in range(10):
+        try:
+            temporary.replace(path)
+            return
+        except OSError:
+            if attempt == 9:
+                raise  # Complete temporary file remains available for recovery.
+            sleep(0.1)
+
+
+def worker_fingerprint(text):
+    """Prove the measured functions did not change across a parent-only repair."""
+    import ast
+
+    tree = ast.parse(text)
+    names = {"restore_operator", "run_pipeline", "worker", "sample_process"}
+    return {
+        node.name: sha256(ast.dump(node, include_attributes=False).encode()).hexdigest()
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name in names
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
@@ -764,6 +804,7 @@ def main():
     parser.add_argument("--prepare", action="store_true")
     parser.add_argument("--phase", choices=("pilot", "formal"), default="pilot")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--resume-from", type=Path)
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--case")
     parser.add_argument("--route")
@@ -847,6 +888,69 @@ def main():
         },
         "samples": [],
     }
+    if args.resume_from is not None:
+        if args.phase != "formal":
+            parser.error("resume is only allowed for a formal report")
+        raw = args.resume_from.read_bytes()
+        previous = json.loads(raw)
+        for key in (
+            "manifest_sha256_lf",
+            "baseline",
+            "candidate",
+            "native_binary_sha256",
+            "environment",
+            "protocol",
+        ):
+            if previous[key] != report[key]:
+                raise ValueError(f"resume changes frozen {key}")
+        for name, value in harness_hashes.items():
+            if (
+                name != "scripts/benchmark_acceptance.py"
+                and previous["harness_lf_sha256"][name] != value
+            ):
+                raise ValueError(f"resume changes measured helper: {name}")
+        old_text = subprocess.check_output(
+            [
+                "git",
+                "show",
+                previous["harness_revision"] + ":scripts/benchmark_acceptance.py",
+            ],
+            cwd=ROOT,
+            text=True,
+        )
+        old_worker = worker_fingerprint(old_text)
+        new_worker = worker_fingerprint(Path(__file__).read_text("utf-8"))
+        if old_worker != new_worker or len(old_worker) != 4:
+            raise ValueError("resume changes the measured pipeline")
+        report["resume"] = {
+            "previous_report_sha256": sha256(raw).hexdigest(),
+            "previous_harness_revision": previous["harness_revision"],
+            "previous_harness_lf_sha256": previous["harness_lf_sha256"],
+            "retained_processes": len(previous["samples"]),
+            "measured_function_ast_sha256": old_worker,
+            "reason": "parent checkpoint write raised Windows OSError errno22; complete prior samples retained; worker/math/manifest/binary/statistics unchanged",
+        }
+        report["samples"] = previous["samples"]
+        report["original_created_at"] = previous["created_at"]
+    done_keys = {
+        (s["mode"], s["block"], s["case"], s["route"]) for s in report["samples"]
+    }
+    if len(done_keys) != len(report["samples"]):
+        raise ValueError("duplicate retained process samples")
+    expected = {
+        (mode, block, case["id"], route)
+        for mode in ("timing", "rss")
+        for block in range(blocks)
+        for case in manifest["cases"]
+        for route in case["routes"]
+    }
+    if not done_keys <= expected:
+        raise ValueError("retained samples are outside the frozen workload")
+    for sample in report["samples"]:
+        case = next(c for c in manifest["cases"] if c["id"] == sample["case"])
+        if sample["repeats"] != case["formal_repeats"]:
+            raise ValueError("retained repeat count differs")
+    checkpoint_json(args.output, report)
     for mode in ("timing", "rss"):
         for block in range(blocks):
             cases = [
@@ -860,6 +964,8 @@ def main():
                 )
                 repeats = 1 if args.phase == "pilot" else case["formal_repeats"]
                 for route in routes:
+                    if (mode, block, case["id"], route) in done_keys:
+                        continue
                     command = [
                         sys.executable,
                         "-I",
@@ -902,7 +1008,7 @@ def main():
                     if mode == "rss":
                         sample.pop("cold_block_seconds", None)
                     report["samples"].append(sample)
-                write_json(args.output, report)
+                checkpoint_json(args.output, report)
                 print(
                     f"{args.phase} {mode} block={block} {case['id']} done", flush=True
                 )
@@ -910,7 +1016,7 @@ def main():
                 f"{args.phase} {mode} block {block + 1}/{blocks} complete", flush=True
             )
     report["summary"] = summarize(manifest, report["samples"])
-    write_json(args.output, report)
+    checkpoint_json(args.output, report)
 
 
 if __name__ == "__main__":

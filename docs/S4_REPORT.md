@@ -53,3 +53,16 @@ Rank2的必需solver_options在pilot v1清单生成时漏传，导致三个路�
 均Solved/ExactOptimal且完整输出一致。没有根据性能结果删负载或改变门槛。
 冻结正式清单为 `benchmarks/s4_acceptance_frozen_manifest.json`，
 其中保存两个pilot的LF hash。正式样本在冻结提交后产生。
+
+## 采样中断审计
+
+原冻结harness在第4个计时区组写检查点时遇到Windows `OSError errno22`，
+已落盘297个独立进程（3个完整区组和第4组15个进程）的JSON完整且hash可读，
+保存为 `benchmarks/s4_acceptance_interrupted.json`，不覆盖。
+修复仅涉及父进程原子写、续跑和相应CLI选项；独立worker的测量流水线、恢复器和
+外层冷计时函数AST、helpers、生产源码、manifest/阈值/预算、环境及release二进制
+逐一核对相同。新报告记录两次harness提交、旧原始数据hash及保留样本数；
+仅补跑未落盘的case/route/block/mode，不重选路线或计入缺失观察。
+新增测试证明替换失败时旧检查点和完整临时数据均可保全。
+RSS在流水线及结果记录构造后读取OS历史峰值；外层报告JSON输出和退出含在cold时间，
+RSS采集点之后的报告输出/退出没有另外观测RSS。
