@@ -159,3 +159,256 @@ test_zero_projection_cannot_erase_nonzero_homology (test_validation.ProjectionVa
 Ran 156 tests in 137.068s
 
 OK
+
+=== PR82 integration with main 63138fc (merged PR83 + PR84) ===
+Prior PR82 HEAD: 39f8b2be5df91c6e71a53139bdeaef3992cc545e
+Windows x64 / CPython 3.10.11 / Rust 1.98.1 / release / native required
+Command: HOMOLOGY_NATIVE_REQUIRED=1 .venv/Scripts/python.exe -m unittest discover -s tests -v
+Source hashes use UTF-8 LF bytes:
+src/homology_operator/family.py db63249088f35ac5310984fd0f776df21dd11c88111fbdcead36be5c678a990a
+src/homology_operator/native.py 70ec0d56d4a905d971f515f6bffac77ed27a6d2755fe24f2ad626ab421d690b0
+src/homology_operator/solver.py ee28f1adc290b9e58e848aa26e4dbb7ba7390c1c7ebfa2e8eaa30991198cce10
+src/homology_operator/validation.py 7f4350c4d693ac11df0072e367002f77462957e0b922e04fd686667efce87e6d
+src/homology_operator/result.py 97a9a66547ba9b6ecad884bda5b693fdee1a81d118f665a7bb727f9f80ab8542
+native/src/lib.rs a1f056ab656c41fc3fc3b0350465586a52f07f39545bc895d6c7c03f0af38b39
+native/src/packed.rs 80fb46c244f8f6bb350927d7ee0d3c24022500aa3936570397c782f796ec24c3
+tests/test_family.py 6ff204b1be747cc2c8ab27fc5b43c2e6118a5c222842b3ee3849f9f7e5deba89
+tests/test_family_joint.py 95f6acf66705a6732b963eaae98a67ae49d8cc7917c41a3b5e51b899a5512edc
+tests/test_native.py ffac570c70446ff2eb6538085933281a69eeb24474924bd8aab784e0852ff96c
+Installed release extension SHA256: 1545e244691f9c29df2f245fe3f311ab6152a6b1704ffe13d63c5ea01ab9c9ce
+
+test_deterministic_elimination_retains_original_columns (test_algebra.MatrixAlgebraTests) ... ok
+test_exhaustive_small_matrices_against_enumerated_vectors (test_algebra.MatrixAlgebraTests) ... ok
+test_rectangular_products_and_f2_addition (test_algebra.MatrixAlgebraTests) ... ok
+test_construction_preserves_coordinates_and_immutability (test_algebra.MatrixInputTests) ... ok
+test_empty_shapes (test_algebra.MatrixInputTests) ... ok
+test_invalid_coordinates_and_dimensions (test_algebra.MatrixInputTests) ... ok
+test_bad_policy_types_are_input_errors (test_chain.ChainWindowTests) ... ok
+test_deserialization_revalidates_inputs (test_chain.ChainWindowTests) ... ok
+test_empty_spaces_and_h0 (test_chain.ChainWindowTests) ... ok
+test_geometry_semantics_and_metadata_are_explicit (test_chain.ChainWindowTests) ... ok
+test_invalid_chain_and_dimensions (test_chain.ChainWindowTests) ... ok
+test_invalid_weights_and_arithmetic (test_chain.ChainWindowTests) ... ok
+test_shape_order_and_exact_weights (test_chain.ChainWindowTests) ... ok
+test_unordered_or_text_coordinate_inputs_are_rejected (test_chain.ChainWindowTests) ... ok
+test_frozen_report_revalidates_every_retained_action (test_comparison.ComparisonTests) ... ok
+test_local_search_frozen_report_preserves_proof_and_cost_boundaries (test_comparison.ComparisonTests) ... ok
+test_local_search_keeps_completed_improvements_on_interruption (test_comparison.ComparisonTests) ... ok
+test_problem_and_actual_certificate_groups_are_not_interchangeable (test_comparison.ComparisonTests) ... ok
+test_r0_disjoint_costs_and_repeatable_joint_output (test_comparison.ComparisonTests) ... ok
+test_r0_frozen_lf_and_historical_crlf_checksums (test_comparison.ComparisonTests) ... ok
+test_r0_json_output_is_lf_before_git_normalization (test_comparison.ComparisonTests) ... ok
+test_r0_library_failures_are_not_successful_or_zero_queries (test_comparison.ComparisonTests) ... ok
+test_unsupported_and_budget_failure_are_preserved (test_comparison.ComparisonTests) ... ok
+test_5689_original_modules_plus_historical_bases_against_enumeration (test_family.AdjacentFiltrationTests) ... ok
+test_compact_shared_storage_and_legacy_roundtrip (test_family.AdjacentFiltrationTests) ... ok
+test_historical_merge_generator_dies_and_stage_bases_commute (test_family.AdjacentFiltrationTests) ... ok
+test_long_barcode_only_adjacent_actions_and_bounded_cache (test_family.AdjacentFiltrationTests) ... ok
+test_empty_barcode_and_failure_are_distinct (test_family.BarcodeTests) ... ok
+test_merge_essential_duplicate_and_rank_reconstruction (test_family.BarcodeTests) ... ok
+test_same_betti_different_barcode_and_zero_scale_length (test_family.BarcodeTests) ... ok
+test_failed_stage_remains_partial (test_family.FamilyInputTests) ... ok
+test_invalid_chain_inclusion_and_stage_identity (test_family.FamilyInputTests) ... ok
+test_ordered_stages_duplicates_and_empty_chain (test_family.FamilyInputTests) ... ok
+test_weight_policy_is_explicit (test_family.FamilyInputTests) ... ok
+test_lossless_snapshot_and_restored_actions (test_family.FamilySerializationTests) ... ok
+test_partial_roundtrip_and_zero_remain_distinct (test_family.FamilySerializationTests) ... ok
+test_queried_failures_survive_with_and_without_partial_identity (test_family.FamilySerializationTests) ... ok
+test_readout_identity_action_rank_and_barcode_tampering (test_family.FamilySerializationTests) ... ok
+test_schema_json_and_weight_mixing_rejected (test_family.FamilySerializationTests) ... ok
+test_direct_multistep_death_merger_and_support (test_family.TrackingTests) ... ok
+test_float_ratio_product_overflow_and_zero_queries (test_family.TrackingTests) ... ok
+test_tracking_rejects_noncycles_and_wrong_coordinates (test_family.TrackingTests) ... ok
+test_variable_weights_numerical_bounds_and_resource_failure (test_family.TrackingTests) ... ok
+test_identity_composition_rank_and_original_chain_action (test_family.TransportTests) ... ok
+test_partial_transport_is_missing_not_zero (test_family.TransportTests) ... ok
+test_same_betti_different_maps_and_quotient_rank (test_family.TransportTests) ... ok
+test_all_cycles_tracking_geometry_and_endpoint_control (test_family_joint.FamilyJointTests) ... ok
+test_all_five_solvers_dense_and_structured_in_one_family (test_family_joint.FamilyJointTests) ... ok
+test_all_frozen_families_rank_barcode_and_expected_endpoints (test_family_joint.FamilyJointTests) ... ok
+test_cross_solver_replacements_preserve_ph_and_action_bound_geometry (test_family_joint.FamilyJointTests) ... ok
+test_numerical_failures_and_bool_rank_tampering_are_explicit (test_family_joint.FamilyJointTests) ... ok
+test_production_does_not_import_oracle_or_ph_packages (test_family_joint.FamilyJointTests) ... ok
+test_projection_change_preserves_topology_and_changes_geometry_identity (test_family_joint.FamilyJointTests) ... ok
+test_coordinate_geometry_and_metric (test_geometry.GeometryTests) ... ok
+test_geometry_rejects_noncycles (test_geometry.GeometryTests) ... ok
+test_selected_mass_is_not_minimum_class_mass (test_geometry.GeometryTests) ... ok
+test_weight_and_arithmetic_identity (test_geometry.GeometryTests) ... ok
+test_all_chain_actions_cycles_boundaries_and_kernel_quotient (test_joint.JointAcceptanceTests) ... ok
+test_corpus_sources_hashes_and_coverage (test_joint.JointAcceptanceTests) ... ok
+test_cross_solver_frozen_corpus_joint_readouts_and_bounds (test_joint.JointAcceptanceTests) ... ok
+test_identity_snapshot_and_readout_round_trip (test_joint.JointAcceptanceTests) ... ok
+test_joint_geometry_pairs_metric_and_current_stretch (test_joint.JointAcceptanceTests) ... ok
+test_compact_family_transport_ranks_barcode_and_restore (test_native.CompactActionTests) ... ok
+test_corpus_all_generator_and_cycle_actions_same_p_and_geometry (test_native.CompactActionTests) ... ok
+test_full_augmented_inverse_rows_and_small_chain_windows (test_native.CompactActionTests) ... ok
+test_illegal_factors_hc_zero_projection_and_tampered_version_identity (test_native.CompactActionTests) ... ok
+test_multiword_factor_hc_resource_and_query_domains (test_native.CompactActionTests) ... ok
+test_no_dense_projection_inverse_identity_or_rust_required_for_restore (test_native.CompactActionTests) ... ok
+test_independent_homology_validation_rejects_zero_and_bad_hc (test_native.CompactValidationTests) ... ok
+test_reference_only_compact_identity_recovery_and_geometry (test_native.CompactValidationTests) ... ok
+test_missing_extension_and_unsupported_domain_are_explicit (test_native.NativeAvailabilityTests) ... ok
+test_all_state_interruptions_keep_completed_bounds_and_seeds (test_native.NativeSolverTests) ... ok
+test_cut_and_structured_supports_remain_exact (test_native.NativeSolverTests) ... ok
+test_missing_extension_recovery_and_unsupported_requests (test_native.NativeSolverTests) ... ok
+test_multiword_cycle_objective_matches_independent_finite_vectors (test_native.NativeSolverTests) ... ok
+test_sourced_corpus_same_actions_certificates_and_states (test_native.NativeSolverTests) ... ok
+test_tampered_proofs_actions_and_witnesses_rejected_by_both_replays (test_native.NativeSolverTests) ... ok
+test_unbounded_weights_visible_fallback_and_cross_product_overflow (test_native.NativeSolverTests) ... ok
+test_all_small_augmented_inverses_match_noncycle_extension (test_native.NativeTests) ... ok
+test_entire_corpus_actions_identities_and_independent_homology (test_native.NativeTests) ... ok
+test_failure_inputs_cycles_padding_and_wrong_identity (test_native.NativeTests) ... ok
+test_geometry_empty_repeated_and_round_trip_queries (test_native.NativeTests) ... ok
+test_resource_units_and_empty_and_word_edge (test_native.NativeTests) ... ok
+test_unbounded_exact_weights_and_floating_policy (test_native.NativeTests) ... ok
+test_exhaustive_small_canonical_results_and_independent_enumeration (test_native.PackedAlgebraTests) ... ok
+test_immutable_reuse_no_weight_or_projection_selection (test_native.PackedAlgebraTests) ... ok
+test_invalid_shapes_rhs_padding_and_unavailable_extension (test_native.PackedAlgebraTests) ... ok
+test_multiword_boundaries_products_padding_and_original_coordinates (test_native.PackedAlgebraTests) ... ok
+test_actions_and_quotient_correspondence (test_operator.OperatorTests) ... ok
+test_cycle_domain_and_immutability (test_operator.OperatorTests) ... ok
+test_nested_objective_mixing_is_rejected (test_operator.OperatorTests) ... ok
+test_snapshot_state_and_roundtrip_revalidation (test_operator.OperatorTests) ... ok
+test_solution_mismatch_and_zero_homology (test_operator.OperatorTests) ... ok
+test_installed_package_metadata_matches (test_package.PackageTests) ... ok
+test_public_exports_are_available (test_package.PackageTests) ... ok
+test_all_sourced_rank2_windows_match_exhaustive (test_rank2.Rank2Tests) ... ok
+test_certificate_replays_reduction_minima_identity_and_witness (test_rank2.Rank2Tests) ... ok
+test_nonempty_pareto_transcript_is_independently_verified (test_rank2.Rank2Tests) ... ok
+test_pareto_elimination_reduces_support_without_increasing_any_class (test_rank2.Rank2Tests) ... ok
+test_rank_three_pareto_counterexample_is_preserved_and_rejected (test_rank2.Rank2Tests) ... ok
+test_resources_preserve_proven_seed_and_completed_objective (test_rank2.Rank2Tests) ... ok
+test_structural_rejections_do_not_infer_geometry_from_rank (test_rank2.Rank2Tests) ... ok
+test_three_terminal_exact_macro_family_and_all_small_weights (test_rank2.Rank2Tests) ... ok
+test_bounds_reject_invalid_values_and_uncertified_grades (test_result.ResultTests) ... ok
+test_cache_binds_every_semantic_policy (test_result.ResultTests) ... ok
+test_canonical_hash_and_reproducible_identity (test_result.ResultTests) ... ok
+test_deserialization_rejects_tampering_and_mixed_results (test_result.ResultTests) ... ok
+test_exact_optimal_requires_more_than_a_feasible_flag (test_result.ResultTests) ... ok
+test_lossless_round_trip (test_result.ResultTests) ... ok
+test_metadata_is_immutable (test_result.ResultTests) ... ok
+test_missing_projection_failure_round_trip (test_result.ResultTests) ... ok
+test_missing_projection_rejects_fabricated_action (test_result.ResultTests) ... ok
+test_missing_states_are_not_zero (test_result.ResultTests) ... ok
+test_nested_objective_requires_same_identity (test_result.ResultTests) ... ok
+test_reserved_mapping_keys_and_fractions_round_trip (test_result.ResultTests) ... ok
+test_unsupported_certificate_and_failed_ready_are_rejected (test_result.ResultTests) ... ok
+test_weight_basis_and_projection_identity_changes (test_result.ResultTests) ... ok
+test_backend_claims_cannot_become_verified_certificate_flags (test_solver.SolverTests) ... ok
+test_config_identity_is_immutable_and_run_independent (test_solver.SolverTests) ... ok
+test_construction_and_determinism (test_solver.SolverTests) ... ok
+test_cross_solver_exact_arithmetic_and_float_scope (test_solver.SolverTests) ... ok
+test_cross_solver_positive_wall_limits_at_checkpoints (test_solver.SolverTests) ... ok
+test_dispatch_binds_returned_configuration_to_request (test_solver.SolverTests) ... ok
+test_dispatch_failures_keep_actual_backend_method (test_solver.SolverTests) ... ok
+test_dispatch_rejects_invalid_backend_candidates (test_solver.SolverTests) ... ok
+test_empty_shapes (test_solver.SolverTests) ... ok
+test_exact_zero_and_empty_objective_remain_distinct (test_solver.SolverTests) ... ok
+test_exhaustive_interruption_preserves_only_proven_bounds (test_solver.SolverTests) ... ok
+test_exhaustive_matches_all_small_ambient_projections (test_solver.SolverTests) ... ok
+test_exhaustive_two_boundary_directions_three_homology_directions (test_solver.SolverTests) ... ok
+test_exhaustive_weighted_and_higher_rank_ground_truth (test_solver.SolverTests) ... ok
+test_failures_and_resource_limits_are_structured (test_solver.SolverTests) ... ok
+test_float_equality_cannot_certify_exact_optimality (test_solver.SolverTests) ... ok
+test_frozen_solver_corpus_and_exact_family_roundtrips (test_solver.SolverTests) ... ok
+test_generalized_inverses_all_small_shapes (test_solver.SolverTests) ... ok
+test_greedy_empty_zero_and_unsupported_requests (test_solver.SolverTests) ... ok
+test_greedy_interruption_retains_only_completed_seed_bounds (test_solver.SolverTests) ... ok
+test_greedy_noncycle_and_wrong_action_cannot_claim_greedy_proof (test_solver.SolverTests) ... ok
+test_greedy_proof_tampering_is_rejected (test_solver.SolverTests) ... ok
+test_greedy_sourced_corpus_optimum_bound_and_queried_roundtrip (test_solver.SolverTests) ... ok
+test_interrupted_best_feasible_interval_roundtrip_and_family (test_solver.SolverTests) ... ok
+test_preflight_capabilities_and_no_fallback (test_solver.SolverTests) ... ok
+test_resource_fields_reject_unimplemented_limits (test_solver.SolverTests) ... ok
+test_solver_policy_and_geometry_cache_boundaries (test_solver.SolverTests) ... ok
+test_supported_grades_require_independent_evidence (test_solver.SolverTests) ... ok
+test_validated_heuristic_changes_geometry_with_same_topology (test_solver.SolverTests) ... ok
+test_empty_cycle_domain_and_zero_homology_are_distinct (test_stretch.StretchTests) ... ok
+test_exact_current_objective_is_not_global_optimum (test_stretch.StretchTests) ... ok
+test_exhaustion_preserves_partial_information_without_exact_value (test_stretch.StretchTests) ... ok
+test_float_objective_is_not_exact_or_certified_upper_bound (test_stretch.StretchTests) ... ok
+test_shortest_query_is_explicitly_unavailable (test_stretch.StretchTests) ... ok
+test_formula_and_all_small_actions_match_explicit_reference (test_structured.StructuredTests) ... ok
+test_handle_certificate_and_action_tampering_rejected (test_structured.StructuredTests) ... ok
+test_no_dense_projection_required_for_constructor_project_or_restore (test_structured.StructuredTests) ... ok
+test_resource_failures_do_not_claim_certification (test_structured.StructuredTests) ... ok
+test_seven_coordinate_optimum_by_independent_integer_section_search (test_structured.StructuredTests) ... ok
+test_structured_family_transport_queries_and_identity_roundtrip (test_structured.StructuredTests) ... ok
+test_wrong_family_float_weights_and_unsupported_parameters_rejected (test_structured.StructuredTests) ... ok
+test_all_small_windows_and_projections_match_vector_enumeration (test_validation.ProjectionValidationTests) ... ok
+test_bad_projection_invariants_are_identified (test_validation.ProjectionValidationTests) ... ok
+test_empty_domain_and_zero_homology_are_legal (test_validation.ProjectionValidationTests) ... ok
+test_shape_and_type_failures_are_structured (test_validation.ProjectionValidationTests) ... ok
+test_zero_projection_cannot_erase_nonzero_homology (test_validation.ProjectionValidationTests) ... ok
+
+----------------------------------------------------------------------
+Ran 163 tests in 135.844s
+
+OK
+
+=== Additional mixed-family / README smoke script ===
+import re
+from pathlib import Path
+from homology_operator import ChainWindow, Matrix, ProjectionProblem, HomologyOperator, OperatorFamily, OperatorFamilyResult, solve_projection
+from homology_operator.native import NativeFactorizedSolver
+
+w = ChainWindow(1, Matrix.zero(0, 3), Matrix.from_columns(((1, 1, 1),), nrows=3), (), ('x', 'y', 'z'), ('b',), (1, 1, 1))
+operators = []
+for method in ('NativeExhaustiveExactSolver', 'NativeGreedyCertifiedSolver', 'NativeRank2ExactSolver', 'NativeStructuredFamilySolver'):
+    options = {'input_structure': 'CyclicTrace', 'matrix_free_output': True} if method == 'NativeStructuredFamilySolver' else {}
+    s = solve_projection(ProjectionProblem(w, **options), method)
+    assert s.status == 'Solved', (method, s.status, s.diagnostics)
+    operators.append(HomologyOperator(w, s))
+for representation in ('HC', 'Factorized'):
+    p = ProjectionProblem(w, matrix_free_output=True, solver_options={'representation': representation})
+    s = solve_projection(p, NativeFactorizedSolver())
+    assert s.projection is not None, s.diagnostics
+    operators.append(HomologyOperator(w, s))
+family = OperatorFamily((0, 0, 1, 2, 3, 4), (w,) * 6, tuple(operators))
+assert family.barcode().state == 'Computed'
+assert sum(b['multiplicity'] for b in family.barcode().value) == 2
+history = family.barcode_basis()
+assert history.state == 'Computed'
+for i in range(6):
+    for j in range(i, 6):
+        assert family.transport_rank(i, j).value == 2
+        assert family.transport_certificate(i, j).state == 'Computed'
+        assert family.track_mass((1, 0, 0), i, j).state == 'Computed'
+for version in (1, 2):
+    record = family.to_result(schema_version=version)
+    restored = OperatorFamilyResult.from_json(record.to_json())
+    assert restored.to_json() == record.to_json()
+    recovered = restored.to_family()
+    assert recovered.barcode().value == family.barcode().value
+    assert recovered.barcode_basis().value == history.value
+    Path(f'.task-artifacts/pr82_mixed_native_family_v{version}.json').write_text(record.to_json(), encoding='utf-8')
+print('Native four solvers + CyclicAction + HC/Factorized mixed family: all interval ranks/composition/tracking and schema 1/2 round-trip passed')
+
+ns = {}
+for source in re.findall(r'```python\n(.*?)```', Path('README.md').read_text(encoding='utf-8'), re.S):
+    exec(compile(source, 'README.md', 'exec'), ns)
+ns['family'].barcode_basis()
+assert ns['family'].rank_table().state == 'Computed'
+print('README examples and new optional family readouts passed')
+Result: all interval ranks/composition/tracking, history and schema1/2 round-trips passed; README examples passed.
+
+=== Isolated no-extension family restore script (reference wheel; python -I) ===
+from importlib.util import find_spec
+from pathlib import Path
+import sys
+from homology_operator import OperatorFamilyResult
+
+assert find_spec('_homology_native') is None
+for path in sys.argv[1:]:
+    record = OperatorFamilyResult.from_json(Path(path).read_text(encoding='utf-8'))
+    family = record.to_family()
+    assert family.barcode().state == 'Computed'
+    assert sum(b['multiplicity'] for b in family.barcode().value) == 2
+    assert family.barcode_basis().state == 'Computed'
+    for i in range(6):
+        for j in range(i, 6):
+            assert family.transport_rank(i, j).value == 2
+            assert family.track_mass((1, 0, 0), i, j).state == 'Computed'
+    print(Path(path).name, 'restored native solvers + Cyclic/HC/Factorized without extension')
+Arguments: pr82_mixed_native_family_v1.json pr82_mixed_native_family_v2.json
+Result: both native mixed-family snapshots restored and queried without extension.

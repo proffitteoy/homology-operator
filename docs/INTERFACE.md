@@ -146,9 +146,15 @@ stretch 定义为非零循环上 `m_w(Pz)/m_w(z)` 的最大值。
 
 ## 过滤与传输
 
+S4-07 实现、birth 前缀证明与成本见 [过滤读取](S4_FILTRATION.md)。普通 `barcode()`
+只消费相邻核坐标映射；历史区间基与全部区间 rank 按真实输出大小另行请求。
+`cache_limit=64` 分别限制 action/transport/rank 的 LRU 条目，0禁用；内部按索引嵌入，
+不物化公共 inclusion。核坐标分解随不同投影保留，缓存条目上限不是字节/RSS硬限制。
+
 ```text
 OperatorFamily(scales, windows, operators, weight_policy="Inherited",
-               duplicate_policy="OrderedStages", terminal_extension="Constant")
+               duplicate_policy="OrderedStages", terminal_extension="Constant",
+               cache_limit=64)
 ```
 
 阶段非空、有序且同次数；允许合法零维窗口。包含由三个次数的基标识建立，验证链映射及复合相容。
@@ -163,12 +169,14 @@ OperatorFamily(scales, windows, operators, weight_policy="Inherited",
 | `transport(i,j)` | QueryResult，T_ij=P_j J_ij\|ker(L_i) |
 | `transport_rank(i,j)` | QueryResult，rank(T_ij) |
 | `transport_certificate(i,j)` | QueryResult，恒等、composition、目标核与诱导同调映射检查 |
-| `barcode()` | QueryResult，从全区间传输 rank 读取区间多重集 |
+| `barcode()` | QueryResult，从相邻核坐标传输读取区间多重集 |
+| `barcode_basis()` | QueryResult，显式读取死亡回改后的历史区间基、原链代表与阶段身份 |
+| `rank_table()` | QueryResult，显式读取全部区间 rank，输出量为 s(s+1)/2 |
 | `track_class(x,i,j)` | QueryResult，源循环在目标原坐标的投影代表 |
 | `track_mass`、`track_support` | 参数同 track_class；QueryResult，目标代表几何 |
 | `track_shared_support(x,y,i,j)`、`track_union_support(x,y,i,j)` | QueryResult，两个源循环的目标支撑交 / 并 |
 | `endpoint_mass_bound(x,i,j,limits=None)` | QueryResult，终点 stretch 与变权因子的质量控制 |
-| `to_result()` | OperatorFamilyResult 快照 |
+| `to_result(schema_version=None)` | 默认 schema 2 的 OperatorFamilyResult；可显式请求旧 schema 1 |
 
 阶段索引要求 `0≤i≤j<len(scales)`。传输 value 包含 kernel 坐标的 `action` 和目标原链坐标的
 `chain_action`，包括零维形状；记录目标六身份和 source/target 完整身份。
@@ -180,7 +188,7 @@ barcode 的 value 为区间记录 tuple：`[birth_stage, death_stage)`，multipl
 空 barcode 为 Computed 空 tuple，失败 rank 不能伪装成空表。
 provenance 固定注明当前 operator_family，`oracle_used_for_result=false`。
 
-tracking 只接受源循环；死亡类返回合法零链、零质量与空支撑。
+tracking 只接受源循环，按索引嵌入计算目标投影的作用；死亡类返回合法零链、零质量与空支撑。
 `endpoint_mass_bound` 使用终点 stretch、源选定质量与 `max(w_j/w_i)`，不乘中间 stretch。
 浮点仅给数值观察，`bound_verified=None`。完整实例见 [examples/filtration.py](../examples/filtration.py)。
 
@@ -306,3 +314,36 @@ solution = solve_projection(problem, "NativeExhaustiveExactSolver")
 
 [S4-05 有限同 solver 协议](BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
 它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。
+
+
+### 几何批查询与 workspace（S4-06）
+
+`geometry_batch` 只接受循环，支持多字显式 Matrix 和 Factorized/HC；每批每条循环只投影一次，
+由同一 packed Pz 的 XOR/AND/OR 计算距离与支撑交并，索引保持原基顺序。
+沿用上方的 `op`，安装匹配当前源码的扩展后：
+
+```python
+from homology_operator.native import GeometryWorkspace, geometry_batch
+
+cycles = ((1, 0), (0, 1))
+workspace = GeometryWorkspace(op)
+first = geometry_batch(op, cycles, pairs=((0, 1),), workspace=workspace)
+second = geometry_batch(op, cycles, pairs=((0, 1),), workspace=workspace)
+assert first.state == "Computed"
+assert first.value == second.value
+assert first.value["class_distance"] == (op.class_distance(*cycles),)
+```
+
+workspace 持有同一 action/边界/权重及私有缓冲，核对全部六身份，包括 solver_run_id；
+准备和查询不改变算子或既有快照历史。省略 workspace 时每次建立临时准备对象；
+输出记录独立不可变，准备对象不序列化。缓冲保留最大已用容量，不提供并发共享保证或 RSS 硬上限。
+CyclicAction 的原生几何和缺少扩展返回 Unavailable，标量读取与过滤 tracking 仍可使用。
+
+正整数及分母为1的 Fraction 使用检查溢出的 u64 求和；单项超界、求和溢出或非整数有理数
+显式使用 Python 任意精度后备，浮点保持原坐标顺序的 binary64 fsum。浮点溢出抛出带
+NumericalFailure 的 ValueError。exact 只描述几何算术，不升级 solver 认证。
+
+QueryResult.details 分开记录准备/输入转换/原生/绑定/decode/权重后备成本、次数与原因；
+准备子项不与准备总量重复相加，结果冻结计入调用者完整计时。statistics() 的 completed_batches
+是原生步骤完成数，Python 浮点后备失败后也可能增加；projection_buffer_growths 用于检查复用。
+0/1/8/64/1024 的历史完整成本与退化见 [性能协议](BENCHMARKS.md)。

@@ -134,3 +134,13 @@ schema 2往返。此smoke不覆盖native因子构造或尚未交付的#66，也�
 Factorized/HC的11个过滤族全部区间rank/transport/barcode及恢复。Rust fmt/Clippy、Ruff、
 文档/完整PR whitespace、示例与隔离wheel也通过。上述性能样本仍绑定原e0e3183，不回写为
 新整合提交的性能证据；#66及后续全native/GUDHI联合验收仍待后续工作包。
+
+本轮再普通 merge 同步 main `63138fc`（已合并文档 PR #83 与 S4-05 / PR #84），
+仅解决五处并行文档冲突并保留各自的 API、schema 与验收说明。整合 release 扩展重新构建后，
+163项完整强制 native 回归无跳过地通过（135.844秒）；原156项记录和本轮日志均保存在
+[整合日志](../benchmarks/s4_filtration_integration.log)。另实际检查四个 native solver 与
+CyclicAction、HC、Factorized 混合过滤族的全部区间 rank/composition/tracking、历史基及
+schema 1/2 往返；两种快照在真实无扩展的隔离 reference 安装中恢复并读取通过。
+Rust 单测/fmt/Clippy、Ruff、文档/完整 PR whitespace、README与两示例、reference打包和
+隔离安装通过。36条性能样本及其hash保持不变，仍绑定 `e0e3183`；这次整合未重新测量性能，
+也不代替 S4-06 几何工作区与 S4-08 完整后端联合验收。远端 CI 另按最终 PR head 核验。

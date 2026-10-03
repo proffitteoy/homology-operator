@@ -96,8 +96,18 @@ barcode 来自 `T_ij=P_j J_ij|ker(L_i)` 的 rank invariant。
 uv run --locked python examples/filtration.py
 ```
 
+S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
+packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
+显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
+默认过滤快照采用共享边界/基/活动索引的 schema 2，旧 schema 1 可读并原版本重发；
+`to_result(schema_version=1)` 显式输出旧格式，单尺度快照版本保持原契约。
+证明、状态边界及复跑命令见 [S4-07说明](docs/S4_FILTRATION.md)。
+
 四种限定 solver 可显式选择 native 加速与独立证书重放；默认 reference 入口保持不变。
 调用及支持域见 [native 认证求解](docs/INTERFACE.md#限定-native-认证求解s4-05)。
+
+几何批查询可显式复用 `GeometryWorkspace`，支持 Matrix 与 Factorized/HC 的同一 P，
+保留精确权重后备和六身份；调用与限制见 [几何 workspace](docs/INTERFACE.md#几何批查询与-workspaces4-06)。
 
 ## 能力与边界
 
@@ -107,7 +117,7 @@ uv run --locked python examples/filtration.py
 | 单尺度与有限过滤 | 同 P 联合查询、transport、rank/barcode、几何追踪、结果快照 |
 | 求解与认证 | 五种限定 reference solver；投影合法性、objective 计算、最优认证分别报告 |
 | 权重 | 任意精度整数/有理数；显式浮点政策，浮点几何不提供精确最优证书 |
-| 可选 Rust | 单字宽可行原型与批查询；多字 packed 代数、可复用分解、多 RHS、同 P 的因子/HC action 与限定 solver/证书重放 |
+| 可选 Rust | 单字宽可行原型与批查询；多字 packed 代数、可复用分解、多 RHS、同 P 的因子/HC action、限定 solver/证书重放及几何 workspace |
 | 开发目标 | 完整后端集成与性能验收、GUDHI 正式对拍、稳定性与应用实验 |
 
 当前输入是链窗口与带序基。点云、Rips 构造器和通用复形前端仍需调用者或后续适配提供。
