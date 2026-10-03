@@ -165,3 +165,17 @@ correctness通过run_pipeline的可选capture保存本次实际请求/manifest�
 缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。
 
 review修复源码`aea7940`的8项correctness回归通过（45.556秒），[独立新审计](../benchmarks/s5_correctness_review_audit.json)重新检查全部77份，77 Passed/Compared，原归档未覆盖。
+
+### S5-04 review 后的比值准入
+
+summarize在过滤无metric之前统计语义Mismatch，任何一个这样的区组都会否决比值/CI；
+普通timeout/资源失败继续单列，不变成成功耗时。
+同输出身份另外核对实际solver方法/config、停止状态与certificate_level，warm批hash也绑定这些证据。
+Native前缀及已独立验证的Feasible Matrix/Factorized/HC表示规范化，其余请求、预算、算术、
+objective、并列策略和实际认证保留；缺证据或不同方法/认证不生成同认证比值。
+cold Joint的额外topology构造失败时保留本次statuses/details/resource_usage/diagnostics和前一Joint记录，
+不再read_topology(None)并改写为process_error。
+
+9项采样回归通过，包含经run_plan标记的10个正常配对+1个Mismatch、真实isolated的Greedy/NativeFeasible
+认证不同、额外构造故障注入经run_plan→summarize、原真实子进程失败边界。
+旧性能raw和原summary仍原样保留；重新汇总使用新准入但不宣称执行过新worker。

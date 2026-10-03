@@ -11,6 +11,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from benchmark_s5 import sample_process, summarize, successful, output_key  # noqa: E402
 
 
+def computed_record():
+    return {
+        "completed": True,
+        "state": "Computed",
+        "output_hash": "same",
+        "topology_hash": "topology",
+        "worker_pipeline_seconds": 0.5,
+        "warm_records": [{"output_hash": "same", "seconds": 0.1}],
+        "statuses": [{"status": "FeasibleOnly", "certificate_level": "Feasible"}],
+        "details": [
+            {
+                "method": "FeasibleSolver",
+                "solver_config": {
+                    "method": "FeasibleSolver",
+                    "solver_options": {},
+                    "requested_certificate_level": "Feasible",
+                },
+            }
+        ],
+    }
+
+
 class S5SamplingTests(unittest.TestCase):
     def test_real_fresh_process_success_timeout_oom_and_killed_are_distinct(self):
         success = sample_process(
@@ -62,14 +84,7 @@ class S5SamplingTests(unittest.TestCase):
                         "end_to_end_seconds": 0.1,
                         "result": {
                             "peak_rss_bytes": 200 if route == "reference" else 100,
-                            "records": [
-                                {
-                                    "completed": True,
-                                    "state": "Computed",
-                                    "output_hash": "same",
-                                    "topology_hash": "topology",
-                                }
-                            ],
+                            "records": [computed_record()],
                         },
                     }
                 )
@@ -174,6 +189,247 @@ class S5SamplingTests(unittest.TestCase):
             self.assertEqual(
                 json.loads(temporary[0].read_text("utf-8")), {"sample": "complete"}
             )
+
+    def test_run_plan_marked_mismatch_vetoes_ten_remaining_valid_pairs(self):
+        from unittest.mock import patch
+        import benchmark_s5 as sampler
+
+        case = {
+            "id": "x",
+            "input_id": "x",
+            "workload": "Joint-basic",
+            "query_count": 0,
+            "solver": "FeasibleSolver",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {},
+            "routes": ["reference", "integrated"],
+            "expected_topology_hash": "topology",
+        }
+        plan = {
+            "inputs": {},
+            "cases": [case],
+            "blocks": 11,
+            "seed": 73,
+            "threads": {},
+            "process_wall_seconds": 5,
+            "rss_budget_bytes": 1000,
+            "statistics": {"minimum_paired_blocks": 10},
+        }
+        injected = False
+
+        def sample(command, *args):
+            nonlocal injected
+            record = computed_record()
+            if (
+                not injected
+                and command[command.index("--route") + 1] == "integrated"
+                and command[command.index("--scope") + 1] == "cold"
+                and command[command.index("--mode") + 1] == "timing"
+            ):
+                injected = True
+                record["topology_hash"] = "incorrect-topology"
+            return {
+                "process_state": "completed",
+                "end_to_end_seconds": 1,
+                "result": {
+                    "initialization_seconds": 0,
+                    "peak_rss_bytes": 100,
+                    "records": [record],
+                },
+            }
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(sampler, "frozen_environment", return_value={}),
+            patch.object(sampler, "sample_process", side_effect=sample),
+        ):
+            root = Path(directory)
+            report = sampler.run_plan(
+                plan, root / "plan.json", root / "report.json", root, "smoke"
+            )
+        group = next(
+            g
+            for g in report["summary"]
+            if (g["route"], g["scope"], g["mode"]) == ("integrated", "cold", "timing")
+        )
+        self.assertEqual(group["library_states"]["Mismatch"], 1)
+        self.assertEqual(group["reference_comparison"]["paired_blocks"], 10)
+        self.assertEqual(group["reference_comparison"]["mismatched_blocks"], 1)
+        self.assertIsNone(group["reference_comparison"]["paired_median_ratio"])
+
+    def test_identical_warm_values_with_different_actual_certification_are_not_comparable(
+        self,
+    ):
+        record = computed_record()
+        row = {
+            "case": "x",
+            "route": "reference",
+            "block": 0,
+            "scope": "warm",
+            "mode": "timing",
+            "process_state": "completed",
+            "result": {"records": [record]},
+        }
+        peer = deepcopy(row)
+        peer["route"] = "native_explicit"
+        peer["result"]["records"][0]["statuses"] = [
+            {"status": "Solved", "certificate_level": "ExactOptimal"}
+        ]
+        peer["result"]["records"][0]["details"][0]["method"] = (
+            "NativeGreedyCertifiedSolver"
+        )
+        peer["result"]["records"][0]["details"][0]["solver_config"]["method"] = (
+            "NativeGreedyCertifiedSolver"
+        )
+        self.assertNotEqual(output_key(row), output_key(peer))
+        plan = {
+            "cases": [
+                {
+                    "id": "x",
+                    "workload": "Topology",
+                    "routes": ["reference", "native_explicit"],
+                }
+            ],
+            "seed": 73,
+            "statistics": {"minimum_paired_blocks": 1},
+        }
+        group = next(
+            g
+            for g in summarize(plan, [row, peer])
+            if g["route"] == "native_explicit"
+            and g["scope"] == "warm"
+            and g["mode"] == "timing"
+        )
+        self.assertEqual(group["reference_comparison"]["mismatched_blocks"], 1)
+        self.assertIsNone(group["reference_comparison"]["paired_median_ratio"])
+
+    def test_real_isolated_greedy_and_native_feasible_warm_are_distinct(self):
+        from importlib.util import find_spec
+        from benchmark_s5 import run_worker_case, ROOT
+        from oracle.simplicial import load_manifests
+
+        if find_spec("_homology_native") is None:
+            self.skipTest("real native solver requires the optional extension")
+        manifest = next(m for m in load_manifests() if m["id"] == "isolated")
+        case = {
+            "input_id": "isolated",
+            "workload": "Topology",
+            "query_count": 0,
+            "solver": "GreedyCertifiedSolver",
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {
+                "state_limit": 100000,
+                "wall_time_limit": 20.0,
+                "matrix_entry_limit": 1000000,
+            },
+            "warm_repeats": 2,
+        }
+        plan = {"inputs": {"isolated": manifest}}
+        ref = run_worker_case(plan, case, "reference", "warm", ROOT)
+        native = run_worker_case(plan, case, "native_explicit", "warm", ROOT)
+        self.assertEqual(ref["topology_hash"], native["topology_hash"])
+        self.assertEqual(ref["statuses"][0]["certificate_level"], "ExactOptimal")
+        self.assertEqual(native["statuses"][0]["certificate_level"], "Feasible")
+        self.assertNotEqual(
+            ref["warm_records"][0]["output_hash"],
+            native["warm_records"][0]["output_hash"],
+        )
+        self.assertNotEqual(
+            output_key({"scope": "warm", "result": {"records": [ref]}}),
+            output_key({"scope": "warm", "result": {"records": [native]}}),
+        )
+
+    def test_cold_joint_additional_construction_failure_retains_original_records(self):
+        from unittest.mock import patch
+        import benchmark_s5 as sampler
+        from oracle.simplicial import load_manifests
+
+        manifest = load_manifests()[1]
+        case = {
+            "id": "failure",
+            "input_id": manifest["id"],
+            "solver": "FeasibleSolver",
+            "workload": "Joint-basic",
+            "query_count": 1,
+            "requested_certificate_level": "Feasible",
+            "resource_limits": {},
+        }
+        statuses = [
+            {
+                "degree": 0,
+                "stage": 0,
+                "status": "ResourceExhausted",
+                "certificate_level": None,
+            }
+        ]
+        details = [
+            {
+                "method": "FeasibleSolver",
+                "solver_config": {"requested_certificate_level": "Feasible"},
+                "resource_usage": {"states": 100000},
+                "diagnostics": ["wall_time_limit"],
+            }
+        ]
+        with (
+            patch.object(
+                sampler,
+                "run_pipeline",
+                return_value={
+                    "completed": True,
+                    "output_hash": "joint-success",
+                    "statuses": [],
+                },
+            ),
+            patch.object(
+                sampler, "construct_families", return_value=(None, statuses, details)
+            ),
+        ):
+            failed = sampler.run_worker_case(
+                {"inputs": {manifest["id"]: manifest}},
+                case,
+                "reference",
+                "cold",
+                Path("."),
+            )
+        self.assertEqual(failed["state"], "ResourceExhausted")
+        self.assertEqual(failed["statuses"], statuses)
+        self.assertEqual(failed["details"], details)
+        self.assertTrue(all(r["completed"] for r in failed["records"]))
+        case.update(routes=["reference"], expected_topology_hash="unused")
+        plan = {
+            "inputs": {},
+            "cases": [case],
+            "blocks": 1,
+            "seed": 73,
+            "threads": {},
+            "process_wall_seconds": 5,
+            "rss_budget_bytes": 1000,
+            "statistics": {"minimum_paired_blocks": 10},
+        }
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(sampler, "frozen_environment", return_value={}),
+            patch.object(
+                sampler,
+                "sample_process",
+                return_value={
+                    "process_state": "completed",
+                    "end_to_end_seconds": 1,
+                    "result": {"initialization_seconds": 0, "records": [failed]},
+                },
+            ),
+        ):
+            root = Path(directory)
+            report = sampler.run_plan(
+                plan, root / "plan.json", root / "report.json", root, "smoke"
+            )
+        self.assertTrue(all(g["median"] is None for g in report["summary"]))
+        self.assertTrue(
+            all(
+                g["library_states"] == {"ResourceExhausted": 1}
+                for g in report["summary"]
+            )
+        )
 
 
 if __name__ == "__main__":
