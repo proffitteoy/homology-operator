@@ -12,6 +12,10 @@ dependencies = []
 
 [dependency-groups]
 dev = ["hatchling==1.27.0", "ruff==0.11.13"]
+oracle = [
+    "gudhi==3.11.0",
+    "numpy==2.2.6",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/homology_operator"]

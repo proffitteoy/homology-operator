@@ -252,3 +252,10 @@ Windows原子替换失败的数据保全。没有为复述实现添加测试。
 reference-only独立wheel的20项集成/旧格式/联合恢复中14项通过，6项native按预期跳过；
 双wheel独立环境同20项全部通过。Ruff、Rustfmt/Clippy、精确比值Rust单测、
 打包、公开示例和文档检查通过；远端CI成绩与本地/Windows性能数据分开。
+
+## S5 显式输入与 GUDHI oracle
+
+[输入契约与真实命令](S5_GUDHI.md)提供可选 `oracle` 依赖组。GUDHI 3.11.0/NumPy 2.2.6
+只用于 tests/oracle 与测量对照。新增 S5 workflow 强制安装锁定组，覆盖 Windows3.12/Linux3.10/3.12。
+普通 reference/native 检查缺该组时明确跳过 GUDHI 专项测试；`HOMOLOGY_GUDHI_REQUIRED=1` 阻止静默跳过。
+manifest 的标准库校验和链构造始终执行。S5-01 双边输入导出通过不等于 PH 或性能验收。

@@ -32,7 +32,7 @@
 | S4-07 / [PR #82](https://github.com/proffitteoy/homology-operator/pull/82) | 相邻 transport barcode、历史区间基、受控缓存与 schema 2 共享过滤快照 | 已合入 main `f0c15265`；保留 schema 1 兼容和有限合成性能范围 |
 | S4-08 / [PR #86](https://github.com/proffitteoy/homology-operator/pull/86) | 后端选择/可见后备、取消、旧格式与紧凑恢复、隔离 wheel CI | 已合并至上述 main；Windows/Linux强制native和隔离wheel CI通过，见 [VALIDATION](VALIDATION.md#s4-08-后端集成验收) |
 | S4-09 / [验收报告](S4_REPORT.md) | 27配置、1880独立进程、同P/认证/联合输出、完整成本/RSS/消融与S5源码冻结 | 性能门槛通过；4组时间退化，保留可选后端；最终合并/main CI以 [S4 Epic](https://github.com/proffitteoy/homology-operator/issues/59)记录为据 |
-| S5 | GUDHI 三方正确性与正式对照测量 | 本轮没有实施；S4数据不替代S5 |
+| S5-01 / [输入冻结与双构造器](S5_GUDHI.md) | 六个显式复形的严格 manifest、实际链/GUDHI 导出与 hash 对拍 | 开发 PR，后续 PH oracle、三方正确性和正式测量分别验收 |
 | 公开发行 | 包名 `homology-operator`，开发快照 `0.0.2.dev0` | 当前 GitHub 仓库为 public，未选择 LICENSE，发行/API 兼容政策未冻结 |
 
 上述main已包含S4-01–08；S4-09的生产被测源码也固定在同一7fa812d，
