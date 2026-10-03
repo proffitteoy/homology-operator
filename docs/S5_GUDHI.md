@@ -112,3 +112,15 @@ uv run --locked --no-sync python -m unittest discover -s tests -v
 
 Native CI安装oracle组，强制同时运行真实native与GUDHI；reference仍可独立安装。
 本轮有限corpus通过不推出一般证明、规模稳定性或性能结论。
+
+### S5-03 review 后的失败分类与现场
+
+correctness整体状态由每项实际comparison派生：只有所请求的reference/native比较全部完成才是Passed；
+双方同样ResourceExhausted、Unavailable或中断也不能记通过，CLI保存结果并以非零退出。
+默认预算的17个孤点认证样本明确为ResourceExhausted；原77份归档全部实际完成的成功结论保持原样。
+
+correctness通过run_pipeline的可选capture保存本次实际请求/manifest、solver配置/认证/身份/原projection、
+渐进语义结果、geometry批和可用snapshot wires；wire包含原joint_batch和原solver_run_id，不重新求解替代。
+独立投影与transport失败另保存实际窗口/action/身份或原族快照及失败链。
+归档先独立写入不可覆盖的.original.json，再仅接受同failure_category的删除缩减；
+缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。

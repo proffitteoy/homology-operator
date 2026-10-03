@@ -170,14 +170,26 @@ def joint_case(slices, scales, method="FeasibleSolver", query_count=8):
 
 
 def check_manifest(manifest, require_native=False, certified=False):
+    from collections.abc import Mapping
     from homology_operator.native import backend_info
+    from homology_operator.chain import action_data
+    from homology_operator.result import canonical_json
     from oracle import reference
     from oracle.gudhi_oracle import build_families, gudhi_topology, operator_topology
     from oracle.simplicial import audit_inputs, build_windows, number
 
     def mismatch(message, **results):
         error = ValueError(message)
-        error.results = results
+        error.results = json.loads(
+            json.dumps(
+                results,
+                default=lambda value: dict(value)
+                if isinstance(value, Mapping)
+                else json.loads(canonical_json(value)),
+                allow_nan=False,
+            )
+        )
+        error.failure_category = message
         raise error
 
     audit = audit_inputs(manifest)
@@ -189,6 +201,10 @@ def check_manifest(manifest, require_native=False, certified=False):
             "GUDHI/reference topology mismatch",
             gudhi=expected,
             reference=reference_topology,
+            reference_snapshots={
+                str(degree): family.to_result().to_json()
+                for degree, family in reference_families.items()
+            },
         )
     native_available = backend_info()["native"] == "Available"
     if require_native and not native_available:
@@ -202,7 +218,13 @@ def check_manifest(manifest, require_native=False, certified=False):
         native_topology = operator_topology(native_families)
         if native_topology != expected:
             mismatch(
-                "GUDHI/native topology mismatch", gudhi=expected, native=native_topology
+                "GUDHI/native topology mismatch",
+                gudhi=expected,
+                native=native_topology,
+                native_snapshots={
+                    str(degree): family.to_result().to_json()
+                    for degree, family in native_families.items()
+                },
             )
 
     for families in (reference_families, native_families):
@@ -224,18 +246,33 @@ def check_manifest(manifest, require_native=False, certified=False):
                         for col in range(op.window.n)
                     )
                     if not reference.verify_projection(op.window.to_dict(), columns):
-                        raise ValueError(
-                            "independent full-chain/cycle projection mismatch"
+                        mismatch(
+                            "independent full-chain/cycle projection mismatch",
+                            degree=op.window.k,
+                            stage=i,
+                            window=op.window.to_dict(),
+                            projection=action_data(op.P),
+                            identity=op.identity,
+                            columns=columns,
+                            source_revision=CANDIDATE,
                         )
                 for j in range(i, len(family.windows)):
                     for k in range(j, len(family.windows)):
                         for cycle in op.window.A.kernel_basis():
                             intermediate = family.track_class(cycle, i, j).value
-                            if (
-                                family.track_class(cycle, i, k).value
-                                != family.track_class(intermediate, j, k).value
-                            ):
-                                raise ValueError("transport composition mismatch")
+                            direct = family.track_class(cycle, i, k)
+                            composed = family.track_class(intermediate, j, k)
+                            if direct.value != composed.value:
+                                mismatch(
+                                    "transport composition mismatch",
+                                    stages=[i, j, k],
+                                    cycle=cycle,
+                                    intermediate=intermediate,
+                                    direct=direct.to_dict(),
+                                    composed=composed.to_dict(),
+                                    family_snapshot=family.to_result().to_json(),
+                                    source_revision=CANDIDATE,
+                                )
     comparisons = []
     for k, slices in build_windows(manifest).items():
         for method in (
@@ -246,48 +283,70 @@ def check_manifest(manifest, require_native=False, certified=False):
             joint_manifest, case = joint_case(
                 slices, [number(x) for x in manifest["scales"]], method
             )
-            ref = run_pipeline(joint_manifest, case, "reference", ROOT)
-            native = (
-                run_pipeline(joint_manifest, case, "integrated", ROOT)
-                if native_available
-                else None
-            )
-            if native is not None and (
-                ref["output_hash"] != native["output_hash"]
-                or ref["completed"] != native["completed"]
-            ):
-                native_method = (
-                    "NativeFactorizedSolver"
-                    if method == "FeasibleSolver"
-                    else "Native" + method
+            reference_capture, native_capture = {}, {}
+            try:
+                ref = run_pipeline(
+                    joint_manifest, case, "reference", ROOT, capture=reference_capture
                 )
-                reference_record = (
-                    build_families(manifest, method)[k].to_result().to_json()
+                native = (
+                    run_pipeline(
+                        joint_manifest, case, "integrated", ROOT, capture=native_capture
+                    )
+                    if native_available
+                    else None
                 )
-                native_record = (
-                    build_families(
-                        manifest,
-                        native_method,
-                        matrix_free_output=method == "FeasibleSolver",
-                    )[k]
-                    .to_result()
-                    .to_json()
+            except (ValueError, AssertionError) as error:
+                mismatch(
+                    f"joint pipeline failure: H{k}/{method}",
+                    error=str(error),
+                    reference_capture=reference_capture,
+                    native_capture=native_capture,
                 )
+            comparable = ref["completed"] and native is not None and native["completed"]
+            if comparable and ref["output_hash"] != native["output_hash"]:
                 mismatch(
                     f"native/reference full action/geometry/certification/recovery mismatch: H{k}/{method}",
                     reference=ref,
                     native=native,
-                    reference_snapshot=json.loads(reference_record),
-                    native_snapshot=json.loads(native_record),
+                    reference_capture=reference_capture,
+                    native_capture=native_capture,
                 )
             comparisons.append(
                 {"degree": k, "solver": method, "reference": ref, "native": native}
             )
+    incomplete = [
+        result
+        for comparison in comparisons
+        for result in (comparison["reference"], comparison["native"])
+        if result is None or not result["completed"]
+    ]
+    states = {
+        status["status"]
+        for result in incomplete
+        if result is not None
+        for status in result["statuses"]
+    }
+    interrupted = any(
+        "cancelled" in str(result.get("details", {})).lower()
+        for result in incomplete
+        if result is not None
+    )
+    state = (
+        "Passed"
+        if not incomplete
+        else "Interrupted"
+        if interrupted or states & {"Interrupted", "Cancelled"}
+        else "ResourceExhausted"
+        if "ResourceExhausted" in states
+        else "Unavailable"
+        if not native_available or "Unavailable" in states
+        else "Failed"
+    )
     return {
         "id": manifest["id"],
         "input_hash": manifest["input_hash"],
-        "state": "Passed",
-        "native_state": "Compared" if native_available else "Unavailable",
+        "state": state,
+        "native_state": "Compared" if state == "Passed" else state,
         "input_audit": audit,
         "topology": expected,
         "joint_comparisons": comparisons,
@@ -319,21 +378,46 @@ def minimize_manifest(manifest, mismatch):
     return current
 
 
-def archive_mismatch(directory, manifest, evaluate):
+def archive_mismatch(directory, manifest, evaluate, original_result=None):
     from oracle.simplicial import digest
 
+    original = evaluate(manifest) if original_result is None else original_result
+    if original["state"] != "Mismatch":
+        raise ValueError("only an actual mismatch may be archived")
+    category = original.get("failure_category", original.get("error", "Mismatch"))
+    original_record = {
+        "classification": "Mismatch",
+        "failure_category": category,
+        "original_manifest": manifest,
+        "original_result": original,
+    }
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    original_path = directory / (digest(original_record) + ".original.json")
+    with original_path.open("x", encoding="utf-8", newline="\n") as stream:
+        json.dump(original_record, stream, indent=2, allow_nan=False)
+        stream.write("\n")
+
     def mismatches(candidate):
-        return evaluate(candidate)["state"] == "Mismatch"
+        result = evaluate(candidate)
+        return (
+            result["state"] == "Mismatch"
+            and result.get("failure_category", result.get("error", "Mismatch"))
+            == category
+        )
 
     minimized = minimize_manifest(manifest, mismatches)
     record = {
         "classification": "Mismatch",
+        "failure_category": category,
+        "original_archive": original_path.name,
+        "original_result": original,
         "original_manifest": manifest,
         "minimal_manifest": minimized,
         "results": evaluate(minimized),
         "minimality": "deletion-minimal among maximal-simplex removals, not global",
     }
-    path = Path(directory) / (digest(record) + ".json")
+    path = directory / (digest(record) + ".json")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf-8", newline="\n") as stream:
         json.dump(record, stream, indent=2)
@@ -415,6 +499,7 @@ def main():
             return {
                 "state": "Mismatch",
                 "error": str(error),
+                "failure_category": getattr(error, "failure_category", str(error)),
                 "results": getattr(error, "results", None),
             }
 
@@ -423,7 +508,7 @@ def main():
         if row["state"] == "Mismatch":
             row["archive"] = str(
                 archive_mismatch(
-                    args.output.parent / "s5-counterexamples", manifest, evaluate
+                    args.output.parent / "s5-counterexamples", manifest, evaluate, row
                 )
             )
         rows.append(row)
@@ -455,7 +540,7 @@ def main():
     with args.output.open("x", encoding="utf-8", newline="\n") as stream:
         json.dump(result, stream, indent=2, allow_nan=False)
         stream.write("\n")
-    if result["summary"].get("Mismatch", 0):
+    if any(row["state"] != "Passed" for row in rows):
         raise SystemExit(1)
 
 
