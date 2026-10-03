@@ -124,3 +124,5 @@ correctness通过run_pipeline的可选capture保存本次实际请求/manifest�
 独立投影与transport失败另保存实际窗口/action/身份或原族快照及失败链。
 归档先独立写入不可覆盖的.original.json，再仅接受同failure_category的删除缩减；
 缩减复现与原始run各自保留。该调试capture只由correctness启用，旧性能记录仍绑定原helper提交/hash。
+
+review修复源码`aea7940`的8项correctness回归通过（45.556秒），[独立新审计](../benchmarks/s5_correctness_review_audit.json)重新检查全部77份，77 Passed/Compared，原归档未覆盖。
