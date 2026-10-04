@@ -42,6 +42,11 @@ foreach ($document in $documents) {
     if ($content -match '(?m)^(?:<{7}|={7}|>{7})(?: |\r?$)') {
         $problems.Add("${relativePath}: unresolved merge conflict marker")
     }
+    foreach ($math in [regex]::Matches($content, '(?ms)^```math[ \t]*\r?\n(.*?)^```[ \t]*\r?$')) {
+        if ($math.Groups[1].Value -match '\\\\\r?\n') {
+            $problems.Add("${relativePath}: a math row separator must not end a physical line on GitHub")
+        }
+    }
     # Ignore fenced examples. This intentionally checks inline file links only.
     $prose = [regex]::Replace($content, '(?ms)^```[^\r\n]*\r?\n.*?^```[ \t]*\r?$', '')
     # Raw pipes also split cells inside formulas or inline code on GitHub.

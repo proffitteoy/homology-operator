@@ -341,8 +341,7 @@ With the current default tie rule, `ExhaustiveExactSolver` returns
 
 ```math
 P_*=\begin{pmatrix}
-0&0&0&0&1&1\\0&0&0&0&0&0\\0&0&0&0&1&1\\
-0&0&0&0&0&1\\0&0&0&0&1&0\\0&0&0&0&0&1
+0&0&0&0&1&1\\0&0&0&0&0&0\\0&0&0&0&1&1\\ 0&0&0&0&0&1\\0&0&0&0&1&0\\0&0&0&0&0&1
 \end{pmatrix},\qquad L_*=I+P_*.
 ```
 
