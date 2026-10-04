@@ -13,7 +13,8 @@ $required = @(
     'docs/index.md', 'docs/conf.py', 'docs/requirements.txt', 'docs/en/USAGE.md',
     'docs/README.md', 'docs/ARCHITECTURE.md', 'docs/INTERFACE.md',
     'docs/RESULT_MODEL.md', 'docs/SOLVER_CONTRACT.md', 'docs/VALIDATION.md',
-    'docs/冷启动.md'
+    'docs/冷启动.md', 'docs/research/README.md', 'research/README.md',
+    'benchmarks/README.md', 'scripts/README.md'
 )
 $problems = [Collections.Generic.List[string]]::new()
 foreach ($relativePath in $required) {
@@ -23,9 +24,11 @@ foreach ($relativePath in $required) {
 }
 
 $documents = @(Get-ChildItem -LiteralPath $repoRoot -File -Filter '*.md')
-$docsRoot = Join-Path $repoRoot 'docs'
-if (Test-Path -LiteralPath $docsRoot -PathType Container) {
-    $documents += @(Get-ChildItem -LiteralPath $docsRoot -Recurse -File -Filter '*.md')
+foreach ($folder in @('docs', 'research', 'benchmarks', 'scripts')) {
+    $documentRoot = Join-Path $repoRoot $folder
+    if (Test-Path -LiteralPath $documentRoot -PathType Container) {
+        $documents += @(Get-ChildItem -LiteralPath $documentRoot -Recurse -File -Filter '*.md')
+    }
 }
 $utf8 = [Text.UTF8Encoding]::new($false, $true)
 $localLinks = 0

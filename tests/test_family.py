@@ -715,7 +715,7 @@ class AdjacentFiltrationTests(unittest.TestCase):
         old = json.loads(
             (
                 Path(__file__).parents[1]
-                / "docs/research/s4-s5/quiver_barcode_probe_result.json"
+                / "research/s4-s5/quiver_barcode_probe_result.json"
             ).read_text("utf-8")
         )
         self.assertEqual(len(cases), 5689)

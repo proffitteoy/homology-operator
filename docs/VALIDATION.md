@@ -50,12 +50,28 @@ Rust 单测不能替代 Python 差分/不变量测试，实际本地命令与证
 数学定义、构造或 schema 变更则按下方表格补独立测试。
 
 [check_docs.ps1](../scripts/check_docs.ps1) 需要 PowerShell 7，可从任意目录调用。
-它按脚本位置定位仓库，检查根目录与 docs 下全部 Markdown（含未跟踪文件）：
+它按脚本位置定位仓库，检查根目录、docs、research、benchmarks 与 scripts 下全部 Markdown（含未跟踪文件）：
 必需入口、严格 UTF-8、冲突标记、本地行内文件链接存在且位于仓库内。
 失败退出 1，成功打印文件/链接数。
 
 它不验证标题锚点、引用式链接、外网可达性或完整 Markdown 语法；围栏示例不进入链接检查。
 `git diff --check` 仅补充检查已跟踪文件的改动。两者均不证明数学正确、最优性或运行时性能。
+
+## 研究成果与原始数据
+
+[研究索引](research/README.md)、[实验数据](../benchmarks/README.md)和[脚本索引](../scripts/README.md)
+把实现、来源、完整原值及结论关联起来。根目录运行：
+
+```powershell
+python scripts/reproduce_research.py
+uv run --locked --no-sync python -m unittest discover -s tests -p test_research.py -v
+uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all --output-dir .task-artifacts/research-reproduced
+```
+
+第一条仅标准库、只读核对所有登记数据及原件；Reference CI 执行同一检查。
+第二条验证数据篡改/缺失/新增、路径及不覆盖边界；第三条比较完整原型结果及 S5 两张冻结 CSV。
+S5 统计重建需安装 reference 并保留完整 Git 历史，无需 native/GUDHI；输出目录必须尚不存在。
+这里的 hash 校验、有限算法对拍和已有原值统计重建均不提供新的性能采样或一般证明。
 
 ## CI 与打包
 

@@ -107,3 +107,13 @@ Do not reuse old performance samples as measurements of a new commit.
 
 The project uses the [MIT License](../../LICENSE). API/native ABI compatibility
 policies and the public release process remain development work.
+
+## Research evidence
+
+The [artifact catalog](../../benchmarks/README.md) covers frozen data, fixtures and
+original uploads. Run `python scripts/reproduce_research.py` for a read-only hash
+and coverage audit; Reference CI runs the same check. Use
+`uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all --output-dir .task-artifacts/research-reproduced`
+to replay the archived finite probe and rebuild S5 tables into a new directory.
+S5 needs the reference package and complete Git history, without native/GUDHI.
+This verifies existing results and does not collect new performance samples.

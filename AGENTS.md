@@ -28,7 +28,8 @@
 - `docs/SOLVER_CONTRACT.md`：投影合法性、最优性、资源和并列策略。
 - `docs/VALIDATION.md`：实际开发命令、CI 范围与数学变更的验收要求。
 - `docs/development/`：通用开发参考材料，与项目数学契约分开维护。
-- `scripts/check_docs.ps1`：只读检查根目录和 `docs/` 下的 Markdown 及本地文件链接。
+- `scripts/check_docs.ps1`：只读检查根目录、`docs/`、`research/`、`benchmarks/` 与 `scripts/` 下的 Markdown 及本地文件链接。
+- `research/` 保留上传原型与原件，`docs/research/` 汇总研究成果；`benchmarks/registry.json` 登记冻结数据/fixtures/原件，`scripts/reproduce_research.py` 提供只读校验与不覆盖的复现入口。
 - 使用现有 `src/homology_operator/`、`native/`、`tests/`、`examples/` 与 `benchmarks/`；路线图的推荐目录与版本是目标，不按模板预建空目录。
 
 在仓库根目录运行：

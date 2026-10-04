@@ -1,8 +1,8 @@
 # S4-07：相邻 transport 与过滤快照
 
 实现对应 [#67](https://github.com/proffitteoy/homology-operator/issues/67)。主结果来自当前族的
-T_ij=P_j J_ij|ker(L_i)，无独立 PH 旁路。上传的[端点脚本](research/s4-s5/quiver_barcode_probe.py)
-及[5689例记录](research/s4-s5/quiver_barcode_probe_result.json)保持原字节和历史限制。
+T_ij=P_j J_ij|ker(L_i)，无独立 PH 旁路。上传的[端点脚本](../research/s4-s5/quiver_barcode_probe.py)
+及[5689例记录](../research/s4-s5/quiver_barcode_probe_result.json)保持原字节和历史限制。
 
 ## 实现与成本
 

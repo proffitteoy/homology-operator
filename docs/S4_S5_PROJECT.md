@@ -25,11 +25,11 @@ API 与限制见 [INTERFACE](INTERFACE.md)；本次源代码整合纳入几何/w
 - 两阶段细化原路线图 **Phase 4：性能后端** 的实现与验收，不重新编号 Phase 0–7；采样稳定性、应用收益、一般新搜索算法与正式发行仍按原路线独立推进。
 - 现有 129 项数学测试与历史报告属于 reference 证据。研究包的 5,689 例是独立端点算法有限检查，不是 native 集成、几何追踪、GUDHI 或性能证据。
 
-原始材料按字节保留在 [研究计划](research/s4-s5/homology-operator-S3-S4-plan.md)、
-[粘贴摘要](research/s4-s5/pasted-summary.md)、[独立原型](research/s4-s5/quiver_barcode_probe.py)、
-[原始结果](research/s4-s5/quiver_barcode_probe_result.json)。
+原始材料按字节保留在 [研究计划](../research/s4-s5/homology-operator-S3-S4-plan.md)、
+[粘贴摘要](../research/s4-s5/pasted-summary.md)、[独立原型](../research/s4-s5/quiver_barcode_probe.py)、
+[原始结果](../research/s4-s5/quiver_barcode_probe_result.json)。
 用户已将上传材料中的 S3/S4 更正为 S4/S5；原始文件名与正文按上传字节保留，不改写历史。原材料中的“未修改 GitHub”“拟创建任务”、sandbox 下载链接与旧状态保留为调研时记录；本文件是整合后的管理入口。
-原型是归档研究脚本，保持来源/hash，不进入运行时或数学测试，Ruff 仅排除此归档文件。
+原型脚本保持来源/hash，不进入运行时；端点结果作为有限回归对照，生产历史基和几何另行验收。Ruff 仅排除此归档文件。
 Git 对此归档目录关闭换行规范化，并保留归档 Markdown 原有换行/尾空格，
 避免 Windows checkout 或空白修整改变原始字节和 hash；普通文档仍遵循空白检查。
 
@@ -429,8 +429,8 @@ S5 的退出条件是正确、完整、可复现的结论，不能要求结果�
 
 ```powershell
 $probeOutput = Join-Path $env:TEMP 'homology-quiver-barcode-recheck.json'
-uv run --locked python docs/research/s4-s5/quiver_barcode_probe.py --cases 5000 --seed 20261002 --output $probeOutput
-uv run --locked python -c "import json, pathlib, sys; a=json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')); b=json.loads(pathlib.Path(sys.argv[2]).read_text(encoding='utf-8')); assert a == b; print('Probe record matches archived result')" docs/research/s4-s5/quiver_barcode_probe_result.json $probeOutput
+uv run --locked python research/s4-s5/quiver_barcode_probe.py --cases 5000 --seed 20261002 --output $probeOutput
+uv run --locked python -c "import json, pathlib, sys; a=json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8')); b=json.loads(pathlib.Path(sys.argv[2]).read_text(encoding='utf-8')); assert a == b; print('Probe record matches archived result')" research/s4-s5/quiver_barcode_probe_result.json $probeOutput
 pwsh -NoProfile -File ./scripts/check_docs.ps1
 git diff --check
 ```

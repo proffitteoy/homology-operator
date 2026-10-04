@@ -12,6 +12,7 @@
   <a href="README.en.md">English</a> ·
   <a href="docs/index.md">Documentation</a> ·
   <a href="docs/INTERFACE.md">API</a> ·
+  <a href="docs/research/README.md">Research</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT License</a>
 </p>
@@ -133,6 +134,21 @@ uv run --locked python examples/filtration.py
 
 保留显式后端选择。上述数字绑定报告中的源码、输入、机器、预算与认证；完整失败和退化一并保留。
 GUDHI 只对照拓扑，联合几何信息的成本单独报告。更大规模、采样稳定性和应用收益仍需各自验收。
+
+## 研究代码与成果
+
+[研究成果索引](docs/research/README.md)连接数学定义、Python/Rust 实现、独立验证与冻结结论。
+[实验清单](benchmarks/README.md)登记全部原值、失败、fixtures 和原件；
+[脚本索引](scripts/README.md)列出维护中的检查与测量入口，
+[research](research/README.md)保留独立原型和上传材料。
+
+```powershell
+python scripts/reproduce_research.py
+uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all --output-dir .task-artifacts/research-reproduced
+```
+
+第一条只读校验完整数据清单，第二条重跑 5,689 例原型并从已有 S5 原值重建两张统计表，
+逐项核对冻结结果。输出目录须为新目录；这不是新的性能测量。
 
 ## 文档
 

@@ -49,7 +49,7 @@ ChainWindow → ProjectionProblem → solver → ProjectionSolution
 
 Python 包位于 `src/homology_operator/`，采用上述现有文件。
 `examples/` 是可运行入口，`scripts/` 是检查/测量工具，`benchmarks/` 是冻结记录，
-`docs/research/` 是研究归档。路线图中的分层目录树不是实际源码布局，不据此预建目录或拆分类型。
+`research/` 保存归档原型与上传原件，`docs/research/` 汇总成果与证据入口。路线图中的分层目录树不是实际源码布局，不据此预建目录或拆分类型。
 
 ## 联合输出的身份与几何
 
