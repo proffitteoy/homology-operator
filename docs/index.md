@@ -36,14 +36,14 @@ platforms
 
 VALIDATION
 贡献 <https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.md>
-实现与证据 <https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md>
+产品说明 <https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md>
 源代码 <https://github.com/proffitteoy/homology-operator>
 ```
 
 
 [![Reference checks](https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml)
 [![Native checks](https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml)
-[![GUDHI oracle](https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml)
+[![GUDHI oracle](https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml)
 
 
 [English](en/index.md)
@@ -105,16 +105,6 @@ assert op.selected_mass((0, 1)) == 10
 类查询接受循环；原始 project/apply_operator 接受全部链。
 合法投影、当前 objective 与全局最优性分别报告。完整调用见[API](INTERFACE.md)，
 身份与失败状态见[结果模型](RESULT_MODEL.md)。
-
-## 性能
-
-| 冻结对照 | 范围与结论 |
-| --- | --- |
-| [S4](S4_REPORT.md) | 27 配置、1,880 独立进程；部分路线有收益，4 组时间退化超过 20% |
-| [S5](S5_REPORT.md) | 77 三方正确性输入、2,840 正式进程；集成后端 68 个可比组没有一个 95% 配对区间完全低于 1 |
-
-后端选择保持显式。数字绑定各报告的源码、机器、输入、预算和认证；完整失败与退化保留。
-GUDHI 对照覆盖拓扑，额外联合几何的成本单独报告。
 
 ## 开发与引用
 

@@ -30,4 +30,4 @@ Default family snapshots use schema 2 with shared boundary/basis storage. Legacy
 schema 1 is readable and reissued at its original version; use
 `to_result(schema_version=1)` to request old-format output without the new
 historical basis. Single-scale schema remains 1. Recovery independently checks
-the family and stored readouts. See [filtration details](../../S4_FILTRATION.md).
+the family and stored readouts. See [filtration guide](../ARCHITECTURE.md).

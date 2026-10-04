@@ -1,85 +1,54 @@
-# Phase 1 reference fixture corpus
+# 产品测试输入与来源
 
-[reference.json](../tests/fixtures/reference.json) 保存 23 个有限带基链窗口；[独立 oracle](../tests/oracle/reference.py) 仅使用标准库、整数 XOR、列组合穷举及 `Fraction`，不导入生产 `Matrix`、消元、solver 或算子。当前空间最多 9 维，因此最多枚举 512 条链。这些小实例用于正确性核验，不是性能或一般效率证据。
+测试样本只用于独立正确性与兼容性验证，不进入生产计算路径。
+生产输出来自输入窗口与合法 P；oracle 的最短类质量或 PH 结果不能填充产品结果。
 
-## 固定来源与迁移范围
+## 单尺度与过滤窗口
 
-来源仓库为 `proffitteoy/homology-operator-lab`，固定提交为 `6143729669902ee875b211b58085e954c76cdf88`。下列 SHA256 对 GitHub contents API 返回的原始文件字节计算，保留源码原始换行；没有执行会覆盖研究结果的脚本，也没有引入研究依赖。
+[reference.json](../tests/fixtures/reference.json) 保存 23 份带基 H0–H3 链窗口，
+覆盖空空间、零同调、基置换、重复尺度、人工正权与实际欧氏边长/面积/体积。
+[独立标准库 oracle](../tests/oracle/reference.py) 使用整数 XOR、列组合和 Fraction，
+不导入生产消元、solver 或算子。窗口以显式 nrows/ncols/rows 保存矩阵，包括 0×n 和 n×0。
+带序基使用唯一字符串，精确权保存 numerator/denominator，浮点权保存 JSON 数值。
 
-| 源文件 | 原始字节 SHA256 | 迁移内容 |
-| --- | --- | --- |
-| [verify.py](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/verify.py) | `f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9` | `filtration_example` 的 K4 六边图、继承人工权重及 8 个切片；`k4_example` 的有限实例最优值记录 |
-| [verify_highdim.py](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/highdim/verify_highdim.py) | `c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13` | `edge_cases` 的 ordinary H0 区间与 top sphere 构造原则；明确标注的本地退化和升维补充 |
-| [verify_euclidean_family.py](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/candidates/minimum-stretch/highdim/verify_euclidean_family.py) | `79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c` | `geometry(k,4k)` 的 central/lower 子复形、真实欧氏面积/三维体积与原坐标导出的实际边长 |
+迁移来源固定为 [homology-operator-lab](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)
+的 `6143729669902ee875b211b58085e954c76cdf88`。每份 fixture 的 source 保留路径、
+原始源码 hash、迁移步骤、参数及明确的本地补充。
 
-每个 fixture 的 `source` 保存仓库、提交、路径、上述文件 hash、迁移步骤及参数；本地扩展明确使用 `local_extension=true` 或在迁移文字中说明。本地补充不被描述为研究库已有的序列化 fixture。研究源码中的通过记录也不构成本仓库测试通过记录。
-
-欧氏 H2/H3 的迁移步骤如下，完整坐标另存于每个 fixture 的 `geometry`：
-
-1. 取源 `geometry(k,m)`，`k=2` 或 `3`，`m=4k`，`h=2m/(m²-k)`。保留原点、`k` 个标准基向量及末坐标为 `±h` 的两点，仍使用源顶点编号。
-2. 保留 `central=(0,...,k+1)`、`lower=(0,...,k,k+2)` 的全部 `k` 维边界面及其 `(k-1)` 维面，遗漏源 `upper` 及其专属面。以字典序建立所有带序基。
-3. `A` 和 `D` 逐单形面取 F2 边界。三个切片依次填入零个、仅 central、central 与 lower 两个 `(k+1)` 单形。
-4. 每个当前基面沿用源坐标对应的 `sqrt(det Gram)/k!` 欧氏度量；本次生成通过独立 Leibniz 行列式及整数平方根重新核对有理值。H2 有 7 个三角面，H3 有 9 个四面体面；这是源子复形，完整研究实例的 10/13 个当前坐标没有被冒称为已迁移。
-
-H3 是嵌入 R4 的四面体的实际三维体积；单位是 `model_length^3`，没有臆造为现实测量的立方米。人工 top sphere 的权重是 `(i+1)/2`，独立标为 `abstract_positive_cost`。边长实例只取源 `geometry(2,8)` 的顶点 `[0,1,3]`，重标为 `[0,1,2]`；长度是 `1`、`8/31`、`sqrt(1025)/31`，以 binary64 存储并标为 `FloatingPoint`。它的 F2 拓扑精确，几何 objective 只有浮点数值语义。
-
-## 覆盖与预期
-
-| Fixture | 覆盖 |
+| 来源文件 | 原始字节 SHA256 |
 | --- | --- |
-| `h0_interval_stage_0/1`、`h0_interval_duplicate_scale` | ordinary H0，两个分支合并为一个，重复尺度，末端常值延拓 |
-| `h1_k4_stage_0` 至 `7` | 人工正权，单洞、多洞、非平凡且末端线性相关的边界，循环非空的零同调；源 8 切片 Betti 为 `[0,1,2,3,2,1,0,0]` |
-| `h1_k4_stage_4_permuted` | 明示 previous/current 基置换，连同边界矩阵与权重一并置换 |
-| `h2_euclidean_two_holes/one_hole/filled` | 实际面积、两洞/单洞/零同调，Betti `[2,1,0]` |
-| `h3_euclidean_two_holes/one_hole/filled` | 实际三维体积、两洞/单洞/零同调，Betti `[2,1,0]` |
-| `h2_abstract_top_sphere`、`h3_abstract_top_sphere` | 人工有理权与无上边界的 top sphere，Betti 1 |
-| `h1_euclidean_length_triangle` | 实际边长、浮点算术，Betti 1 |
-| `empty_h1`、`acyclic_injection_h1` | 空链窗口、当前空间非空而循环空间为零；与 filled 的循环非空 Betti 0 区分 |
+| candidates/minimum-stretch/verify.py | f6d2dbeda729b6bba18ea297c1e72c45bdb4412ec80a5e93fb6352d183bf4ab9 |
+| candidates/minimum-stretch/highdim/verify_highdim.py | c2b36b673ba9cf82d0c31ac999d0e2a106897ee13d6e5ec01b8fd63d64d39c13 |
+| candidates/minimum-stretch/highdim/verify_euclidean_family.py | 79ac315c336d471ddeca8e7b9ce0b0a914ac9e142eaa1b9703e32d9a2ba5c11c |
 
-`expected` 保存独立穷举得到的 Betti、循环/边界/商类数量、oracle 的最短类质量，以及一个本地列组合补空间构造的已知可行投影和其 objective。已知可行投影仅为 `Feasible`，不冻结生产 solver 的代表选择。`h1_k4_stage_4` 另存源有限实例的已知最优值 `9/8` 及来源；这不将 Phase 1 的可行 solver 提升为 `ExactOptimal`，生产构造也不能消费 oracle 类表。
+input_hash 为规范 UTF-8 JSON 的 SHA256，包含 k、A/D、三组有序基、weights、
+weight_semantics、unit 和 arithmetic；source、expected、geometry 及 fixture id 单独记录。
+编码使用 sort_keys=True、紧凑 separators、ensure_ascii=False、allow_nan=False。
+oracle 加载时检查 hash、形状、二元元素、AD=0、正权、基和 Betti。
 
-`filtration_slice` 只保存 Phase 2 准备材料，不实现传输或 persistence。K4 源 stage barcode 为 `[[1,4],[2,5],[3,6]]`，截断在 stage 5 且末端常值时为 `[[1,4],[2,5],[3,null]]`。重复尺度保留阶段顺序；这些区间使用阶段编号、左闭右开，`null` 表示所声明常值延拓下存活。死亡和非零合并事实可由 stage 4/5 新边界解释；本轮不声称完成 `OperatorFamily`、rank invariant 或独立 PH 对拍。
+[solver_reference.json](../tests/fixtures/solver_reference.json) 保存相同输入的精确最优回归与贪心预期，
+浮点实例明确不支持精确优化；生产 solver 证书另由独立提升枚举重放。
+[单尺度联合测试](../tests/test_joint.py)与[过滤联合测试](../tests/test_family_joint.py)
+核对投影、几何、transport composition、rank 与独立 PH。
 
-## 存储与独立核验
+## 快照兼容样本
 
-Phase 2 的 [联合测试](../tests/test_family_joint.py) 现已将全部 23 份冻结窗口组织为 11 个族/变体（四个多阶段过滤、五个单阶段边界、K4 末端存活前缀及基重排变体）。生产只消费 A/D/基/权重及合法 P；预期区间只用于测试断言。独立 oracle 新增全局边界列约化与循环像商空间枚举，分别对拍 barcode 和 transport rank；原 fixture 文件及来源/input hash 保持冻结。
+[legacy_results.json](../tests/fixtures/legacy_results.json) 保存 7 份旧 schema 快照，
+包括未读取/已读取 Matrix、CyclicTrace、EmptyDomain、预算失败、重复尺度和 Partial 族。
+来源为本库 `88f69661859fe7475705fb76589cf30674b63746` 的真实序列化入口；
+逐源码 hash 和规范 wire hash 保留在数据中。UUID/time 经过合成固定，仅用于兼容性验证。
+[旧格式测试](../tests/test_legacy_results.py)检查原版本重发、无重求解恢复、状态和篡改拒绝。
+[后端联合测试](../tests/test_backend_integration.py)检查新版紧凑表示与过滤恢复。
 
-矩阵始终包含 `nrows`、`ncols`、`rows`，包括 `0×n` 和 `n×0`。基是非空唯一字符串标识的有序数组。精确权为 `{numerator, denominator}`，浮点权为 JSON 数值；语义、单位和算术策略是单独字段。
+## 显式单形与外部 oracle
 
-`input_hash` 为 SHA256，内容仅包括 `k`、`A`、`D`、三组有序基、`weights`、`weight_semantics`、`unit`、`arithmetic`。编码为 UTF-8 的 `json.dumps(..., sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)`。Fixture id、source、expected 和 geometry 不在此输入 hash 中；source 的 hash 单独绑定原始来源文件。生产身份模型可再包含 provenance，但不能用 source hash 代替链输入 hash。
+[simplicial.json](../tests/fixtures/simplicial.json)保存 6 个显式复形，
+[oracle_corpus.json](../tests/fixtures/oracle_corpus.json)保存 77 份产品回归输入。
+包含单形出生 stage、原尺度、坐标、正权、单位、算术、截断、来源/hash 及完整 corpus hash。
+实际链构造和 GUDHI SimplexTree 均从同一单形列表导出；自动补面或修复过滤被拒绝。
+GUDHI 显式使用 F2，核对最高请求次数所需 q+1 次单形、重复尺度和常量末端延拓。
+一般 AD=0 窗口没有单形适配时明确 NotApplicable，不另造复形。
 
-Oracle 的 `load_fixtures()` 核对输入 hash、矩阵形状与二元元素、`AD=0`、基长度/唯一性、正权和 Betti。`verify_projection(fixture, projection_columns)` 接受长度 `n` 的 packed 整数列，逐条检查全部链上的幂等性与循环像、全部边界上的湮灭，以及所有循环的 `z+Pz∈im(D)`。`objective` 对非零循环独立穷举，空定义域返回约定值 0。类最短质量只供测试 oracle 使用，不能填入生产 `selected_mass`。
-
-安装及统一测试入口见 [根 README](../README.md) 和 [验证说明](VALIDATION.md)。单独检查 corpus 可在已激活的项目 Python 环境中运行：
-
-```powershell
-python -c "import sys; sys.path.insert(0, 'tests/oracle'); from reference import load_fixtures, columns, verify_projection; fixtures=load_fixtures(); assert all(verify_projection(f, columns(f['expected']['known_feasible_projection'])) for f in fixtures); print(len(fixtures))"
-```
-
-此命令不联网、不写研究数据，也不调用生产实现。完整 Phase 1 的生产查询对拍由相应数学测试承担。Fixtures 不证明一般规模效率、无限族稳定性、过滤传输正确性或全局最优性。
-
-## Phase 3 最优回归记录
-
-[solver_reference.json](../tests/fixtures/solver_reference.json) 复用原23个冻结输入及其 hash，不修改 reference.json。记录22个精确实例的最优有理数、完整候选数和非零循环数，以及1个浮点实例的 Unavailable 预期。所有精确值实际与上述固定 verify_highdim.py 的 compressed_native_operator 对照，16个 n≤6 精确窗口另与 verify.py 的 native_operator 对照；生产证书还由独立商基提升枚举重放。来源提交与原文件 SHA256 保存在记录中，不引入研究代码运行依赖。
-
-该回归记录还冻结22个精确输入在固定 verify.py `model(optimize=False)` 下的贪心 objective、按 packed 原坐标表示的生成元、β理论上界及认证等级，保留全部原最优记录。β=0 的 native 算子 objective 为0，不能直接复制上游截面记账1。K4 stage 4 的贪心为4/3、最优为9/8；理论来源为固定 T4 中注明的 Rossman 贪心回缩加权同调版本。
-
-当前回归记录 UTF-8/LF 原始文件 SHA256 为 `1bcd53fc250949346299e3aa216f042b9f59dc014879b1e506879645999203f1`。单尺度与族的已查询快照、证书篡改及反复往返由 test_solver.py 核验；通用下界、完整搜索和贪心证书的范围见 [solver 契约](SOLVER_CONTRACT.md)。Phase 1/2 的历史报告与输入 hash 保持原验收含义。
-
-## S4-08 冻结旧快照
-
-[legacy_results.json](../tests/fixtures/legacy_results.json) 来自本库
-`88f69661859fe7475705fb76589cf30674b63746` 的实际序列化入口，文件内保存来源仓库、逐源码
-SHA256 和各记录规范 wire hash。UTF-8/LF 文件 SHA256 为
-`ee79ac1b3525dc8e9f88c8404d9bb53c79ce346cc20e90df99b42ef5e9b44c4a`。
-共7份：未读取 Matrix、已读取精确 Matrix、CyclicTrace、EmptyDomain、预算失败、重复尺度族和 Partial 族。
-UUID、timestamp、wall time 经过合成固定，仅用于可重复兼容验证，不是性能样本。
-[test_legacy_results.py](../tests/test_legacy_results.py) 核对来源/hash、旧 schema 原版本重发、
-无重求解恢复、历史/缺失状态及篡改拒绝；新版 Factorized/HC 与族 schema 1/2 联合恢复另由
-[test_integration.py](../tests/test_integration.py) 和 [S4 联合测试](../tests/test_s4_integration.py) 验证。
-
-## S5 显式单纯复形 manifest
-
-[六份初始冻结输入](../tests/fixtures/s5_simplicial.json)及[完整双边构造导出](../benchmarks/s5_input_audit.json)
-记录人工显式单形出生列表、来源/hash、原scale、stage、坐标、正权与截断。它们没有复用或改写上述迁移fixture。
-契约、失效输入和复跑入口见 [S5 GUDHI](S5_GUDHI.md)。一般AD=0窗口无适配时NotApplicable。
+[输入测试](../tests/test_simplicial_inputs.py)、[GUDHI 测试](../tests/test_gudhi_oracle.py)
+和[完整 corpus 回归](../tests/test_oracle_corpus.py)独立核对输入、拓扑、同 P 几何与恢复。
+运行命令见 [VALIDATION](VALIDATION.md)。这些有限输入不证明一般规模效率或应用收益。

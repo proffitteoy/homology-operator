@@ -1,4 +1,4 @@
-//! Single-threaded, one-word vertical prototype. Python remains the independent validator.
+//! Rust F2 algebra, projection and geometry kernels. Python independently validates projections.
 #![forbid(unsafe_code)]
 
 use pyo3::exceptions::PyValueError;

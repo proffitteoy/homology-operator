@@ -64,8 +64,7 @@ when the declared/current value is 0.
 | Rank2ExactSolver | Exact weights, Betti=2; general or explicitly validated graph/three-terminal structure |
 | StructuredFamilySolver | Declared CyclicTrace, m=2/3/4, equal exact positive weights; Matrix or CyclicAction |
 
-GeneralSearchSolver is not a registered public backend. Frozen no-go evidence is
-retained in the [solver benchmark record](../BENCHMARKS.md).
+GeneralSearchSolver is not a registered public backend.
 
 ## Certificate replay and search limits
 

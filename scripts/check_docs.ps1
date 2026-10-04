@@ -9,12 +9,11 @@ $rootPrefix = $repoRoot + [IO.Path]::DirectorySeparatorChar
 $pathComparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
 $required = @(
     'AGENTS.md', 'README.md', 'README.en.md', 'CONTRIBUTING.md',
-    'LICENSE', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md', 'HOMOLOGY_OPERATOR_ROADMAP.md',
+    'LICENSE', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md',
     'docs/index.md', 'docs/conf.py', 'docs/requirements.txt', 'docs/en/USAGE.md',
     'docs/README.md', 'docs/ARCHITECTURE.md', 'docs/INTERFACE.md',
     'docs/RESULT_MODEL.md', 'docs/SOLVER_CONTRACT.md', 'docs/VALIDATION.md',
-    'docs/冷启动.md', 'docs/research/README.md', 'research/README.md',
-    'benchmarks/README.md', 'scripts/README.md'
+    'docs/FIXTURES.md'
 )
 $problems = [Collections.Generic.List[string]]::new()
 foreach ($relativePath in $required) {
@@ -24,7 +23,7 @@ foreach ($relativePath in $required) {
 }
 
 $documents = @(Get-ChildItem -LiteralPath $repoRoot -File -Filter '*.md')
-foreach ($folder in @('docs', 'research', 'benchmarks', 'scripts')) {
+foreach ($folder in @('docs')) {
     $documentRoot = Join-Path $repoRoot $folder
     if (Test-Path -LiteralPath $documentRoot -PathType Container) {
         $documents += @(Get-ChildItem -LiteralPath $documentRoot -Recurse -File -Filter '*.md')

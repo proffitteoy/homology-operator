@@ -1,16 +1,2 @@
-# Keep uploaded research evidence byte-identical across Git checkouts.
-research/s4-s5/* -text
-# Uploaded Markdown has intentional hard breaks and original CRLF whitespace.
-research/s4-s5/*.md whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
-# Keep frozen S4 JSON file hashes stable on Windows and Linux.
-benchmarks/s4_r0_*.json text eol=lf
-benchmarks/s4_native_prototype.json text eol=lf
-benchmarks/s4_packed_ablation.json text eol=lf
-
-benchmarks/s4_solver_pilot.json text eol=lf
-
-benchmarks/s4_compact_action.json text eol=lf
-benchmarks/s4_compact_verification.log text eol=lf
-benchmarks/s4_geometry_workspace.json text eol=lf
-tests/fixtures/legacy_results.json text eol=lf
-benchmarks/s4_integration_verification.log text eol=lf
+# Keep regression fixture bytes stable across platforms.
+tests/fixtures/*.json text eol=lf

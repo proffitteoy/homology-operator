@@ -14,7 +14,7 @@ dependencies = []
 
 [project.urls]
 Repository = "https://github.com/proffitteoy/homology-operator"
-Documentation = "https://github.com/proffitteoy/homology-operator/blob/main/docs/index.md"
+Documentation = "https://proffitteoy.github.io/homology-operator/"
 Issues = "https://github.com/proffitteoy/homology-operator/issues"
 
 [dependency-groups]
@@ -35,8 +35,6 @@ packages = ["src/homology_operator"]
 
 [tool.ruff]
 target-version = "py310"
-# Preserve the uploaded research script bytes and provenance hash.
-extend-exclude = ["research/s4-s5/quiver_barcode_probe.py"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]

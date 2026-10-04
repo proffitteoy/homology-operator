@@ -223,7 +223,7 @@ def freeze_manifest(payload):
 
 
 def load_manifests(path=None):
-    path = path or Path(__file__).resolve().parents[1] / "fixtures/s5_simplicial.json"
+    path = path or Path(__file__).resolve().parents[1] / "fixtures/simplicial.json"
     data = json.loads(Path(path).read_text("utf-8"))
     if (
         set(data) != {"schema_version", "manifests", "corpus_hash"}

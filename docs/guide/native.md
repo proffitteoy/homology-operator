@@ -37,4 +37,4 @@ backend_info 报告实际扩展来源与可用性。缺扩展时 solver/批入�
 工具与 workspace 创建抛 ImportError。后备仅显式 fallback=True，记录 requested/selected/reason。
 Factorized 没有 reference 后备，不把 matrix-free 请求改为显式矩阵。
 CancellationToken 在受支持检查点协作取消，报告 ResourceExhausted；不提供 RSS 硬限制或全流程抢占。
-完整签名、缓冲与失败语义见[Python API](../INTERFACE.md#后端可用性与协作取消s4-08)。
+完整签名、缓冲与失败语义见[Python API](../INTERFACE.md#后端可用性与协作取消)。

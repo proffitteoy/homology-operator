@@ -17,7 +17,7 @@ behavior, checks actually run, skipped checks and remaining limitations.
 5. Bind performance claims to source/build/input, arithmetic, certificate and budget,
    and retain complete costs, failures and regressions.
 6. Do not commit environments, build caches, wheels or temporary measurements.
-   Existing frozen records keep their provenance and original bytes.
+   Keep temporary measurements and research material in ignored directories.
 
 At minimum, run the applicable checks from [development](docs/en/VALIDATION.md).
 Documentation edits require source-link checks and both strict site builds;

@@ -25,5 +25,5 @@ cache_limit 限制各 LRU 缓存条目，不是字节/RSS 上限。
 默认族快照采用 schema 2；schema 1 可读并原版本重发，或显式请求旧格式。
 恢复重验投影、族身份、已存传输与查询，不重新求解。
 
-完整签名与返回值见[API](../INTERFACE.md#过滤与传输)，历史区间基证明与成本见
-[过滤实现记录](../S4_FILTRATION.md)。
+完整签名与返回值见[API](../INTERFACE.md#过滤与传输)，相邻读取与历史基不变量见
+[数学与架构](../ARCHITECTURE.md)。

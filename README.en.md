@@ -5,14 +5,13 @@
 <p align="center">
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg" alt="Reference checks"></a>
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml/badge.svg" alt="Native checks"></a>
-  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml/badge.svg" alt="GUDHI oracle"></a>
+  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml/badge.svg" alt="GUDHI oracle"></a>
 </p>
 
 <p align="center">
   <a href="README.md">中文</a> ·
-  <a href="docs/en/index.md">Documentation</a> ·
+  <a href="https://proffitteoy.github.io/homology-operator/en/">Documentation</a> ·
   <a href="docs/en/INTERFACE.md">API</a> ·
-  <a href="docs/research/README.md">Research</a> ·
   <a href="docs/en/VALIDATION.md">Development</a> ·
   <a href="LICENSE">MIT License</a>
 </p>
@@ -139,38 +138,6 @@ schema 1 remains readable. See the [English guide](docs/en/USAGE.md#finite-filtr
 Every solver output is independently checked for `P²=P`, `AP=0`, `PD=0`, and
 preservation of cycle homology. Exact F2 algebra does not certify floating-point
 geometry or the global optimum.
-
-## Performance and comparisons
-
-| Frozen experiment | Scope and conclusion |
-| --- | --- |
-| [S4](docs/S4_REPORT.md) | 27 configurations and 1,880 independent processes; some matched routes improve cost or RSS, while four time groups regress by more than 20% |
-| [S5](docs/S5_REPORT.md) | 77 three-way correctness inputs and 2,840 formal processes; none of 68 comparable integrated-backend groups has a paired 95% interval entirely below 1 |
-
-Backend selection remains explicit. These measurements apply to the source,
-inputs, machine, budgets, and certificates recorded in the reports, including
-failures and regressions. GUDHI supplies a topology comparison; additional joint
-geometry has its own cost. General speedups and application benefits require
-further evidence.
-
-## Research code and results
-
-The [research index](docs/research/README.md) connects mathematical contracts,
-Python/Rust implementation, independent checks and frozen conclusions.
-The [artifact catalog](benchmarks/README.md) covers raw values, failures, fixtures
-and originals; the [script index](scripts/README.md) lists maintained checks and
-measurements. Archived prototype code is in [research](research/README.md).
-These evidence pages retain their original Chinese language.
-
-```console
-python scripts/reproduce_research.py
-uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all --output-dir .task-artifacts/research-reproduced
-```
-
-The first command checks every catalogued artifact without writing. The second
-replays the 5,689-case prototype and rebuilds two S5 tables from existing raw
-observations, comparing frozen results. The output directory must be new; this
-does not collect new performance samples.
 
 ## Documentation, contribution, and citation
 

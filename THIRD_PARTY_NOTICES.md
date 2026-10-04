@@ -2,15 +2,11 @@
 
 本项目采用 [MIT License](LICENSE)。下列来源与依赖的原有许可和来源记录分别保留。
 
-## 理论与研究材料
+## 数学定义与测试来源
 
 理论定义来自 [homology-operator-lab 的固定提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)。
 迁移测试窗口的源码路径、原始 hash 与本地补充见 [Fixture 来源](docs/FIXTURES.md)。
 研究源码与验证成绩不构成本包的运行时依赖或当前验收成绩。
-
-[S4/S5 研究归档](research/s4-s5/)保存上传原件、原型脚本与原始结果；
-文件名、原始字节及历史阶段编号保留。来源与 hash 见 [工作包记录](docs/S4_S5_PROJECT.md)。
-这些材料用于研究追溯，不进入本包的生产计算路径。
 
 ## 分别安装的依赖
 

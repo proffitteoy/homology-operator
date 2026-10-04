@@ -13,19 +13,8 @@ language = "zh_CN"
 extensions = ["myst_parser", "sphinx.ext.mathjax", "sphinx_copybutton"]
 source_suffix = {".md": "markdown"}
 root_doc = "index"
-exclude_patterns = [
-    "_build",
-    "en/**",
-    "research/**",
-    "development/**",
-    "README.md",
-    "冷启动.md",
-    "PHASE*_REPORT.md",
-    "BENCHMARKS.md",
-    "FIXTURES.md",
-    "S4_*.md",
-    "S5_*.md",
-]
+exclude_patterns = ["_build", "en/**", "README.md", "FIXTURES.md"]
+html_baseurl = "https://proffitteoy.github.io/homology-operator/"
 myst_enable_extensions = ["colon_fence", "dollarmath", "fieldlist", "substitution"]
 myst_dmath_double_inline = True
 myst_heading_anchors = 4

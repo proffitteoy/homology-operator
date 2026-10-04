@@ -98,10 +98,10 @@ assert solution.certificate_level == "ExactOptimal"
 
 字符串调度支持 `FeasibleSolver`、`ExhaustiveExactSolver`、`GreedyCertifiedSolver`、
 `Rank2ExactSolver`、`StructuredFamilySolver`。也可传入提供 `capabilities()` / `solve(problem)` 的对象；
-S4-05 四个限定 solver 另有 `NativeExhaustiveExactSolver`、`NativeGreedyCertifiedSolver`、
+四个限定 solver 另有 `NativeExhaustiveExactSolver`、`NativeGreedyCertifiedSolver`、
 `NativeRank2ExactSolver`、`NativeStructuredFamilySolver` 字符串入口，或使用现有类的 `native=True`。
 `NativeFeasibleSolver` 与 `NativeFactorizedSolver` 同时支持字符串和对象调用。
-未知后端或不支持的请求返回 Unavailable。显式 `fallback=True` 仅在 native 可行原型或四种限定
+未知后端或不支持的请求返回 Unavailable。显式 `fallback=True` 仅在 native 显式可行构造或四种限定
 solver 返回 Unavailable 时尝试同名 reference solver，保留支持域/认证请求，并在
 `resource_usage.backend_selection` 保存 requested、selected、fallback_reason；对象的 `native=True` 同样适用。
 `NativeFactorizedSolver` 没有 reference 后备，不把 matrix_free 请求降级成显式矩阵。
@@ -149,7 +149,7 @@ stretch 定义为非零循环上 `m_w(Pz)/m_w(z)` 的最大值。
 
 ## 过滤与传输
 
-S4-07 实现、birth 前缀证明与成本见 [过滤读取](S4_FILTRATION.md)。普通 `barcode()`
+普通 `barcode()`
 只消费相邻核坐标映射；历史区间基与全部区间 rank 按真实输出大小另行请求。
 `cache_limit=64` 分别限制 action/transport/rank 的 LRU 条目，0禁用；内部按索引嵌入，
 不物化公共 inclusion。核坐标分解随不同投影保留，缓存条目上限不是字节/RSS硬限制。
@@ -215,7 +215,7 @@ uv pip install --python $pythonPath $wheel.FullName
 此后用 `uv run --locked --no-sync ...` 保留另行安装的扩展。
 重新 `uv sync` 后需要再次安装 wheel。强制 native 测试、Rust lint 与构建检查见 [验证说明](VALIDATION.md)。
 
-### 可行原型与批查询（已合并）
+### 显式可行构造与批查询
 
 以下沿用 README 的 `window`：
 
@@ -235,12 +235,12 @@ assert geometry.value["class_distance"] == (0,)
 
 `NativeFeasibleSolver` 只构造 StableBasisOrder/Feasible，三个链空间均至多 64 维。
 G/U/P 与 reference 完整相同，仍经独立 Python validator；不提供 native 优化认证。
-states 沿用原型的 feasible checkpoint 单位，成功为 `5+m+n`。
+states 使用 feasible checkpoint 单位，成功为 `5+m+n`。
 `apply_batch` 返回 project/apply_operator/support；`geometry_batch` 先校验循环与 pair 索引，再复用 Pz。
 两者返回绑定六身份的 QueryResult，默认不增加算子的查询历史。
-已合并原型的质量、距离及支撑交并使用 Python 精确整数/Fraction 或浮点 fsum，后备成本保存在 details。
+显式后端的质量、距离及支撑交并使用 Python 精确整数/Fraction 或浮点 fsum，后备成本保存在 details。
 
-### 多字 packed 代数与复用（已合并）
+### 多字 packed 代数与复用
 
 ```python
 from homology_operator import Matrix
@@ -260,15 +260,15 @@ assert packed_multiply(matrix, Matrix.identity(3)) == matrix
 `apply_many(vectors)`、`solve(b)`、`solve_many(rhs)`、`membership_many(rhs)` 和 `statistics()`。
 支持多字矩形及空形状、原列坐标、确定性 canonical 解；与权重、投影选择无关。
 statistics 是分解/非零位/存储 word 的诊断，不是峰值 RSS。
-这组多字工具不解除上节单字宽可行原型的限制，也未自动替换全部 reference 路径。
+这组多字工具不解除上节单字宽显式可行构造的限制，也未自动替换全部 reference 路径。
 
 缺扩展时，native solver/批查询返回 Unavailable；直接创建 PreparedMatrix 或调用 packed 工具抛 ImportError。
 直接 packed 工具没有后备；solver 仅支持前述显式同 solver 后备。无效矩阵、RHS 或坐标明确拒绝。
 
-### 因子化 action（S4-04）
+### 因子化 action
 
 [PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合入 main，提供 `CompactAction` 和 `NativeFactorizedSolver`。
-使用时构建匹配当前源码的扩展；旧原型 wheel 不能替代。调用形态为：
+使用时构建匹配当前源码的扩展；旧版本 wheel 不能替代。调用形态为：
 
 ```python
 from homology_operator.native import NativeFactorizedSolver
@@ -292,10 +292,9 @@ HC 流式读取同 P 的生成元构造规范像基 H，再逐列求 C。β 接�
 返回 Feasible 与 NotComputed objective，不提供最优证书。
 身份绑定具体表示；跨表示查询不能凭 action 等价直接混用。紧凑 handle 恢复规则见结果模型。
 常规 A/D、因子、核基输出和 transport 仍可为显式矩阵，资源检查仍非硬 RSS 限制。
-正式性能与集成验收属于 [S4/S5 工作包](S4_S5_PROJECT.md)。
 
 
-### 限定 native 认证求解（S4-05）
+### 限定 native 认证求解
 
 沿用本节的可选 release wheel 构建与安装命令。四个限定 solver 保留原支持域，
 显式选择 native 实现，默认 reference 入口不变：
@@ -315,11 +314,9 @@ solution = solve_projection(problem, "NativeExhaustiveExactSolver")
 可行种子、候选外循环和部分代数仍在 Python，最终投影仍为原显式 Matrix 或
 既有 CyclicAction。支持域、身份与恢复路径见 [solver 契约](SOLVER_CONTRACT.md)。
 
-[S4-05 有限同 solver 协议](BENCHMARKS.md) 分别记录构造、独立重放和完整读取/恢复成本；
-它不替代 S4-04 因子表示、S4-08 全后端集成或 S5 正式验收。
 
 
-### 几何批查询与 workspace（S4-06）
+### 几何批查询与 workspace
 
 `geometry_batch` 只接受循环，支持多字显式 Matrix 和 Factorized/HC；每批每条循环只投影一次，
 由同一 packed Pz 的 XOR/AND/OR 计算距离与支撑交并，索引保持原基顺序。
@@ -349,9 +346,8 @@ NumericalFailure 的 ValueError。exact 只描述几何算术，不升级 solver
 QueryResult.details 分开记录准备/输入转换/原生/绑定/decode/权重后备成本、次数与原因；
 准备子项不与准备总量重复相加，结果冻结计入调用者完整计时。statistics() 的 completed_batches
 是原生步骤完成数，Python 浮点后备失败后也可能增加；projection_buffer_growths 用于检查复用。
-0/1/8/64/1024 的历史完整成本与退化见 [性能协议](BENCHMARKS.md)。
 
-## 后端可用性与协作取消（S4-08）
+## 后端可用性与协作取消
 
 `homology_operator.native.backend_info()` 报告实际 extension 路径、平台、语义版本和可用性；
 缺少或不兼容扩展为 Unavailable。native ABI 语义版本为1，旧 wheel 需要重建；reference 导入不依赖 Rust。

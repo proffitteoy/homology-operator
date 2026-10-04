@@ -141,7 +141,7 @@ selected_mass 不得命名或序列化为真实最短值。
 | --- | --- |
 | `{nrows, ncols, rows}` | 显式 Matrix；空形状保留 |
 | `{kind: "CyclicTrace", version: 1, m, complement}` | 已合并，m=2/3/4 的固定结构族；P 的 complement=false |
-| `{kind: "CompactF2", version: 1, form, factors, pivots, complement}` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合并，GeneralizedInverse / HC 紧凑作用 |
+| `{kind: "CompactF2", version: 1, form, factors, pivots, complement}` | GeneralizedInverse / HC 紧凑作用 |
 
 CyclicTrace handle 由受支持公式决定全部链上的 action；L 使用同参数的补作用。
 未知版本、额外字段、非法形状/参数和身份篡改拒绝；链输入 A/D 始终只接受 Matrix schema。
@@ -167,7 +167,7 @@ JSON 将 Fraction 编码为 `$fraction` 标签；普通单键 `$fraction` / `$ma
 
 ## 原生几何批查询与进程内准备
 
-S4-06 的 `geometry_batch` 在一个 QueryResult 中保存代表、selected_mass、距离及原坐标支撑交并，六身份来自传入的算子。`GeometryWorkspace` 持有同一 P/基/权重的原生准备与私有缓冲，复用时核对完整身份（含 solver_run_id）；准备对象不进入 OperatorResult，也不把 kernel/stretch 或未查询几何标为 Computed。批记录只有被调用者显式加入 query_results 时才进入快照，恢复继续复核身份与合法投影。
+`geometry_batch` 在一个 QueryResult 中保存代表、selected_mass、距离及原坐标支撑交并，六身份来自传入的算子。`GeometryWorkspace` 持有同一 P/基/权重的原生准备与私有缓冲，复用时核对完整身份（含 solver_run_id）；准备对象不进入 OperatorResult，也不把 kernel/stretch 或未查询几何标为 Computed。批记录只有被调用者显式加入 query_results 时才进入快照，恢复继续复核身份与合法投影。
 
 质量算术由 window.arithmetic 决定：u64 逐项检查求和，超界整数/溢出总和及非整数 Fraction 使用任意精度后备，浮点保留 binary64 fsum。details 保存准备/转换/原生/绑定/decode/后备分段、后备次数和原因；准备子项不得与准备总成本重复相加，结果冻结计入完整调用。后备不更换 P 或认证等级。空批为 Computed 空 tuple；合法零质量仍为0；缺少扩展或不支持的 action 为 Unavailable；非循环/混用拒绝，浮点溢出明确 NumericalFailure。
 
@@ -184,7 +184,7 @@ transports, rank_readout, barcode_readout, tracking_readout, provenance
 schema 2 的 windows 共享末阶段边界/带序基和各阶段活动索引；stage_results 以 input_ref 引用输入，
 另保存显式请求的 barcode_basis_readout。schema 1 可读并原版本重发；
 `to_result(schema_version=1)` 显式输出旧格式。单尺度 schema 不变，schema 2 需要读取客户端升级。
-仅不可变边界/基共享，不合并权重、投影或 solver run；细节见 [S4-07](S4_FILTRATION.md)。
+仅不可变边界/基共享，不合并权重、投影或 solver run；细节见 [过滤指南](guide/filtration.md)。
 
 每个阶段保留 OperatorResult 的身份、投影、证书、查询与失败记录。传输引用源/目标算子完整身份，
 保存 T_ij 的 kernel 坐标 action、目标原链 chain_action、rank 与证书记录。
@@ -216,8 +216,7 @@ CancellationToken 是运行期状态，不进入 solver_config、内容身份或
 不将 ResourceExhausted 改成合法0；外部 timeout/OOM 由执行入口另记。
 显式后备的 requested/selected/reason 保存在 resource_usage.backend_selection。
 缺少 CPU/RSS 等指标不伪造为 0；逻辑条目、stored_words 或 tracemalloc 都不是操作系统峰值 RSS。
-solver 预算、独立验证/恢复成本和外部 timeout/OOM 按 [性能协议](BENCHMARKS.md) 分别记录。
 
 修改身份/schema/action 后必须验证 round-trip、跨投影/权重/基/run 混用拒绝、
 非法 handle 与证书篡改、合法零/缺失状态和族源/目标绑定。
-当前测试入口与历史证据见 [验证说明](VALIDATION.md)。
+当前测试入口见 [验证说明](VALIDATION.md)。

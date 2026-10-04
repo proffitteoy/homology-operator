@@ -4,7 +4,6 @@ import unittest
 from collections import Counter
 from hashlib import sha256
 import json
-from pathlib import Path
 import random
 from unittest.mock import patch
 from itertools import product
@@ -647,7 +646,7 @@ class AdjacentFiltrationTests(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
                 OperatorFamilyResult.from_dict(wire)
 
-    def test_5689_original_modules_plus_historical_bases_against_enumeration(self):
+    def test_adjacent_barcode_and_historical_bases_against_enumeration(self):
         from homology_operator.family import _adjacent_intervals
         from oracle.reference import rank_barcode, apply
 
@@ -712,14 +711,11 @@ class AdjacentFiltrationTests(unittest.TestCase):
                 self.assertEqual(
                     sum(b <= i and (d is None or j < d) for b, d, _ in bars), rank
                 )
-        old = json.loads(
-            (
-                Path(__file__).parents[1]
-                / "research/s4-s5/quiver_barcode_probe_result.json"
-            ).read_text("utf-8")
-        )
         self.assertEqual(len(cases), 5689)
-        self.assertEqual(digest.hexdigest(), old["corpus_sha256"])
+        self.assertEqual(
+            digest.hexdigest(),
+            "c04561269bd169624947172489c3927bb0617db8b20ba84bc1257970a86ebc50",
+        )
 
 
 if __name__ == "__main__":

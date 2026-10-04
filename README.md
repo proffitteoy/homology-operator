@@ -1,18 +1,17 @@
 <h1 align="center">homology-operator</h1>
 
-<p align="center">从 F2 边界矩阵读取同调、持久性与加权几何的 Python 库。</p>
+<p align="center">F2 同调、持久性与加权几何：Python 接口与 Rust 计算后端。</p>
 
 <p align="center">
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg" alt="Reference checks"></a>
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml/badge.svg" alt="Native checks"></a>
-  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml/badge.svg" alt="GUDHI oracle"></a>
+  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml/badge.svg" alt="GUDHI oracle"></a>
 </p>
 
 <p align="center">
   <a href="README.en.md">English</a> ·
-  <a href="docs/index.md">Documentation</a> ·
+  <a href="https://proffitteoy.github.io/homology-operator/">Documentation</a> ·
   <a href="docs/INTERFACE.md">API</a> ·
-  <a href="docs/research/README.md">Research</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT License</a>
 </p>
@@ -22,8 +21,8 @@
 从同一个投影读取 Betti 数、类代表、质量、距离、支撑和 stretch。
 有限过滤的 barcode 与类追踪由 `OperatorFamily` 的跨阶段传输读取。
 
-目前提供 Python correctness reference 和可选 Rust 扩展，版本为开发快照 `0.0.2.dev0`。
-采用 [MIT License](LICENSE)，尚未发行。已合并能力和 CI 证据见 [文档索引](docs/README.md)。
+提供 Python 公共接口和可选 Rust 计算后端，版本为开发快照 `0.0.2.dev0`。
+采用 [MIT License](LICENSE)，尚未发行。完整产品说明见 [在线文档](https://proffitteoy.github.io/homology-operator/)。
 
 目前支持：
 
@@ -123,32 +122,7 @@ uv run --locked python examples/filtration.py
 
 `barcode()` 使用相邻 transport。历史区间基和完整 rank 表分别由 `barcode_basis()`、
 `rank_table()` 显式请求；完整输出可能有二次规模。过滤 schema 1/2、缓存与恢复见
-[过滤说明](docs/S4_FILTRATION.md)和 [API](docs/INTERFACE.md#过滤与传输)。
-
-## 性能与对照
-
-| 冻结实验 | 范围与结论 |
-| --- | --- |
-| [S4](docs/S4_REPORT.md) | 27 个配置、1,880 个独立进程；部分同输出/认证路线有成本或 RSS 收益，4 组时间退化超过 20% |
-| [S5](docs/S5_REPORT.md) | 77 份三方正确性输入、2,840 个正式进程；集成后端 68 个可比组没有一个 95% 配对区间完全低于 1 |
-
-保留显式后端选择。上述数字绑定报告中的源码、输入、机器、预算与认证；完整失败和退化一并保留。
-GUDHI 只对照拓扑，联合几何信息的成本单独报告。更大规模、采样稳定性和应用收益仍需各自验收。
-
-## 研究代码与成果
-
-[研究成果索引](docs/research/README.md)连接数学定义、Python/Rust 实现、独立验证与冻结结论。
-[实验清单](benchmarks/README.md)登记全部原值、失败、fixtures 和原件；
-[脚本索引](scripts/README.md)列出维护中的检查与测量入口，
-[research](research/README.md)保留独立原型和上传材料。
-
-```powershell
-python scripts/reproduce_research.py
-uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all --output-dir .task-artifacts/research-reproduced
-```
-
-第一条只读校验完整数据清单，第二条重跑 5,689 例原型并从已有 S5 原值重建两张统计表，
-逐项核对冻结结果。输出目录须为新目录；这不是新的性能测量。
+[过滤说明](docs/guide/filtration.md)和 [API](docs/INTERFACE.md#过滤与传输)。
 
 ## 文档
 
@@ -158,15 +132,14 @@ uv run --locked --no-sync python scripts/reproduce_research.py --reproduce all -
 - [结果与序列化](docs/RESULT_MODEL.md)：身份、状态、精确性、快照与缓存。
 - [架构](docs/ARCHITECTURE.md) / [solver 契约](docs/SOLVER_CONTRACT.md)：数学定义和计算边界。
 - [开发与验证](docs/VALIDATION.md)：测试、Ruff、构建、文档检查和 CI。
-- [性能协议与冻结证据](docs/BENCHMARKS.md)：包含不利结果、完整成本及适用范围。
-- [完整文档索引](docs/README.md)：当前状态、路线图、历史报告和研究材料。
+- [完整文档索引](docs/README.md)：产品 API、后端、测试与使用文档。
 
 贡献代码前阅读 [项目约定](AGENTS.md)，按 [验证说明](docs/VALIDATION.md) 运行与改动相关的检查。
 
 ## 开发
 
 问题与改进建议见 [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues)，
-提交要求见 [贡献指南](CONTRIBUTING.md)。文档站可在本地构建，命令见
+提交要求见 [贡献指南](CONTRIBUTING.md)。文档站由 main 自动发布到 GitHub Pages，本地构建命令见
 [文档构建](docs/VALIDATION.md#文档站构建)。公开 API 与 native ABI 尚未冻结兼容政策。
 
 ## 引用

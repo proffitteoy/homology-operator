@@ -76,7 +76,7 @@ map under the chosen representation. Stage Betti alone does not determine this m
 `barcode_basis()` and `rank_table()` explicitly request larger historical/all-rank
 outputs. Death yields a valid zero chain, mass, and support. Failed stages remain
 missing rather than becoming empty spaces. The historical proof is retained in
-the [S4 filtration record](../S4_FILTRATION.md).
+the [filtration guide](guide/filtration.md).
 
 ## Existing modules
 
@@ -91,8 +91,8 @@ the [S4 filtration record](../S4_FILTRATION.md).
 | result.py | Six identities, query state, canonical JSON and cache boundaries |
 | native.py / native/src | Optional safe Rust adaptation, packed algebra and supported batch operations |
 
-No public LinearAction base class, universal sparse backend, or
-FilteredChainComplex front end is implied by the roadmap.
+There is no public LinearAction base class or universal sparse backend;
+callers construct based chain windows for the supported input domain.
 
 ## Action and native boundaries
 
@@ -118,4 +118,3 @@ Independent PH reduction and GUDHI are test/measurement oracles. They do not
 populate production barcodes, replace representatives, or fill missing results.
 Performance comparisons match input, P, arithmetic, certificates and budgets,
 and retain conversion, validation, query, snapshot and recovery costs.
-Historical results and regressions remain in [S4](../S4_REPORT.md) and [S5](../S5_REPORT.md).

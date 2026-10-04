@@ -70,7 +70,7 @@ def _adjacent_intervals(dimensions, maps, histories=False):
     """Birth-prefix elimination; optional backward corrections of dying vectors.
 
     Maps are packed columns in the *same family's* kernel coordinates. The
-    proof and historical basis correction are in docs/S4_FILTRATION.md.
+    proof and historical basis correction are in docs/ARCHITECTURE.md.
     """
     alive = [(0, 1 << i, [1 << i] if histories else None) for i in range(dimensions[0])]
     ended = []

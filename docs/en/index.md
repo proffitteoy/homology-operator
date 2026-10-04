@@ -37,14 +37,14 @@ platforms
 VALIDATION
 USAGE
 Contributing <https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.en.md>
-Implementation and evidence <https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md>
+Product overview <https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md>
 Source code <https://github.com/proffitteoy/homology-operator>
 ```
 
 
 [![Reference checks](https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml)
 [![Native checks](https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml)
-[![GUDHI oracle](https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml)
+[![GUDHI oracle](https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml/badge.svg)](https://github.com/proffitteoy/homology-operator/actions/workflows/oracle.yml)
 
 
 [中文](../index.md)
@@ -110,18 +110,6 @@ Class queries require cycles; raw project/apply_operator accept all chains.
 Projection feasibility, current objective and global optimality remain separate.
 See the [API](INTERFACE.md), [mathematical conventions](ARCHITECTURE.md), and
 [result states](RESULT_MODEL.md).
-
-## Performance
-
-| Frozen comparison | Scope and conclusion |
-| --- | --- |
-| [S4](../S4_REPORT.md) | 27 configurations, 1,880 independent processes; some routes improve, while four time groups regress by more than 20% |
-| [S5](../S5_REPORT.md) | 77 three-way correctness inputs, 2,840 formal processes; none of 68 comparable integrated groups has a paired 95% interval entirely below 1 |
-
-Backend selection remains explicit. Measurements belong to the recorded source,
-machine, input, budget and certificate; failures and regressions remain public.
-GUDHI compares topology, while additional joint geometry has its own cost.
-Frozen reports are retained in their original Chinese form.
 
 ## Development and citation
 

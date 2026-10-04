@@ -1,4 +1,4 @@
-name: Documentation checks
+name: Documentation and Pages
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docs:
@@ -25,8 +29,28 @@ jobs:
         run: python -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site
       - name: Build English documentation
         run: python -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site/en
+      - run: touch .task-artifacts/docs-site/.nojekyll
       - uses: actions/upload-artifact@v4
         with:
           name: documentation-site
           path: .task-artifacts/docs-site
           if-no-files-found: error
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: .task-artifacts/docs-site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: docs
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
