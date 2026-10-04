@@ -66,7 +66,7 @@ C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\quad AD=0,
 The generalized inverses satisfy $`AGA=A`$ and $`DUD=D`$. Its central relation is
 
 ```math
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+\boxed{\ker L=\mathrm{im}\,P\cong H_k(C;\mathbf F_2).}
 ```
 
 Each kernel vector is the unique selected cycle representative of its class.

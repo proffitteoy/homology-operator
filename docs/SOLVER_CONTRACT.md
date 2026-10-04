@@ -8,7 +8,7 @@ Solver 为一个 ProjectionProblem 选择投影，不定义读取语义、不生
 不改变 HomologyOperator 的数学含义。所有输出进入算子前独立验证：
 
 ```math
-P^2=P,\quad AP=0,\quad PD=0,\quad z+Pz\in\operatorname{im}D\ \ (Az=0).
+P^2=P,\quad AP=0,\quad PD=0,\quad z+Pz\in\mathrm{im}\,D\ \ (Az=0).
 ```
 
 前三项不足以保证同调保持：非零同调窗口的零投影也可能满足它们。

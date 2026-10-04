@@ -140,7 +140,7 @@ Choose algebraic generalized inverses with $`AGA=A`$ and $`DUD=D`$ and construct
 
 ```math
 P=(I+DU)(I+GA),\qquad L=I+P,\qquad
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+\boxed{\ker L=\mathrm{im}\,P\cong H_k(C;\mathbf F_2).}
 ```
 
 Each kernel vector uniquely represents a homology class. $`P`$ preserves cycle

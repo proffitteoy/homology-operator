@@ -65,7 +65,7 @@ C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\quad AD=0,
 广义逆满足 $`AGA=A`$、$`DUD=D`$。算子的核心关系是
 
 ```math
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+\boxed{\ker L=\mathrm{im}\,P\cong H_k(C;\mathbf F_2).}
 ```
 
 核中的向量是每个同调类唯一的选定循环代表。对循环 $`z`$，$`Pz`$ 保持原类，

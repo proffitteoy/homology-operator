@@ -139,7 +139,7 @@ C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
 
 ```math
 P=(I+DU)(I+GA),\qquad L=I+P,\qquad
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+\boxed{\ker L=\mathrm{im}\,P\cong H_k(C;\mathbf F_2).}
 ```
 
 核中的向量是每个同调类唯一的选定循环代表。$`P`$ 保持循环的原同调类，

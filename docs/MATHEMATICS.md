@@ -30,14 +30,14 @@ C=C_k=\mathbf F_2^n\xrightarrow{A}\mathbf F_2^m=C_{k-1},
 记循环空间、边界空间与同调商为
 
 ```math
-Z=\ker A,\qquad B=\operatorname{im}D\subseteq Z,\qquad
+Z=\ker A,\qquad B=\mathrm{im}\,D\subseteq Z,\qquad
 H=Z/B,\qquad q:Z\to H.
 ```
 
 第 $`k`$ 次 Betti 数为
 
 ```math
-\beta=\dim H=n-\operatorname{rank}A-\operatorname{rank}D.
+\beta=\dim H=n-\mathrm{rank}\,A-\mathrm{rank}\,D.
 ```
 
 链的加权质量是
@@ -117,7 +117,7 @@ Q^2=Q,\quad QD=0,\quad AQ=A.
 **核定理。** 每个合法投影及对应算子满足
 
 ```math
-L^2=L,\qquad \ker L=\operatorname{im}P\subseteq Z,\qquad
+L^2=L,\qquad \ker L=\mathrm{im}\,P\subseteq Z,\qquad
 q|_{\ker L}:\ker L\xrightarrow{\cong}H.
 ```
 
@@ -131,7 +131,7 @@ Pz=Py\iff z+y\in B\quad(z,y\in Z).
 
 **证明。** 特征二与 $`P^2=P`$ 给出 $`L^2=I+P=L`$。
 若 $`x=Py`$，则 $`Lx=Py+P^2y=0`$；若 $`Lx=0`$，则 $`x=Px`$。
-故 $`\ker L=\operatorname{im}P`$，且由 $`AP=0`$，核包含于 $`Z`$。
+故 $`\ker L=\mathrm{im}\,P`$，且由 $`AP=0`$，核包含于 $`Z`$。
 
 对每个类 $`h=qz`$，定义 $`s(h)=Pz`$。若 $`qz=qy`$，则 $`z+y\in B`$，
 由 $`PD=0`$ 得 $`Pz=Py`$，所以 $`s`$ 良定义且线性。
@@ -147,7 +147,7 @@ Pz=Py\iff z+y\in B\quad(z,y\in Z).
 幂等性给出原链空间的直和分解
 
 ```math
-C=\operatorname{im}P\oplus\ker P.
+C=\mathrm{im}\,P\oplus\ker P.
 ```
 
 $`L`$ 在第一项上为零，在第二项上为恒等，因而
@@ -182,8 +182,8 @@ $`s`$ 称为商映射的**线性截面**。它要求 $`s(h+g)=s(h)+s(g)`$，
 记 $`r=\dim B`$，选一个截面 $`s_0`$。其他截面恰为
 
 ```math
-s=s_0+t,\quad t\in\operatorname{Hom}_{\mathbf F_2}(H,B),\qquad
-\Omega_R=\{(s_0+t)qR:t\in\operatorname{Hom}(H,B)\}.
+s=s_0+t,\quad t\in\mathrm{Hom}_{\mathbf F_2}(H,B),\qquad
+\Omega_R=\{(s_0+t)qR:t\in\mathrm{Hom}(H,B)\}.
 ```
 
 这是维数 $`r\beta`$ 的仿射空间，恰有 $`2^{r\beta}`$ 个投影。
@@ -267,7 +267,7 @@ $`d_{P,w}`$ 是 $`H`$ 上的真度量：对称性来自二元加法，三角不�
 令 $`x=Pz`$、$`y'=Py`$，则共享支撑质量满足
 
 ```math
-m_w(\operatorname{supp}x\cap\operatorname{supp}y')
+m_w(\mathrm{supp}\,x\cap\mathrm{supp}\,y')
 =\frac{m_w(x)+m_w(y')-m_w(x+y')}2.
 ```
 
@@ -359,12 +359,12 @@ $`P_jJ_{ij}x=s_jq_jJ_{ij}x=s_jf_{ij}q_ix`$。
 因而
 
 ```math
-\operatorname{rank}T_{ij}=\operatorname{rank}f_{ij}
+\mathrm{rank}\,T_{ij}=\mathrm{rank}\,f_{ij}
 =\dim(J_{ij}Z_i+B_j)-\dim B_j.
 ```
 
 阶段 Betti 数不足以确定条形码：两个一维阶段之间的恒等和零映射有不同的存活行为。
-这里保留完整映射。令 $`r(i,j)=\operatorname{rank}T_{ij}`$、$`r(-1,j)=0`$，阶段为 $`0,\ldots,N`$。
+这里保留完整映射。令 $`r(i,j)=\mathrm{rank}\,T_{ij}`$、$`r(-1,j)=0`$，阶段为 $`0,\ldots,N`$。
 区间 $`[b,d)`$ 的重数为
 
 ```math

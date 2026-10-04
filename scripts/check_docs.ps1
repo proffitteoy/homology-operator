@@ -42,7 +42,11 @@ foreach ($document in $documents) {
     if ($content -match '(?m)^(?:<{7}|={7}|>{7})(?: |\r?$)') {
         $problems.Add("${relativePath}: unresolved merge conflict marker")
     }
-    foreach ($math in [regex]::Matches($content, '(?ms)^```math[ \t]*\r?\n(.*?)^```[ \t]*\r?$')) {
+    foreach ($math in [regex]::Matches($content, '(?ms)^```math[ \t]*\r?\n(.*?)^```[ \t]*\r?$|\$`([^`\r\n]+)`\$')) {
+        # GitHub rejects operatorname before MathJax renders the formula.
+        if ($math.Value -match '\\operatorname\b') {
+            $problems.Add("${relativePath}: GitHub forbids operatorname; use mathrm instead")
+        }
         if ($math.Groups[1].Value -match '\\\\\r?\n') {
             $problems.Add("${relativePath}: a math row separator must not end a physical line on GitHub")
         }

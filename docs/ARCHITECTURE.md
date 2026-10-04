@@ -62,7 +62,7 @@ Python 包位于 `src/homology_operator/`，采用上述现有文件。
 对循环 z 和 y：
 
 ```math
-\operatorname{selected\_mass}(z)=m_w(Pz),\qquad
+\mathrm{selected\_mass}(z)=m_w(Pz),\qquad
 d_P([z],[y])=m_w(P(z+y)),\qquad m_w(x)=\sum_i w_i x_i.
 ```
 

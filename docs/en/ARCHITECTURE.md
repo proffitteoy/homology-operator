@@ -37,7 +37,7 @@ For cycles z,y, define
 
 ```math
 m_w(x)=\sum_i w_i x_i,\qquad
-\operatorname{selected\_mass}(z)=m_w(Pz),\qquad
+\mathrm{selected\_mass}(z)=m_w(Pz),\qquad
 d_P([z],[y])=m_w(P(z+y)).
 ```
 

@@ -33,14 +33,14 @@ of the middle space have strictly positive weights $`w_i>0`$.
 Write
 
 ```math
-Z=\ker A,\qquad B=\operatorname{im}D\subseteq Z,\qquad
+Z=\ker A,\qquad B=\mathrm{im}\,D\subseteq Z,\qquad
 H=Z/B,\qquad q:Z\to H.
 ```
 
 The degree-$`k`$ Betti number is
 
 ```math
-\beta=\dim H=n-\operatorname{rank}A-\operatorname{rank}D.
+\beta=\dim H=n-\mathrm{rank}\,A-\mathrm{rank}\,D.
 ```
 
 The weighted mass of a chain is
@@ -122,7 +122,7 @@ For a cycle $`z`$, $`Pz=Qz=z+DUz`$, so $`z+Pz\in B`$. All four conditions hold.
 **Kernel theorem.** Every legal projection and its operator satisfy
 
 ```math
-L^2=L,\qquad\ker L=\operatorname{im}P\subseteq Z,\qquad
+L^2=L,\qquad\ker L=\mathrm{im}\,P\subseteq Z,\qquad
 q|_{\ker L}:\ker L\xrightarrow{\cong}H.
 ```
 
@@ -136,7 +136,7 @@ Pz=Py\iff z+y\in B\quad(z,y\in Z).
 
 **Proof.** Characteristic two and $`P^2=P`$ yield $`L^2=I+P=L`$.
 If $`x=Py`$, then $`Lx=Py+P^2y=0`$; if $`Lx=0`$, then $`x=Px`$.
-Thus $`\ker L=\operatorname{im}P`$, which lies in $`Z`$ because $`AP=0`$.
+Thus $`\ker L=\mathrm{im}\,P`$, which lies in $`Z`$ because $`AP=0`$.
 
 For $`h=qz`$, define $`s(h)=Pz`$. If $`qz=qy`$, their difference is a boundary,
 and $`PD=0`$ gives $`Pz=Py`$. Hence $`s`$ is well defined and linear.
@@ -153,7 +153,7 @@ its cardinality and its dimension $`\beta`$ are different quantities.
 Idempotence gives a direct sum
 
 ```math
-C=\operatorname{im}P\oplus\ker P.
+C=\mathrm{im}\,P\oplus\ker P.
 ```
 
 $`L`$ is zero on the first summand and the identity on the second, so
@@ -191,8 +191,8 @@ chains it covers the extensions compatible with the fixed $`R`$.
 Set $`r=\dim B`$ and choose one section $`s_0`$. All sections and projections are
 
 ```math
-s=s_0+t,\quad t\in\operatorname{Hom}_{\mathbf F_2}(H,B),\qquad
-\Omega_R=\{(s_0+t)qR:t\in\operatorname{Hom}(H,B)\}.
+s=s_0+t,\quad t\in\mathrm{Hom}_{\mathbf F_2}(H,B),\qquad
+\Omega_R=\{(s_0+t)qR:t\in\mathrm{Hom}(H,B)\}.
 ```
 
 This affine space has dimension $`r\beta`$ and exactly $`2^{r\beta}`$ projections.
@@ -286,7 +286,7 @@ On $`Z`$, it is a pseudometric whose zero relation is homology equivalence.
 For $`x=Pz`$ and $`y'=Py`$, shared support mass is
 
 ```math
-m_w(\operatorname{supp}x\cap\operatorname{supp}y')
+m_w(\mathrm{supp}\,x\cap\mathrm{supp}\,y')
 =\frac{m_w(x)+m_w(y')-m_w(x+y')}2.
 ```
 
@@ -385,14 +385,14 @@ the target ensures the transported representative belongs to the target kernel.
 In particular,
 
 ```math
-\operatorname{rank}T_{ij}=\operatorname{rank}f_{ij}
+\mathrm{rank}\,T_{ij}=\mathrm{rank}\,f_{ij}
 =\dim(J_{ij}Z_i+B_j)-\dim B_j.
 ```
 
 Stage Betti numbers alone do not determine a barcode: identity and zero maps
 between two one-dimensional stages have different survival behavior.
 Here the full maps are retained. For stages $`0,\ldots,N`$, set
-$`r(i,j)=\operatorname{rank}T_{ij}`$ and $`r(-1,j)=0`$. The multiplicity of $`[b,d)`$ is
+$`r(i,j)=\mathrm{rank}\,T_{ij}`$ and $`r(-1,j)=0`$. The multiplicity of $`[b,d)`$ is
 
 ```math
 r(b,d-1)-r(b-1,d-1)-r(b,d)+r(b-1,d),

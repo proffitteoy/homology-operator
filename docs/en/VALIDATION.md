@@ -64,7 +64,9 @@ On Linux use `bin/python`. Run the PowerShell 7 Markdown checker and execute cha
 code snippets separately. The checker rejects inconsistent table widths and unprotected
 math delimiters. Use GitHub backtick-protected inline math and math fences; shared
 Sphinx configuration converts them to MyST math nodes at build time. The checker
-does not validate TeX commands, remote availability, or heading anchors.
+rejects GitHub's forbidden `\operatorname`; use `\mathrm{...}` for upright names.
+It does not fully validate TeX syntax, remote availability, or heading anchors.
+After editing formulas, also check GitHub's client rendering.
 Successful main builds deploy both languages to
 [GitHub Pages](https://proffitteoy.github.io/homology-operator/); pull requests only build.
 
