@@ -1,5 +1,5 @@
 # Requires PowerShell 7. Checks documentation only; does not validate mathematics.
-# Exit code 1 means a missing document, invalid UTF-8, conflict, or local link error.
+# Exit code 1 means a missing document, invalid UTF-8, conflict, syntax, or local link error.
 #requires -Version 7.0
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -13,7 +13,7 @@ $required = @(
     'docs/index.md', 'docs/conf.py', 'docs/requirements.txt', 'docs/en/USAGE.md',
     'docs/README.md', 'docs/ARCHITECTURE.md', 'docs/INTERFACE.md',
     'docs/RESULT_MODEL.md', 'docs/SOLVER_CONTRACT.md', 'docs/VALIDATION.md',
-    'docs/FIXTURES.md'
+    'docs/FIXTURES.md', 'docs/MATHEMATICS.md', 'docs/en/MATHEMATICS.md'
 )
 $problems = [Collections.Generic.List[string]]::new()
 foreach ($relativePath in $required) {
@@ -44,6 +44,26 @@ foreach ($document in $documents) {
     }
     # Ignore fenced examples. This intentionally checks inline file links only.
     $prose = [regex]::Replace($content, '(?ms)^```[^\r\n]*\r?\n.*?^```[ \t]*\r?$', '')
+    # Raw pipes also split cells inside formulas or inline code on GitHub.
+    $tableWidth = 0
+    foreach ($line in ($prose -split '\r?\n')) {
+        if ($line.StartsWith('|')) {
+            $width = [regex]::Matches($line, '(?<!\\)\|').Count - 1
+            if ($tableWidth -eq 0) {
+                $tableWidth = $width
+            } elseif ($width -ne $tableWidth) {
+                $problems.Add("${relativePath}: table has $width columns; expected $tableWidth")
+            }
+        } else {
+            $tableWidth = 0
+        }
+    }
+    # Protect inline math from Markdown punctuation; block math uses math fences.
+    $plainText = [regex]::Replace($prose, '\$`[^`\r\n]+`\$', '')
+    $plainText = [regex]::Replace($plainText, '`+[^`\r\n]*`+', '')
+    if ($plainText -match '(?<!\\)\$[^$\r\n]+\$|(?m)^\$\$|\\\[|\\\(|\\\]') {
+        $problems.Add("${relativePath}: use backtick-protected inline math or a math fence")
+    }
     foreach ($match in [regex]::Matches($prose, '\[[^\]\r\n]*\]\(([^)\r\n]+)\)')) {
         $target = $match.Groups[1].Value.Trim()
         if ($target -match '^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|#|//)') {

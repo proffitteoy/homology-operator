@@ -9,15 +9,15 @@
 
 固定次数 k 的输入为有限带基链窗口与正坐标权重：
 
-\[
+```math
 C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0,\qquad w_i>0.
-\]
+```
 
 参考构造选择 `AGA=A`、`DUD=D` 的广义逆，得到
 
-\[
+```math
 R=I+GA,\qquad Q=I+DU,\qquad P=QR,\qquad L=I+P.
-\]
+```
 
 `HomologyOperator` 以同一个 P 提供拓扑、代表、质量、距离、支撑和 stretch：
 
@@ -61,10 +61,10 @@ Python 包位于 `src/homology_operator/`，采用上述现有文件。
 
 对循环 z 和 y：
 
-\[
+```math
 \operatorname{selected\_mass}(z)=m_w(Pz),\qquad
 d_P([z],[y])=m_w(P(z+y)),\qquad m_w(x)=\sum_i w_i x_i.
-\]
+```
 
 `selected_mass` 不等于真实最短类质量。`minimum_class_mass` 当前返回 Unavailable。
 当前投影 Γ 的精确计算、最优 Γ 的 bounds、全局最优证书分别表达。
@@ -79,9 +79,9 @@ d_P([z],[y])=m_w(P(z+y)),\qquad m_w(x)=\sum_i w_i x_i.
 校验链映射、坐标与权重政策。重复 scale 保留阶段顺序，末端采用常量延拓。
 不存在单独的公共 `FilteredChainComplex` 类型。
 
-\[
+```math
 \mathcal H_i=\ker L_i,\qquad T_{ij}=P_jJ_{ij}|_{\mathcal H_i}.
-\]
+```
 
 传输保存源 kernel 坐标到目标 kernel 坐标的 action，以及到目标原链坐标的 chain_action。
 合法阶段之间必须满足 `T_ii=I`、`T_jl T_ij=T_il`，且与原诱导同调映射共轭。

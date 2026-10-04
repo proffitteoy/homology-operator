@@ -66,7 +66,9 @@ uv pip install --python .task-artifacts/docs-env/Scripts/python.exe -r docs/requ
 
 Linux 使用该环境的 `bin/python`。两语言首页为 `index.html` 和 `en/index.html`。
 文档检查需要 PowerShell 7，只读检查根目录与 docs 下的 Markdown、UTF-8、冲突标记和本地文件链接。
-它不验证外网可达性或标题锚点；修改代码片段后单独运行。
+检查同时拒绝表格列数不一致和未保护的数学分隔符。行内公式使用 GitHub 的反引号保护写法，
+块公式使用 math 围栏；共享 Sphinx 配置在构建时转换为 MyST 数学节点。
+检查不验证 TeX 命令、外网可达性或标题锚点；修改代码片段后单独运行。
 main 构建通过后自动部署 [GitHub Pages](https://proffitteoy.github.io/homology-operator/)；PR 只执行检查。
 
 ## 按变更验证

@@ -84,11 +84,17 @@ def prepare_markdown(app, docname, source):
             url += "#" + target.fragment
         return f"{match[1]}({url})"
 
-    parts = re.split(r"(^```[^\n]*\n.*?^```[ \t]*$)", source[0], flags=re.M | re.S)
+    # GitHub math fences and backtick-protected inline math share one source.
+    markdown = re.sub(
+        r"^```math[ \t]*\n(.*?)^```[ \t]*$",
+        lambda match: "$$\n" + match[1].rstrip() + "\n$$",
+        source[0],
+        flags=re.M | re.S,
+    )
+    parts = re.split(r"(^```[^\n]*\n.*?^```[ \t]*$)", markdown, flags=re.M | re.S)
     for index in range(0, len(parts), 2):
-        prose = re.sub(
-            r"\\\[\s*\n(.*?)\n\s*\\\]", r"$$\n\1\n$$", parts[index], flags=re.S
-        )
+        prose = re.sub(r"\$`([^`\n]+)`\$", r"$\1$", parts[index])
+        prose = re.sub(r"\\\[\s*\n(.*?)\n\s*\\\]", r"$$\n\1\n$$", prose, flags=re.S)
         prose = re.sub(r"\\\((.*?)\\\)", r"$\1$", prose)
         parts[index] = re.sub(r"(\[[^\]\n]*\])\(([^)\n]+)\)", repository_link, prose)
     source[0] = "".join(parts)

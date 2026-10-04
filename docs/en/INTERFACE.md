@@ -6,9 +6,9 @@
 
 A `ChainWindow` represents one fixed degree:
 
-$$
+```math
 C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
-$$
+```
 
 `A` has shape m×n and `D` has shape n×p, using column vectors. Supply ordered,
 unique nonempty basis identifiers for each space and n finite positive weights.

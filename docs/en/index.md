@@ -2,9 +2,9 @@
 
 ```{toctree}
 :hidden:
-:caption: Operator theory
+:caption: Mathematics
 
-MATHEMATICS
+Operator definition and properties <MATHEMATICS>
 ```
 
 ```{toctree}
@@ -56,22 +56,22 @@ Source <https://github.com/proffitteoy/homology-operator>
 
 This project introduces a binary homology operator on the original chain space.
 Given a finite based chain window and positive coordinate weights, construct a
-linear projection $P$ and operator $L=I+P$:
+linear projection $`P`$ and operator $`L=I+P`$:
 
-$$
+```math
 C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\quad AD=0,
 \qquad P=(I+DU)(I+GA),\quad L=I+P.
-$$
+```
 
-The generalized inverses satisfy $AGA=A$ and $DUD=D$. Its central relation is
+The generalized inverses satisfy $`AGA=A`$ and $`DUD=D`$. Its central relation is
 
-$$
+```math
 \boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
-$$
+```
 
 Each kernel vector is the unique selected cycle representative of its class.
-For cycles, $Pz$ preserves the class and $P(z+y)=Pz+Py$; the selection rule
-therefore couples all class representatives. Weighted action of the same $P$
+For cycles, $`Pz`$ preserves the class and $`P(z+y)=Pz+Py`$; the selection rule
+therefore couples all class representatives. Weighted action of the same $`P`$
 gives mass, distance, and shared support. Projected transport between kernels
 realizes the entire persistence module and its barcode.
 
@@ -82,31 +82,31 @@ or run the [complete six-edge example](guide/single-scale.md#an-exact-operator-o
 
 | Readout | Mathematical object | Questions it answers |
 | --- | --- | --- |
-| Homology | $\ker L$, $Pz$ | How many independent classes? Which class? Where is its selected representative? |
-| Weighted geometry | $m_w(Pz)$, $m_w(P(z+y))$, support intersection/union | What is its realization cost? How is a difference class realized? Which coordinates are shared and cancel? |
-| Persistence | $T_{ij}=P_jJ_{ij}|_{\ker L_i}$ | How do classes travel, merge, or die across stages? What are their intervals? |
+| Homology | $`\ker L`$, $`Pz`$ | How many independent classes? Which class? Where is its selected representative? |
+| Weighted geometry | $`m_w(Pz)`$, $`m_w(P(z+y))`$, support intersection/union | What is its realization cost? How is a difference class realized? Which coordinates are shared and cancel? |
+| Persistence | $`T_{ij}=P_jJ_{ij}\vert_{\ker L_i}`$ | How do classes travel, merge, or die across stages? What are their intervals? |
 
 Zero class distance means exactly equal homology classes. Positive distances
 measure the selected realization cost of the difference class. Units come from
-input weights. The eigenvalues of $L$ are only $0,1$; weighted action supplies
+input weights. The eigenvalues of $`L`$ are only $`0,1`$; weighted action supplies
 additional geometry.
 
 ## Minimum stretch controls every linear combination
 
 Legal projections need not be unique. Selecting by worst cycle mass ratio gives
 
-$$
+```math
 \Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
 \Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P).
-$$
+```
 
 This equals the minimum-stretch linear section problem: choose representatives
 for all classes while preserving all linear relations. For Betti number
-$\beta>0$, $1\le\Gamma_*\le\beta$.
+$`\beta>0`$, $`1\le\Gamma_*\le\beta`$.
 
-The six-edge complex has minimum nonzero class masses $(8,8,9)$.
-A minimum-total-mass basis produces $(8,8,12)$ with stretch $4/3$; the
-minimum-stretch operator produces $(8,9,9)$ with stretch $9/8$.
+The six-edge complex has minimum nonzero class masses $`(8,8,9)`$.
+A minimum-total-mass basis produces $`(8,8,12)`$ with stretch $`4/3`$; the
+minimum-stretch operator produces $`(8,9,9)`$ with stretch $`9/8`$.
 Cancellation of shared support explains the choice. The exhaustive four-section
 table, matrix, and proof are in the [mathematical example](MATHEMATICS.md#6-a-complete-six-edge-example).
 

@@ -7,17 +7,17 @@
 Solver 为一个 ProjectionProblem 选择投影，不定义读取语义、不生成独立 barcode，
 不改变 HomologyOperator 的数学含义。所有输出进入算子前独立验证：
 
-$$
+```math
 P^2=P,\quad AP=0,\quad PD=0,\quad z+Pz\in\operatorname{im}D\ \ (Az=0).
-$$
+```
 
 前三项不足以保证同调保持：非零同调窗口的零投影也可能满足它们。
 当前目标为最小化最坏加权循环 stretch：
 
-$$
+```math
 \Gamma_w(P)=\max_{0\ne z,Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
 \Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P).
-$$
+```
 
 selected_mass 是当前 P 的选定质量，不是真实最短类质量。
 换 solver 可以改变代表与几何，但不改变查询定义；不得为过滤传输另改阶段目标。

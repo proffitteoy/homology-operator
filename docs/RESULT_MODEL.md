@@ -116,19 +116,19 @@ Feasible 不认证最小 stretch；ExactOptimal 必须有受支持且重放成�
 对循环，selected_mass=m_w(Pz)，class_distance=m_w(P(z+y))，支撑及交/并由同一 Pz 得到。
 这些量绑定原基和权重。真实最短类质量
 
-\[
+```math
 \mu_w([z])=\min\{m_w(x):Ax=0,\ [x]=[z]\}
-\]
+```
 
 是不同的优化问题；当前 minimum_class_mass 返回 Unavailable。
 selected_mass 不得命名或序列化为真实最短值。
 
 当前投影的 stretch 与最优投影目标分别为
 
-\[
+```math
 \Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
 \Gamma_*=\min_P\Gamma_w(P).
-\]
+```
 
 当前 objective 的精确值可以给出最优值的上界，不能单凭该值报告 ExactOptimal。
 循环域为空时按固定理论 §1.2 取 stretch=0 并标 EmptyDomain；

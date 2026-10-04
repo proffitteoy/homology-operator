@@ -12,15 +12,15 @@ and computation boundaries. See the
 
 For a fixed degree k, the input is a finite based window over F2:
 
-$$
+```math
 C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0,\qquad w_i>0.
-$$
+```
 
 The reference selects generalized inverses with AGA=A and DUD=D and constructs
 
-$$
+```math
 R=I+GA,\qquad Q=I+DU,\qquad P=QR,\qquad L=I+P.
-$$
+```
 
 Every candidate is independently checked for P²=P, AP=0, PD=0, and
 `z+Pz∈im(D)` on a complete cycle basis. The last condition ensures preservation
@@ -35,11 +35,11 @@ to populate the result. `ker(L)` identifies the selected homology representation
 
 For cycles z,y, define
 
-$$
+```math
 m_w(x)=\sum_i w_i x_i,\qquad
 \operatorname{selected\_mass}(z)=m_w(Pz),\qquad
 d_P([z],[y])=m_w(P(z+y)).
-$$
+```
 
 Support and its intersection/union are read from the same projected coordinates.
 A basis change may preserve homology while changing mass, support, and stretch.
@@ -47,11 +47,11 @@ Weight semantics and units belong to the input, not to an inferred geometric nam
 
 True minimum class mass and the current/optimal projection objectives are different:
 
-$$
+```math
 \mu_w([z])=\min\{m_w(x):Ax=0,\ [x]=[z]\},\qquad
 \Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
 \Gamma_*=\min_P\Gamma_w(P).
-$$
+```
 
 `minimum_class_mass` is currently unavailable. Feasibility, exact current Γ, and
 global optimality are separate facts. Empty cycle space has declared stretch 0
@@ -66,9 +66,9 @@ degree. Basis identifiers define inclusions in all three degrees; chain-map,
 coordinate, and weight policies are validated. Repeated scales preserve stage
 order, and the terminal extension is constant.
 
-$$
+```math
 \mathcal H_i=\ker L_i,\qquad T_{ij}=P_jJ_{ij}|_{\mathcal H_i}.
-$$
+```
 
 Transports retain kernel-coordinate action and original target chain action.
 They must satisfy T_ii=I and `T_jl T_ij=T_il`, and agree with the induced homology

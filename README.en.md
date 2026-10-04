@@ -12,31 +12,18 @@
   <a href="README.md">中文</a> ·
   <a href="https://proffitteoy.github.io/homology-operator/en/">Documentation</a> ·
   <a href="docs/en/INTERFACE.md">API</a> ·
+  <a href="docs/en/MATHEMATICS.md">Mathematics</a> ·
   <a href="docs/en/VALIDATION.md">Development</a> ·
   <a href="LICENSE">MIT License</a>
 </p>
 
 This project introduces a **binary homology operator** on the original chain
-space and provides its Python/Rust implementation. Its input is a finite based
-chain window in a fixed degree with positive coordinate weights:
-
-$$
-C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
-$$
-
-Choose algebraic generalized inverses with $AGA=A$ and $DUD=D$ and construct
-
-$$
-P=(I+DU)(I+GA),\qquad L=I+P,\qquad
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
-$$
-
-Each kernel vector uniquely represents a homology class. $P$ preserves cycle
-classes and enforces linear relations between all representatives:
-$P(z+y)=Pz+Py$. The same weighted action supplies topology, representative mass,
-class distance, shared support, and worst stretch. Projected transport between
-kernels realizes the entire persistence module of a finite filtration, from
-which the barcode is read. Definitions and proofs are in [operator theory](docs/en/MATHEMATICS.md).
+space and provides its Python/Rust implementation. Its kernel realizes homology;
+the accompanying projection selects cycle representatives that obey all linear
+relations. Weighted action supplies class mass, distance, and support. Transport
+between kernels realizes the persistence module of a finite filtration.
+Definitions and proofs are in the [mathematics document](docs/en/MATHEMATICS.md);
+the separate [Mathematics section](#mathematics) below gives the core relations.
 
 The Python correctness reference uses only the standard library. An optional Rust
 extension provides packed algebra, compact actions, supported solvers, and batch
@@ -53,29 +40,6 @@ solver records, and results can be saved and independently checked.
 The public input is a chain window. General point-cloud, Rips, and complex builders
 must be supplied by the caller. True minimum class mass is currently unavailable;
 `selected_mass` measures the representative selected by the current projection.
-
-## Operator selection and minimum stretch
-
-Legal projections need not be unique. Minimum stretch controls every cycle:
-
-$$
-\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
-\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
-m_w(x)=\sum_{i:x_i=1}w_i.
-$$
-
-This equals the minimum-stretch linear section problem for the homology
-quotient. If $\beta>0$, $1\le\Gamma_*\le\beta$. In the six-edge complex, a
-minimum-total-mass basis gives masses $(8,8,12)$ and stretch $4/3$; a
-minimum-stretch operator gives $(8,9,9)$ and stretch $9/8$. Shared-support
-cancellation controls the combined class.
-The [complete example](docs/en/MATHEMATICS.md#6-a-complete-six-edge-example)
-exhausts all four sections; [runnable code](docs/en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex)
-reads all values from the actual operator.
-
-The default solver constructs a legal operator. Exact solvers certify optimality
-within their domains through independent certificates. The eigenvalues of $L$
-are only $0,1$; its weighted action supplies geometry.
 
 ## Installation
 
@@ -161,6 +125,53 @@ Barcodes come from `T_ij=P_j J_ij|ker(L_i)`. `barcode()` reads adjacent transpor
 outputs. Intervals use half-open stage endpoints, with `None` for survival under
 the declared constant terminal extension. Family snapshots default to schema 2;
 schema 1 remains readable. See the [English guide](docs/en/USAGE.md#finite-filtrations).
+
+## Mathematics
+
+### Definition and construction
+
+The input is a finite based chain window in a fixed degree with positive coordinate weights:
+
+```math
+C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
+```
+
+Choose algebraic generalized inverses with $`AGA=A`$ and $`DUD=D`$ and construct
+
+```math
+P=(I+DU)(I+GA),\qquad L=I+P,\qquad
+\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+```
+
+Each kernel vector uniquely represents a homology class. $`P`$ preserves cycle
+classes and enforces linear relations between all representatives:
+$`P(z+y)=Pz+Py`$. The same weighted action supplies topology, representative mass,
+class distance, shared support, and worst stretch. Projected transport between
+kernels realizes the entire persistence module of a finite filtration, from
+which the barcode is read. Definitions and proofs are in [operator theory](docs/en/MATHEMATICS.md).
+
+### Minimum stretch
+
+Legal projections need not be unique. Minimum stretch controls every cycle:
+
+```math
+\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
+\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
+m_w(x)=\sum_{i:x_i=1}w_i.
+```
+
+This equals the minimum-stretch linear section problem for the homology
+quotient. If $`\beta>0`$, $`1\le\Gamma_*\le\beta`$. In the six-edge complex, a
+minimum-total-mass basis gives masses $`(8,8,12)`$ and stretch $`4/3`$; a
+minimum-stretch operator gives $`(8,9,9)`$ and stretch $`9/8`$. Shared-support
+cancellation controls the combined class.
+The [complete example](docs/en/MATHEMATICS.md#6-a-complete-six-edge-example)
+exhausts all four sections; [runnable code](docs/en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex)
+reads all values from the actual operator.
+
+The default solver constructs a legal operator. Exact solvers certify optimality
+within their domains through independent certificates. The eigenvalues of $`L`$
+are only $`0,1`$; its weighted action supplies geometry.
 
 ## Capabilities and limits
 

@@ -13,10 +13,10 @@ P²=P, AP=0, PD=0 and cycle homology preservation `z+Pz∈im(D)`.
 
 The objective is minimum worst weighted cycle stretch:
 
-$$
+```math
 \Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
 \Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P).
-$$
+```
 
 Selected mass is not true minimum class mass. Changing a solver can change the
 selected P and therefore representatives/geometry, while query definitions remain

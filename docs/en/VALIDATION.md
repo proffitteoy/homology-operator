@@ -61,7 +61,11 @@ uv pip install --python .task-artifacts/docs-env/Scripts/python.exe -r docs/requ
 ```
 
 On Linux use `bin/python`. Run the PowerShell 7 Markdown checker and execute changed
-code snippets separately. Successful main builds deploy both languages to
+code snippets separately. The checker rejects inconsistent table widths and unprotected
+math delimiters. Use GitHub backtick-protected inline math and math fences; shared
+Sphinx configuration converts them to MyST math nodes at build time. The checker
+does not validate TeX commands, remote availability, or heading anchors.
+Successful main builds deploy both languages to
 [GitHub Pages](https://proffitteoy.github.io/homology-operator/); pull requests only build.
 
 ## Change-specific validation and CI

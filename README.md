@@ -12,29 +12,15 @@
   <a href="README.en.md">English</a> ·
   <a href="https://proffitteoy.github.io/homology-operator/">Documentation</a> ·
   <a href="docs/INTERFACE.md">API</a> ·
+  <a href="docs/MATHEMATICS.md">Mathematics</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="LICENSE">MIT License</a>
 </p>
 
 本项目提出一种定义在原链空间上的**二元同调算子**，并提供它的 Python/Rust 实现。
-输入固定次数的有限带基链窗口与正坐标权重：
-
-$$
-C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
-$$
-
-选择 $AGA=A$、$DUD=D$ 的代数广义逆，构造
-
-$$
-P=(I+DU)(I+GA),\qquad L=I+P,\qquad
-\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
-$$
-
-核中的向量是每个同调类唯一的选定循环代表。$P$ 保持循环的原同调类，
-并使全部代表遵守线性关系：$P(z+y)=Pz+Py$。
-同一个带权作用同时给出拓扑、代表质量、类距离、共享支撑和最坏伸长；
-有限过滤中核之间的投影传输实现整个持久同调模，并由传输读取 barcode。
-完整定义与证明见[算子理论](docs/MATHEMATICS.md)。
+算子的核实现同调，配套投影为全部类选择线性一致的循环代表。
+同一个带权作用给出代表质量、类距离和支撑；核之间的传输实现有限过滤的持久同调模。
+定义、构造与证明集中在[数学文档](docs/MATHEMATICS.md)，本页的[数学章节](#数学)概述核心关系。
 
 提供 Python 公共接口和可选 Rust 计算后端，版本为开发快照 `0.0.2.dev0`。
 采用 [MIT License](LICENSE)，尚未发行。完整产品说明见 [在线文档](https://proffitteoy.github.io/homology-operator/)。
@@ -50,25 +36,6 @@ $$
 
 当前输入是链窗口与带序基。通用点云、Rips 构造器和复形前端需要调用者提供。
 `selected_mass` 表示当前代表的质量；真实最短类质量查询尚不可用。
-
-## 算子选择与最小伸长
-
-合法投影通常不唯一。最小伸长目标同时控制所有循环，而非只控制某组基代表：
-
-$$
-\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
-\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
-m_w(x)=\sum_{i:x_i=1}w_i.
-$$
-
-它与同调商的最小伸长线性截面问题等价；非零 Betti 数为 $\beta$ 时，$1\le\Gamma_*\le\beta$。
-四顶点六边复形上，最小总质量基给出质量 $(8,8,12)$、伸长 $4/3$；
-最小伸长算子给出 $(8,9,9)$、伸长 $9/8$。这个选择通过共享支撑的抵消控制组合类。
-[完整算例](docs/MATHEMATICS.md#6-六边复形完整算例)列出全部四个截面、矩阵及证明；
-[可运行代码](docs/guide/single-scale.md#六边复形的精确算子)从同一个算子读取这些结果。
-
-默认 solver 构造合法算子；支持域内的精确 solver 与独立证书才认证最优。
-$L$ 的特征值只有 $0,1$，几何信息由带权作用读取。
 
 ## 安装
 
@@ -157,6 +124,48 @@ uv run --locked python examples/filtration.py
 `barcode()` 使用相邻 transport。历史区间基和完整 rank 表分别由 `barcode_basis()`、
 `rank_table()` 显式请求；完整输出可能有二次规模。过滤 schema 1/2、缓存与恢复见
 [过滤说明](docs/guide/filtration.md)和 [API](docs/INTERFACE.md#过滤与传输)。
+
+## 数学
+
+### 定义与构造
+
+输入固定次数的有限带基链窗口与正坐标权重：
+
+```math
+C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
+```
+
+选择 $`AGA=A`$、$`DUD=D`$ 的代数广义逆，构造
+
+```math
+P=(I+DU)(I+GA),\qquad L=I+P,\qquad
+\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+```
+
+核中的向量是每个同调类唯一的选定循环代表。$`P`$ 保持循环的原同调类，
+并使全部代表遵守线性关系：$`P(z+y)=Pz+Py`$。
+同一个带权作用同时给出拓扑、代表质量、类距离、共享支撑和最坏伸长；
+有限过滤中核之间的投影传输实现整个持久同调模，并由传输读取 barcode。
+完整定义与证明见[算子理论](docs/MATHEMATICS.md)。
+
+### 最小伸长
+
+合法投影通常不唯一。最小伸长目标同时控制所有循环，而非只控制某组基代表：
+
+```math
+\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
+\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
+m_w(x)=\sum_{i:x_i=1}w_i.
+```
+
+它与同调商的最小伸长线性截面问题等价；非零 Betti 数为 $`\beta`$ 时，$`1\le\Gamma_*\le\beta`$。
+四顶点六边复形上，最小总质量基给出质量 $`(8,8,12)`$、伸长 $`4/3`$；
+最小伸长算子给出 $`(8,9,9)`$、伸长 $`9/8`$。这个选择通过共享支撑的抵消控制组合类。
+[完整算例](docs/MATHEMATICS.md#6-六边复形完整算例)列出全部四个截面、矩阵及证明；
+[可运行代码](docs/guide/single-scale.md#六边复形的精确算子)从同一个算子读取这些结果。
+
+默认 solver 构造合法算子；支持域内的精确 solver 与独立证书才认证最优。
+$`L`$ 的特征值只有 $`0,1`$，几何信息由带权作用读取。
 
 ## 文档
 

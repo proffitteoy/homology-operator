@@ -33,10 +33,10 @@ stretch over projections are separate facts.
 ## An exact operator on the six-edge complex
 
 The complete graph on four vertices has three cycle directions. Filling face
-$012$ removes one boundary direction, leaving two-dimensional $H_1$.
-Use edge weights $(2,4,2,3,4,2)$ in order $(01,02,03,12,13,23)$.
+$`012`$ removes one boundary direction, leaving two-dimensional $`H_1`$.
+Use edge weights $`(2,4,2,3,4,2)`$ in order $`(01,02,03,12,13,23)`$.
 The [mathematical example](../MATHEMATICS.md#6-a-complete-six-edge-example)
-exhausts all four linear sections and proves that minimum stretch is $9/8$.
+exhausts all four linear sections and proves that minimum stretch is $`9/8`$.
 This code constructs the actual operator and reads topology and geometry together.
 
 ```python
@@ -104,14 +104,14 @@ assert unit_solution.objective.value == Fraction(4, 3)
 
 ```
 
-Here $z$ is triangle $013$ and $y$ is triangle $023$. Their individually shortest
-representatives both cost eight. The selected representative for $y$ adds the
-boundary of $012$ and costs nine. This lets the combined output cost nine rather
-than twelve. Shared edges $01,03$ have total mass four; the union has mass thirteen.
-All these readouts come from the same stored $P$, whose kernel realizes $H_1$.
+Here $`z`$ is triangle $`013`$ and $`y`$ is triangle $`023`$. Their individually shortest
+representatives both cost eight. The selected representative for $`y`$ adds the
+boundary of $`012`$ and costs nine. This lets the combined output cost nine rather
+than twelve. Shared edges $`01,03`$ have total mass four; the union has mass thirteen.
+All these readouts come from the same stored $`P`$, whose kernel realizes $`H_1`$.
 
 The unit-weight variant has identical boundaries and Betti number, but a different
-optimal stretch, $4/3$. These geometric values describe the chosen coordinate
+optimal stretch, $`4/3`$. These geometric values describe the chosen coordinate
 costs. The proof and the four-section table are in the [operator theory](../MATHEMATICS.md).
 The independent solver verifier establishes global optimality in this supported
 small domain; the default feasible solver would not make that claim.
