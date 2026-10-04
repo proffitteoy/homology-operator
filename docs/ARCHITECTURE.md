@@ -87,7 +87,8 @@ d_P([z],[y])=m_w(P(z+y)),\qquad m_w(x)=\sum_i w_i x_i.
 合法阶段之间必须满足 `T_ii=I`、`T_jl T_ij=T_il`，且与原诱导同调映射共轭。
 barcodes 从 `rank(T_ij)` 恢复；逐阶段 Betti 或外部 PH 配对不能替代传输来源。
 
-当前 barcode 路径请求全区间 rank；相邻传输读取的优化是 [S4-07](S4_S5_PROJECT.md) 的目标。
+当前 barcode 路径只读取相邻核坐标传输；历史区间基和完整 rank 表由显式查询请求，
+实现、证明和实际输出成本见 [S4-07](S4_FILTRATION.md)。
 任意类的 tracking 使用源代表、包含及目标投影；死亡类是合法零链、零质量和空支撑。
 Partial 族保留失败阶段，不能以空链空间补齐缺失结果。
 
@@ -99,12 +100,15 @@ Partial 族保留失败阶段，不能以空链空间补齐缺失结果。
 | `CyclicAction` | 已合并的固定 T-B1 结构族，m∈{2,3,4}；参数 handle，无完整 P 存储 |
 | `PreparedMatrix` | 已合并的不可变多字 packed 消元 handle；复用 rank/kernel/image/membership/solve，独立于权重与投影选择 |
 | `CompactAction` / `NativeFactorizedSolver` | [S4-04 / PR #80](https://github.com/proffitteoy/homology-operator/pull/80) 已合并：广义逆因子或 HC 表示，不物化完整 P/L |
+| `GeometryWorkspace` | 已合并的六身份绑定准备对象，复用 Matrix / Factorized / HC 的循环几何批查询 |
 
-多字代数已经存在，但 `NativeFeasibleSolver` 和显式 P 的 native 批查询仍有 64 维限制。
+多字代数已经存在；`NativeFeasibleSolver` 与 `apply_batch` 的显式原型仍有 64 维限制，
+`geometry_batch` 另支持多字 Matrix 与 Factorized/HC。
 reference 安装无需扩展；扩展缺失或 solver 不支持请求时，solver/批查询返回 Unavailable。
 直接使用 packed 代数工具需要安装扩展，缺失时抛 ImportError。
-已合并原型中的质量、距离和支撑交并由 Python 对同一 Pz 计算，后备成本在详情中可见。
-原生几何与 workspace 复用仍按 S4-06 的独立支持域和验收推进。
+原生几何对同一 packed Pz 做 XOR/AND/OR，整数质量使用 checked u64；
+有理/大整数/溢出与浮点按算术政策显式后备，原因和成本在详情中可见。
+workspace 不改变结果快照或查询历史；完整支持域见 API 的 S4-06 章节。
 
 作用表示改变不能改变全部链上的 P/L 行为，包括非循环延拓。
 不同表示可以有不同内容身份；不要声称跨表示 hash 归一化。
@@ -121,7 +125,7 @@ API 不引入尚未存在的 `LinearAction` 基类、全流程稀疏 backend 或
 不是硬 RSS 上限、单步抢占或整个构造/恢复流程的统一预算。
 未计算的 objective 不用 0 填充，中断只保留完成验证的候选与证据。
 
-独立 PH reduction 和未来 GUDHI 适配仅用于测试或测量对照。
+独立 PH reduction 和已有 S5 GUDHI 适配仅用于测试或测量对照。
 禁止 oracle 填充 `OperatorResult`、补齐缺失 barcode 或替换当前 P 的代表。
 正式性能比较必须包括绑定/转换、必需验证、查询、序列化及恢复，并匹配输入、P 与认证等级。
 当前有限实验和阶段状态见 [性能协议](BENCHMARKS.md) 与 [S4/S5 计划](S4_S5_PROJECT.md)。

@@ -1,6 +1,20 @@
-# homology-operator
+<h1 align="center">homology-operator</h1>
 
-Boundary-native F2 homology operators with persistence and geometric readouts.
+<p align="center">从 F2 边界矩阵读取同调、持久性与加权几何的 Python 库。</p>
+
+<p align="center">
+  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg" alt="Reference checks"></a>
+  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/native.yml/badge.svg" alt="Native checks"></a>
+  <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/s5-oracle.yml/badge.svg" alt="GUDHI oracle"></a>
+</p>
+
+<p align="center">
+  <a href="README.en.md">English</a> ·
+  <a href="docs/index.md">Documentation</a> ·
+  <a href="docs/INTERFACE.md">API</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="LICENSE">MIT License</a>
+</p>
 
 `homology-operator` 是一个从边界矩阵构造同调算子的 Python 库。输入固定次数的带基链窗口
 `C_{k+1} --D--> C_k --A--> C_{k-1}` 和正坐标权重，构造投影 `P` 与 `L=I+P`，
@@ -8,24 +22,34 @@ Boundary-native F2 homology operators with persistence and geometric readouts.
 有限过滤的 barcode 与类追踪由 `OperatorFamily` 的跨阶段传输读取。
 
 目前提供 Python correctness reference 和可选 Rust 扩展，版本为开发快照 `0.0.2.dev0`。
-尚未发行，许可证待选。已合并能力、开发中功能和 CI 证据见 [文档索引](docs/README.md)。
+采用 [MIT License](LICENSE)，尚未发行。已合并能力和 CI 证据见 [文档索引](docs/README.md)。
+
+目前支持：
+
+- F2 单尺度同调、类代表与同类判断；
+- 同一投影下的选定质量、类距离、支撑与 stretch；
+- 有限过滤的 transport、barcode 和类追踪；
+- 五种限定 solver 与独立投影/最优证书验证；
+- 可选 Rust packed 代数、因子化 action 与批查询；
+- 保留输入、投影和求解身份的结果快照与恢复。
+
+当前输入是链窗口与带序基。通用点云、Rips 构造器和复形前端需要调用者提供。
+`selected_mass` 表示当前代表的质量；真实最短类质量查询尚不可用。
 
 ## 安装
 
-Python 3.10+；reference 运行时仅依赖标准库。从源码使用 [uv](https://docs.astral.sh/uv/) 安装：
+Python 3.10+；reference 运行时仅依赖标准库。当前从源码安装：
 
-```powershell
+```console
 git clone https://github.com/proffitteoy/homology-operator.git
 cd homology-operator
-uv sync --locked --python 3.10
-uv run --locked python examples/single_scale.py
+python -m pip install .
 ```
 
-已有 Python 环境也可在仓库根目录执行 `python -m pip install .` 安装 reference。
-Rust 扩展单独构建，不是 reference 的安装前提；工具链、平台和构建命令见
-[可选 Rust 扩展](docs/INTERFACE.md#可选-rust-扩展)。
+隔离环境、uv 与可选 Rust 构建见[安装](docs/getting-started/installation.md)。
+Rust 扩展单独构建，不是 reference 的安装前提；平台范围见[平台支持](docs/platforms.md)。
 
-## 一个最小例子
+## 基本用法
 
 两个顶点由一条边连接，`D=(1,1)^T`，因此两个顶点表示同一个 H0 类：
 
@@ -96,39 +120,24 @@ barcode 来自 `T_ij=P_j J_ij|ker(L_i)` 的 rank invariant。
 uv run --locked python examples/filtration.py
 ```
 
-S4-07 的 `OperatorFamily.barcode()` 只读取相邻 transport，内部使用索引嵌入和可复用
-packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区间基；`rank_table()`
-显式请求二次大小的完整 rank 表。`cache_limit=64` 限制各查询缓存条目，0禁用。
-默认过滤快照采用共享边界/基/活动索引的 schema 2，旧 schema 1 可读并原版本重发；
-`to_result(schema_version=1)` 显式输出旧格式，单尺度快照版本保持原契约。
-证明、状态边界及复跑命令见 [S4-07说明](docs/S4_FILTRATION.md)。
+`barcode()` 使用相邻 transport。历史区间基和完整 rank 表分别由 `barcode_basis()`、
+`rank_table()` 显式请求；完整输出可能有二次规模。过滤 schema 1/2、缓存与恢复见
+[过滤说明](docs/S4_FILTRATION.md)和 [API](docs/INTERFACE.md#过滤与传输)。
 
-四种限定 solver 可显式选择 native 加速与独立证书重放；默认 reference 入口保持不变。
-调用及支持域见 [native 认证求解](docs/INTERFACE.md#限定-native-认证求解s4-05)。
+## 性能与对照
 
-几何批查询可显式复用 `GeometryWorkspace`，支持 Matrix 与 Factorized/HC 的同一 P，
-保留精确权重后备和六身份；调用与限制见 [几何 workspace](docs/INTERFACE.md#几何批查询与-workspaces4-06)。
-
-## 能力与边界
-
-| 能力 | 当前范围 |
+| 冻结实验 | 范围与结论 |
 | --- | --- |
-| F2 代数与输入 | 显式形状、稳定消元、空链空间、`AD=0` 校验、原坐标保留 |
-| 单尺度与有限过滤 | 同 P 联合查询、transport、rank/barcode、几何追踪、结果快照 |
-| 求解与认证 | 五种限定 reference solver；投影合法性、objective 计算、最优认证分别报告 |
-| 权重 | 任意精度整数/有理数；显式浮点政策，浮点几何不提供精确最优证书 |
-| 可选 Rust | 单字宽可行原型与批查询；多字 packed 代数、可复用分解、多 RHS、同 P 的因子/HC action、限定 solver/证书重放及几何 workspace |
-| 后端集成 | 显式选择与可见同 solver 后备、协作取消、旧快照与紧凑 action 恢复；支持范围见 API |
-| S4 性能验收 | 冻结27个配置、1880个独立进程；共享过滤/部分规模收益，保留退化与可选后端，见 [S4报告](docs/S4_REPORT.md) |
-| S5 有限对照 | 77份三方correctness与2840进程正式成本/RSS、完整失败和统计复现；见 [S5报告](docs/S5_REPORT.md) |
-| 开发目标 | 更广规模/机器的稳定性与应用实验，公开发行 |
+| [S4](docs/S4_REPORT.md) | 27 个配置、1,880 个独立进程；部分同输出/认证路线有成本或 RSS 收益，4 组时间退化超过 20% |
+| [S5](docs/S5_REPORT.md) | 77 份三方正确性输入、2,840 个正式进程；集成后端 68 个可比组没有一个 95% 配对区间完全低于 1 |
 
-当前输入是链窗口与带序基。点云、Rips 构造器和通用复形前端仍需调用者或后续适配提供。
-真实最短类质量查询尚不可用。本轮有限负载已有同输出/认证的端到端及绝对RSS收益；
-4组时间退化超过20%，不作全局默认后端替换。更大规模、采样稳定性和应用收益仍需各自验收。
+保留显式后端选择。上述数字绑定报告中的源码、输入、机器、预算与认证；完整失败和退化一并保留。
+GUDHI 只对照拓扑，联合几何信息的成本单独报告。更大规模、采样稳定性和应用收益仍需各自验收。
 
-## 文档与开发
+## 文档
 
+- [安装](docs/getting-started/installation.md)与[五分钟快速上手](docs/getting-started/quickstart.md)。
+- [输入语义](docs/guide/input-semantics.md)、[单尺度与几何](docs/guide/single-scale.md)、[有限过滤](docs/guide/filtration.md)。
 - [Python API 与 native 安装](docs/INTERFACE.md)：输入、查询、solver、过滤和批量代数。
 - [结果与序列化](docs/RESULT_MODEL.md)：身份、状态、精确性、快照与缓存。
 - [架构](docs/ARCHITECTURE.md) / [solver 契约](docs/SOLVER_CONTRACT.md)：数学定义和计算边界。
@@ -137,5 +146,20 @@ packed 核坐标分解。`barcode_basis()` 返回经过死亡回改的历史区�
 - [完整文档索引](docs/README.md)：当前状态、路线图、历史报告和研究材料。
 
 贡献代码前阅读 [项目约定](AGENTS.md)，按 [验证说明](docs/VALIDATION.md) 运行与改动相关的检查。
+
+## 开发
+
+问题与改进建议见 [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues)，
+提交要求见 [贡献指南](CONTRIBUTING.md)。文档站可在本地构建，命令见
+[文档构建](docs/VALIDATION.md#文档站构建)。公开 API 与 native ABI 尚未冻结兼容政策。
+
+## 引用
+
+研究工作中使用本包时，请引用实际软件版本与提交；机器可读信息见 [CITATION.cff](CITATION.cff)。
 理论定义固定在 [homology-operator-lab 的研究提交](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88)；
-研究实现与成绩不是本包的运行时依赖或验收证据。公开发行还需确定许可证、版本兼容政策和发布流程。
+研究实现与成绩不是本包的运行时依赖或验收证据。来源与依赖说明见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。
+
+## 许可证与发行状态
+
+采用 [MIT License](LICENSE)。当前仓库已公开，尚无 PyPI 发行。
+公开发行还需确定版本兼容政策和发布流程。

@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use homology-operator in research, please cite the exact software version and commit."
+title: "homology-operator: boundary-native F2 homology operators"
+type: software
+version: 0.0.2.dev0
+license: MIT
+authors:
+  - name: "homology-operator contributors"
+repository-code: "https://github.com/proffitteoy/homology-operator"
+url: "https://github.com/proffitteoy/homology-operator"
+abstract: "Homology operators from based F2 chain windows, with same-projection topology, representatives, weighted geometry, and finite-filtration transport."

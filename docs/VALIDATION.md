@@ -61,8 +61,11 @@ Rust 单测不能替代 Python 差分/不变量测试，实际本地命令与证
 
 - [reference.yml](../.github/workflows/reference.yml)：Python 3.10/3.12 的测试、示例、Ruff、build、隔离 wheel 导入与文档/空白检查。
 - [native.yml](../.github/workflows/native.yml)：可选扩展在声明平台的构建、Rust 检查和强制 native 测试。
+- [s5-oracle.yml](../.github/workflows/s5-oracle.yml)：锁定 GUDHI/secondary 依赖的 S5 测试、输入与 oracle 审计。
+- [docs.yml](../.github/workflows/docs.yml)：Markdown 本地链接与中英文站点严格构建，上传可浏览产物。
 
-这两条 workflow 在 main push / PR 上运行。配置存在、某次本地通过和远端 CI 通过是不同证据。
+这些 workflow 在 main push / PR 上运行；文档构建也支持手动运行。
+配置存在、某次本地通过和远端 CI 通过是不同证据。
 远端结论绑定准确 head SHA；当前已核对状态集中在文档索引，不把旧报告回写成最新结果。
 
 reference wheel 的本地隔离验证可用：
@@ -75,7 +78,40 @@ uv pip install --python .task-artifacts/docs-wheel-env/Scripts/python.exe $wheel
 ```
 
 上例是 Windows 路径，Linux 使用该环境的 `bin/python`。隔离导入检查只验证打包可用。
-许可证、公开发行、发布权限及版本兼容政策仍需在 [路线图 Phase 7](../HOMOLOGY_OPERATOR_ROADMAP.md) 收口。
+项目采用 [MIT License](../LICENSE)；公开发行、发布权限及版本兼容政策仍需在
+[路线图 Phase 7](../HOMOLOGY_OPERATOR_ROADMAP.md) 收口。
+
+## 文档站构建
+
+沿用 Topp 的 Sphinx + MyST + Furo。站点直接读取根 README 与现有 docs Markdown，
+在构建时把源码/原始证据链接转向仓库并渲染旧 TeX 分隔符，原文件与冻结字节不改写。
+中文与英文站点分别构建，安装、使用、API、数学约定与开发文档各有英文入口；历史报告保留原文。
+
+Sphinx 8 需要 Python 3.11+，建议 3.12；这不改变库本身的 Python 3.10+ 支持域。
+文档依赖独立固定在 [requirements.txt](requirements.txt)，不加入运行时/默认开发环境。
+仓库根目录在 PowerShell 中运行：
+
+```powershell
+uv venv .task-artifacts/docs-env --python 3.12
+uv pip install --python .task-artifacts/docs-env/Scripts/python.exe -r docs/requirements.txt
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site/en
+```
+
+Linux 将解释器路径改为 `.task-artifacts/docs-env/bin/python`。中文源码目录为 `docs`，英文为 `docs/en`；
+首页分别为 `.task-artifacts/docs-site/index.html` 与 `en/index.html`。
+`-n -W` 将解析/交叉引用警告作为失败；也需先运行 `check_docs.ps1` 检查全部原始本地链接。
+站点构建不运行示例、数学测试或外网链接检查，这些分别按相关验收命令执行。
+
+本地预览：
+
+```powershell
+.task-artifacts/docs-env/Scripts/python.exe -m http.server 8000 --bind 127.0.0.1 --directory .task-artifacts/docs-site
+```
+
+浏览器打开 `http://127.0.0.1:8000/index.html`，Ctrl+C 停止。
+[Documentation checks](../.github/workflows/docs.yml)仅构建并上传 `documentation-site` artifact。
+当前没有 Pages 部署工作流，也没有已验证的线上文档站；配置站点托管后再更新公开 URL。
 
 ## 数学变更的最低验证
 

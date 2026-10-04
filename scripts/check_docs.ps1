@@ -8,7 +8,9 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $rootPrefix = $repoRoot + [IO.Path]::DirectorySeparatorChar
 $pathComparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
 $required = @(
-    'AGENTS.md', 'README.md', 'HOMOLOGY_OPERATOR_ROADMAP.md',
+    'AGENTS.md', 'README.md', 'README.en.md', 'CONTRIBUTING.md',
+    'LICENSE', 'CITATION.cff', 'THIRD_PARTY_NOTICES.md', 'HOMOLOGY_OPERATOR_ROADMAP.md',
+    'docs/index.md', 'docs/conf.py', 'docs/requirements.txt', 'docs/en/USAGE.md',
     'docs/README.md', 'docs/ARCHITECTURE.md', 'docs/INTERFACE.md',
     'docs/RESULT_MODEL.md', 'docs/SOLVER_CONTRACT.md', 'docs/VALIDATION.md',
     'docs/冷启动.md'
