@@ -1,6 +1,6 @@
 <h1 align="center">homology-operator</h1>
 
-<p align="center">F2 homology, persistence, and weighted geometry from boundary matrices.</p>
+<p align="center">Binary homology operators: kernels, linear representatives, weighted geometry, and persistent transport.</p>
 
 <p align="center">
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg" alt="Reference checks"></a>
@@ -16,11 +16,27 @@
   <a href="LICENSE">MIT License</a>
 </p>
 
-`homology-operator` constructs homology operators from a based chain window
-`C_{k+1} --D--> C_k --A--> C_{k-1}` over F2 and positive coordinate weights.
-One projection `P` supplies Betti numbers, class representatives, selected mass,
-class distances, support, and stretch. `OperatorFamily` reads finite-filtration
-barcodes and class tracking from transport between stages.
+This project introduces a **binary homology operator** on the original chain
+space and provides its Python/Rust implementation. Its input is a finite based
+chain window in a fixed degree with positive coordinate weights:
+
+$$
+C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
+$$
+
+Choose algebraic generalized inverses with $AGA=A$ and $DUD=D$ and construct
+
+$$
+P=(I+DU)(I+GA),\qquad L=I+P,\qquad
+\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+$$
+
+Each kernel vector uniquely represents a homology class. $P$ preserves cycle
+classes and enforces linear relations between all representatives:
+$P(z+y)=Pz+Py$. The same weighted action supplies topology, representative mass,
+class distance, shared support, and worst stretch. Projected transport between
+kernels realizes the entire persistence module of a finite filtration, from
+which the barcode is read. Definitions and proofs are in [operator theory](docs/en/MATHEMATICS.md).
 
 The Python correctness reference uses only the standard library. An optional Rust
 extension provides packed algebra, compact actions, supported solvers, and batch
@@ -37,6 +53,29 @@ solver records, and results can be saved and independently checked.
 The public input is a chain window. General point-cloud, Rips, and complex builders
 must be supplied by the caller. True minimum class mass is currently unavailable;
 `selected_mass` measures the representative selected by the current projection.
+
+## Operator selection and minimum stretch
+
+Legal projections need not be unique. Minimum stretch controls every cycle:
+
+$$
+\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
+\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
+m_w(x)=\sum_{i:x_i=1}w_i.
+$$
+
+This equals the minimum-stretch linear section problem for the homology
+quotient. If $\beta>0$, $1\le\Gamma_*\le\beta$. In the six-edge complex, a
+minimum-total-mass basis gives masses $(8,8,12)$ and stretch $4/3$; a
+minimum-stretch operator gives $(8,9,9)$ and stretch $9/8$. Shared-support
+cancellation controls the combined class.
+The [complete example](docs/en/MATHEMATICS.md#6-a-complete-six-edge-example)
+exhausts all four sections; [runnable code](docs/en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex)
+reads all values from the actual operator.
+
+The default solver constructs a legal operator. Exact solvers certify optimality
+within their domains through independent certificates. The eigenvalues of $L$
+are only $0,1$; its weighted action supplies geometry.
 
 ## Installation
 
@@ -144,16 +183,16 @@ geometry or the global optimum.
 The [English documentation](docs/en/index.md) provides installation, quickstart,
 task guides, API and mathematical references, and development instructions:
 
+- [Operator theory](docs/en/MATHEMATICS.md): definition, kernel theorem, sections, stretch, geometry, and transport
 - [Installation](docs/en/getting-started/installation.md) and [quickstart](docs/en/getting-started/quickstart.md)
 - [Python API](docs/en/INTERFACE.md)
 - [Results and serialization](docs/en/RESULT_MODEL.md)
-- [Mathematical conventions](docs/en/ARCHITECTURE.md) and [solver contract](docs/en/SOLVER_CONTRACT.md)
+- [Implementation architecture](docs/en/ARCHITECTURE.md) and [solver contract](docs/en/SOLVER_CONTRACT.md)
 - [Development and validation](docs/en/VALIDATION.md)
 - [Implementation status and evidence](docs/README.md)
 
 Report issues through [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues).
-See [Contributing](CONTRIBUTING.md) before submitting changes. Frozen experiment
-reports remain in their original Chinese form. API and native ABI
+See [Contributing](CONTRIBUTING.md) before submitting changes. API and native ABI
 compatibility policies have not been frozen.
 
 For research, cite the actual software version and commit. Machine-readable

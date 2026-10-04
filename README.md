@@ -1,6 +1,6 @@
 <h1 align="center">homology-operator</h1>
 
-<p align="center">F2 同调、持久性与加权几何：Python 接口与 Rust 计算后端。</p>
+<p align="center">从边界构造二元同调算子：核、线性代表、加权几何与持久传输。</p>
 
 <p align="center">
   <a href="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml"><img src="https://github.com/proffitteoy/homology-operator/actions/workflows/reference.yml/badge.svg" alt="Reference checks"></a>
@@ -16,10 +16,25 @@
   <a href="LICENSE">MIT License</a>
 </p>
 
-`homology-operator` 是一个从边界矩阵构造同调算子的 Python 库。输入固定次数的带基链窗口
-`C_{k+1} --D--> C_k --A--> C_{k-1}` 和正坐标权重，构造投影 `P` 与 `L=I+P`，
-从同一个投影读取 Betti 数、类代表、质量、距离、支撑和 stretch。
-有限过滤的 barcode 与类追踪由 `OperatorFamily` 的跨阶段传输读取。
+本项目提出一种定义在原链空间上的**二元同调算子**，并提供它的 Python/Rust 实现。
+输入固定次数的有限带基链窗口与正坐标权重：
+
+$$
+C_{k+1}\xrightarrow{D}C_k\xrightarrow{A}C_{k-1},\qquad AD=0.
+$$
+
+选择 $AGA=A$、$DUD=D$ 的代数广义逆，构造
+
+$$
+P=(I+DU)(I+GA),\qquad L=I+P,\qquad
+\boxed{\ker L=\operatorname{im}P\cong H_k(C;\mathbf F_2).}
+$$
+
+核中的向量是每个同调类唯一的选定循环代表。$P$ 保持循环的原同调类，
+并使全部代表遵守线性关系：$P(z+y)=Pz+Py$。
+同一个带权作用同时给出拓扑、代表质量、类距离、共享支撑和最坏伸长；
+有限过滤中核之间的投影传输实现整个持久同调模，并由传输读取 barcode。
+完整定义与证明见[算子理论](docs/MATHEMATICS.md)。
 
 提供 Python 公共接口和可选 Rust 计算后端，版本为开发快照 `0.0.2.dev0`。
 采用 [MIT License](LICENSE)，尚未发行。完整产品说明见 [在线文档](https://proffitteoy.github.io/homology-operator/)。
@@ -35,6 +50,25 @@
 
 当前输入是链窗口与带序基。通用点云、Rips 构造器和复形前端需要调用者提供。
 `selected_mass` 表示当前代表的质量；真实最短类质量查询尚不可用。
+
+## 算子选择与最小伸长
+
+合法投影通常不唯一。最小伸长目标同时控制所有循环，而非只控制某组基代表：
+
+$$
+\Gamma_w(P)=\max_{0\ne z,\ Az=0}\frac{m_w(Pz)}{m_w(z)},\qquad
+\Gamma_*=\min_{P\ \mathrm{legal}}\Gamma_w(P),\qquad
+m_w(x)=\sum_{i:x_i=1}w_i.
+$$
+
+它与同调商的最小伸长线性截面问题等价；非零 Betti 数为 $\beta$ 时，$1\le\Gamma_*\le\beta$。
+四顶点六边复形上，最小总质量基给出质量 $(8,8,12)$、伸长 $4/3$；
+最小伸长算子给出 $(8,9,9)$、伸长 $9/8$。这个选择通过共享支撑的抵消控制组合类。
+[完整算例](docs/MATHEMATICS.md#6-六边复形完整算例)列出全部四个截面、矩阵及证明；
+[可运行代码](docs/guide/single-scale.md#六边复形的精确算子)从同一个算子读取这些结果。
+
+默认 solver 构造合法算子；支持域内的精确 solver 与独立证书才认证最优。
+$L$ 的特征值只有 $0,1$，几何信息由带权作用读取。
 
 ## 安装
 
@@ -126,6 +160,7 @@ uv run --locked python examples/filtration.py
 
 ## 文档
 
+- [算子理论](docs/MATHEMATICS.md)：正式定义、构造、核定理、投影空间、最小伸长、几何与持久传输证明。
 - [安装](docs/getting-started/installation.md)与[五分钟快速上手](docs/getting-started/quickstart.md)。
 - [输入语义](docs/guide/input-semantics.md)、[单尺度与几何](docs/guide/single-scale.md)、[有限过滤](docs/guide/filtration.md)。
 - [Python API 与 native 安装](docs/INTERFACE.md)：输入、查询、solver、过滤和批量代数。

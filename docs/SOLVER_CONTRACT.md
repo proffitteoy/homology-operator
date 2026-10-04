@@ -1,6 +1,6 @@
 # Solver 契约
 
-[English](en/SOLVER_CONTRACT.md) · [API](INTERFACE.md)
+[English](en/SOLVER_CONTRACT.md) · [API](INTERFACE.md) · [目标的定义与证明](MATHEMATICS.md)
 
 ## 职责与合法性
 

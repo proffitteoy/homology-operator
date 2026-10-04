@@ -1,5 +1,8 @@
 # Five-minute quickstart
 
+For the operator definition and proofs, read [operator theory](../MATHEMATICS.md).
+For minimum-stretch selection and joint geometry, run the [six-edge example](../guide/single-scale.md#an-exact-operator-on-the-six-edge-complex).
+
 [中文](../../getting-started/quickstart.md)
 
 Build one window, query its classes, then add a filtration stage.

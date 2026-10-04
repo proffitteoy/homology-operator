@@ -3,6 +3,8 @@
 [English](../en/getting-started/quickstart.md)
 
 本页从一个两顶点窗口开始，依次读取单尺度结果与有限过滤。
+理解新算子的定义与数学意义，先读[算子理论](../MATHEMATICS.md)；
+展示最小伸长选择及联合几何输出的完整例子见[六边精确算子](../guide/single-scale.md#六边复形的精确算子)。
 
 ## 单尺度
 

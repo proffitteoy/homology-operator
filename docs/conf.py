@@ -39,7 +39,7 @@ copybutton_prompt_is_regexp = True
 
 
 def prepare_markdown(app, docname, source):
-    """Render legacy math and resolve evidence/cross-language links at build time."""
+    """Render math and resolve repository/cross-language links at build time."""
     docs = Path(__file__).resolve().parent
     root = docs.parent
     srcdir = Path(app.srcdir).resolve()
@@ -64,6 +64,7 @@ def prepare_markdown(app, docname, source):
                 "INTERFACE.md",
                 "RESULT_MODEL.md",
                 "ARCHITECTURE.md",
+                "MATHEMATICS.md",
                 "SOLVER_CONTRACT.md",
                 "VALIDATION.md",
                 "platforms.md",

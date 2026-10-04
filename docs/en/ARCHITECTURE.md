@@ -1,9 +1,11 @@
-# Mathematical conventions and architecture
+# Architecture and computation boundaries
 
 [中文](../ARCHITECTURE.md)
 
 The theory is tied to `homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`.
-This page defines the current objects and computation boundaries. See the
+The formal definition, proofs, projection space, and six-edge example are in
+[operator theory](MATHEMATICS.md). This page describes implementation responsibilities
+and computation boundaries. See the
 [API](INTERFACE.md), [result model](RESULT_MODEL.md), and [solver contract](SOLVER_CONTRACT.md).
 
 ## Chain window and projection

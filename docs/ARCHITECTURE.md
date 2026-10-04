@@ -1,6 +1,7 @@
 # 架构与计算边界
 
 理论来源固定为 `homology-operator-lab @ 6143729669902ee875b211b58085e954c76cdf88`。
+算子的正式定义、完整证明、投影族和六边算例见[算子理论](MATHEMATICS.md)。
 本文描述当前模块职责和必须保持的数学契约。调用方法见 [API](INTERFACE.md)，
 状态、身份与快照见 [结果模型](RESULT_MODEL.md)，阶段状态见 [文档索引](README.md)。
 

@@ -1,5 +1,7 @@
 # Solver contract
 
+The objective, section equivalence, and universal bounds are proved in [operator theory](MATHEMATICS.md).
+
 [中文](../SOLVER_CONTRACT.md) · [API](INTERFACE.md)
 
 ## Responsibility and validation
