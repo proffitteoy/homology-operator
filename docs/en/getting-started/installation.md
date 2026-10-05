@@ -2,9 +2,19 @@
 
 [中文](../../getting-started/installation.md)
 
-## Install the reference from source
+## Install from PyPI
 
-Python 3.10+ is required. The current version is `0.0.2.dev0`, with no PyPI release:
+Python 3.10+ is required. Once [version 0.0.2](https://pypi.org/project/homology-operator/0.0.2/) is published:
+
+```console
+python -m pip install homology-operator==0.0.2
+```
+
+No Rust compiler is needed for this OS-independent reference wheel.
+
+## Install from source
+
+Alternatively, clone the repository:
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git

@@ -162,7 +162,7 @@ is currently unavailable as a public query.
 ## Installation and backends
 
 Python 3.10+ is required. The reference runtime uses only the standard library.
-The current version is a source development snapshot, `0.0.2.dev0`.
+The Python package version is `0.0.2`; see [installation](getting-started/installation.md) for PyPI upload status and commands.
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git

@@ -19,7 +19,8 @@ git diff --check
 ```
 
 Missing native dependencies explicitly skip native tests. A reference pass does not
-validate native code. There is no independent typecheck or public release command.
+validate native code. `uv build` creates local artifacts; public uploading follows
+the release procedure below. There is no independent typecheck command.
 
 ## Native and oracle checks
 
@@ -82,3 +83,36 @@ checks Windows Python 3.10 and Linux Python 3.12 with required native tests and
 isolated dual wheels. Oracle CI forces GUDHI comparisons. Documentation CI builds
 both languages strictly and deploys main. Local and remote results belong to their
 exact source identities. Temporary outputs and wheels stay in ignored directories.
+
+## Public releases
+
+The `homology-operator` distribution provides an OS-independent wheel and source
+archive. Version 0.0.2 has a standard-library-only runtime. The optional Rust
+package is built separately from matching source and is not uploaded to PyPI.
+During 0.x, patch releases preserve the public API; breaking changes require a
+minor-version increase and release notes. Regression tests cover existing schema
+1/2 restoration and preserve historical fixture versions/hashes.
+
+Before release, synchronize pyproject.toml, `__version__`, uv.lock, CITATION.cff,
+and the documentation version. Run the checks above, including strict builds of
+both documentation languages, and verify all main CI for the release commit.
+New result provenance reports the installed package version.
+
+Register a [pending publisher on PyPI](https://pypi.org/manage/account/publishing/)
+with project `homology-operator`, owner `proffitteoy`, repository `homology-operator`,
+workflow `release.yml`, and environment `pypi`.
+[The release workflow](../../.github/workflows/release.yml) runs on a published
+GitHub Release whose tag is `v` plus the package version, such as `v0.0.2`.
+It tests Python 3.10/3.12, builds/checks wheel and sdist metadata, and runs the full
+applicable suite against the isolated wheel before uploading those same artifacts.
+The publishing job uses the `pypi` environment and short-lived OIDC identity.
+
+```console
+uv build --no-build-isolation
+uv tool run --from twine==6.2.0 twine check --strict dist/*
+gh release create v0.0.2 --target <verified-commit-sha> --title "homology-operator 0.0.2" --notes-file <release-notes-file>
+```
+
+Verify the workflow, [PyPI version record](https://pypi.org/project/homology-operator/0.0.2/),
+uploaded SHA-256 digests, and a fresh installation from PyPI. A GitHub Release or
+successful build alone does not prove that PyPI uploading completed.

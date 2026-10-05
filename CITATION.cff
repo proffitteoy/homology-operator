@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use homology-operator in research, please cite the exact software version and commit."
 title: "homology-operator: boundary-native F2 homology operators"
 type: software
-version: 0.0.2.dev0
+version: 0.0.2
 license: MIT
 authors:
   - name: "homology-operator contributors"

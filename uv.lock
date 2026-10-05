@@ -47,7 +47,7 @@ wheels = [
 
 [[package]]
 name = "homology-operator"
-version = "0.0.2.dev0"
+version = "0.0.2"
 source = { editable = "." }
 
 [package.dev-dependencies]

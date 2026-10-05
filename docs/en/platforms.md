@@ -11,6 +11,7 @@
 
 Other native platforms and interpreter combinations are outside the current CI
 matrix. A successful local build does not expand the public support claim.
-There are no published PyPI wheels. API and native ABI compatibility remain
-development contracts. See [installation](getting-started/installation.md) and
+The Python distribution provides a `py3-none-any` reference wheel. Native wheels
+are built separately from source. The 0.x API policy is in
+[public releases](VALIDATION.md#public-releases); native ABI uses its own semantics version. See [installation](getting-started/installation.md) and
 [development checks](VALIDATION.md).

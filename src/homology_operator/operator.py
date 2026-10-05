@@ -6,6 +6,7 @@ from fractions import Fraction
 from math import fsum, isfinite
 from types import MappingProxyType
 
+from . import __version__
 from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 from .chain import ChainWindow
 from .result import OperatorResult, QueryResult, _freeze, make_identity
@@ -79,9 +80,9 @@ class HomologyOperator:
                     else "python-structured-reference"
                     if isinstance(self.P, CyclicAction)
                     else "python-dense-reference",
-                    "backend_version": "0.0.2.dev0",
+                    "backend_version": __version__,
                     "solver": self.solution.method,
-                    "solver_version": "0.0.2.dev0",
+                    "solver_version": __version__,
                     "arithmetic_mode": self.window.arithmetic,
                     "tie_break_policy": self.solution.tie_break_policy,
                     "solver_config_id": self.solution.solver_config_id,

@@ -2,9 +2,19 @@
 
 [English](../en/getting-started/installation.md)
 
-## 从源码安装 reference
+## 从 PyPI 安装
 
-需要 Python 3.10+。当前版本为 `0.0.2.dev0`，尚无 PyPI 发行：
+需要 Python 3.10+。[0.0.2 的 PyPI 发行](https://pypi.org/project/homology-operator/0.0.2/)完成后执行：
+
+```console
+python -m pip install homology-operator==0.0.2
+```
+
+该 reference wheel 不依赖操作系统，无需 Rust 编译器。
+
+## 从源码安装
+
+也可直接克隆仓库安装：
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git

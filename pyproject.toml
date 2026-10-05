@@ -4,13 +4,25 @@ build-backend = "hatchling.build"
 
 [project]
 name = "homology-operator"
-version = "0.0.2.dev0"
+version = "0.0.2"
 description = "Boundary-native F2 homology operators and finite filtration reference"
-readme = "README.md"
+readme = "README.en.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = []
+authors = [{name = "homology-operator contributors"}]
+keywords = ["homology", "topology", "persistence", "F2", "chain-complex"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
 
 [project.urls]
 Repository = "https://github.com/proffitteoy/homology-operator"

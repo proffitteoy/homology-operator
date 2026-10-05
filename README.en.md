@@ -9,12 +9,12 @@
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> ·
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/README.md">中文</a> ·
   <a href="https://proffitteoy.github.io/homology-operator/en/">Documentation</a> ·
-  <a href="docs/en/INTERFACE.md">API</a> ·
-  <a href="docs/en/MATHEMATICS.md">Mathematics</a> ·
-  <a href="docs/en/VALIDATION.md">Development</a> ·
-  <a href="LICENSE">MIT License</a>
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/INTERFACE.md">API</a> ·
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md">Mathematics</a> ·
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/VALIDATION.md">Development</a> ·
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/LICENSE">MIT License</a>
 </p>
 
 This project introduces a **binary homology operator** on the original chain
@@ -22,13 +22,13 @@ space and provides its Python/Rust implementation. Its kernel realizes homology;
 the accompanying projection selects cycle representatives that obey all linear
 relations. Weighted action supplies class mass, distance, and support. Transport
 between kernels realizes the persistence module of a finite filtration.
-Definitions and proofs are in the [mathematics document](docs/en/MATHEMATICS.md);
+Definitions and proofs are in the [mathematics document](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md);
 the separate [Mathematics section](#mathematics) below gives the core relations.
 
 The Python correctness reference uses only the standard library. An optional Rust
 extension provides packed algebra, compact actions, supported solvers, and batch
-queries. This is a source development snapshot, `0.0.2.dev0`; no PyPI release is
-available. The project uses the [MIT License](LICENSE).
+queries. The Python package version is `0.0.2`, an early release. Check the
+[PyPI version record](https://pypi.org/project/homology-operator/0.0.2/) for upload status. The project uses the [MIT License](https://github.com/proffitteoy/homology-operator/blob/main/LICENSE).
 
 ## When to use it
 
@@ -43,7 +43,13 @@ must be supplied by the caller. True minimum class mass is currently unavailable
 
 ## Installation
 
-Python 3.10+ is required. Install the reference from source:
+Python 3.10+ is required. Once the PyPI release is published:
+
+```console
+python -m pip install homology-operator==0.0.2
+```
+
+The reference can also be installed from source:
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git
@@ -53,7 +59,7 @@ python examples/single_scale.py
 ```
 
 Virtual environments, uv, and optional Rust builds are covered in
-[installation](docs/en/getting-started/installation.md) and [platform support](docs/en/platforms.md).
+[installation](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/getting-started/installation.md) and [platform support](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/platforms.md).
 
 ## A minimal example
 
@@ -124,7 +130,7 @@ Barcodes come from `T_ij=P_j J_ij|ker(L_i)`. `barcode()` reads adjacent transpor
 `barcode_basis()` and `rank_table()` explicitly request potentially quadratic
 outputs. Intervals use half-open stage endpoints, with `None` for survival under
 the declared constant terminal extension. Family snapshots default to schema 2;
-schema 1 remains readable. See the [English guide](docs/en/USAGE.md#finite-filtrations).
+schema 1 remains readable. See the [English guide](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/USAGE.md#finite-filtrations).
 
 ## Mathematics
 
@@ -148,7 +154,7 @@ classes and enforces linear relations between all representatives:
 $`P(z+y)=Pz+Py`$. The same weighted action supplies topology, representative mass,
 class distance, shared support, and worst stretch. Projected transport between
 kernels realizes the entire persistence module of a finite filtration, from
-which the barcode is read. Definitions and proofs are in [operator theory](docs/en/MATHEMATICS.md).
+which the barcode is read. Definitions and proofs are in [operator theory](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md).
 
 ### Minimum stretch
 
@@ -165,8 +171,8 @@ quotient. If $`\beta>0`$, $`1\le\Gamma_*\le\beta`$. In the six-edge complex, a
 minimum-total-mass basis gives masses $`(8,8,12)`$ and stretch $`4/3`$; a
 minimum-stretch operator gives $`(8,9,9)`$ and stretch $`9/8`$. Shared-support
 cancellation controls the combined class.
-The [complete example](docs/en/MATHEMATICS.md#6-a-complete-six-edge-example)
-exhausts all four sections; [runnable code](docs/en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex)
+The [complete example](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md#6-a-complete-six-edge-example)
+exhausts all four sections; [runnable code](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex)
 reads all values from the actual operator.
 
 The default solver constructs a legal operator. Exact solvers certify optimality
@@ -183,7 +189,7 @@ are only $`0,1`$; its weighted action supplies geometry.
 | Weights | Arbitrary-precision integers/rationals and explicit floating-point semantics |
 | Optional Rust | Packed algebra, reusable decompositions, multi-RHS, factorized/HC actions, geometry workspace |
 | Backend integration | Visible same-solver fallback, cooperative cancellation, validated snapshot recovery |
-| Further work | Wider scale and machine coverage, stability, application evidence, public releases |
+| Further work | Wider scale and machine coverage, stability, application evidence |
 
 Every solver output is independently checked for `P²=P`, `AP=0`, `PD=0`, and
 preservation of cycle homology. Exact F2 algebra does not certify floating-point
@@ -191,29 +197,32 @@ geometry or the global optimum.
 
 ## Documentation, contribution, and citation
 
-The [English documentation](docs/en/index.md) provides installation, quickstart,
+The [English documentation](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/index.md) provides installation, quickstart,
 task guides, API and mathematical references, and development instructions:
 
-- [Operator theory](docs/en/MATHEMATICS.md): definition, kernel theorem, sections, stretch, geometry, and transport
-- [Installation](docs/en/getting-started/installation.md) and [quickstart](docs/en/getting-started/quickstart.md)
-- [Python API](docs/en/INTERFACE.md)
-- [Results and serialization](docs/en/RESULT_MODEL.md)
-- [Implementation architecture](docs/en/ARCHITECTURE.md) and [solver contract](docs/en/SOLVER_CONTRACT.md)
-- [Development and validation](docs/en/VALIDATION.md)
-- [Implementation status and evidence](docs/README.md)
+- [Operator theory](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md): definition, kernel theorem, sections, stretch, geometry, and transport
+- [Installation](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/getting-started/installation.md) and [quickstart](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/getting-started/quickstart.md)
+- [Python API](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/INTERFACE.md)
+- [Results and serialization](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/RESULT_MODEL.md)
+- [Implementation architecture](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/ARCHITECTURE.md) and [solver contract](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/SOLVER_CONTRACT.md)
+- [Development and validation](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/VALIDATION.md)
+- [Implementation status and evidence](https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md)
 
 Report issues through [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues).
-See [Contributing](CONTRIBUTING.md) before submitting changes. API and native ABI
-compatibility policies have not been frozen.
+See [Contributing](https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.en.md) before submitting changes. The early-release
+compatibility policy and publishing procedure are in [development](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/VALIDATION.md#public-releases).
 
 For research, cite the actual software version and commit. Machine-readable
-metadata is provided in [CITATION.cff](CITATION.cff). The theory is tied to
+metadata is provided in [CITATION.cff](https://github.com/proffitteoy/homology-operator/blob/main/CITATION.cff). The theory is tied to
 [homology-operator-lab at a fixed commit](https://github.com/proffitteoy/homology-operator-lab/tree/6143729669902ee875b211b58085e954c76cdf88);
 its code and validation results are not this package's runtime dependencies or
-acceptance evidence. See [source and dependency notices](THIRD_PARTY_NOTICES.md).
+acceptance evidence. See [source and dependency notices](https://github.com/proffitteoy/homology-operator/blob/main/THIRD_PARTY_NOTICES.md).
 
 ## License and release status
 
-The repository uses the [MIT License](LICENSE). No PyPI release is available.
-Compatibility policies and the release process need to be finalized before a
-public software release.
+The repository uses the [MIT License](https://github.com/proffitteoy/homology-operator/blob/main/LICENSE). The Python distribution provides
+an OS-independent wheel and source archive. During 0.x, patch releases preserve
+the public API; breaking changes require a minor-version increase and release
+notes. Existing schema 1/2 snapshots remain covered by restoration tests. Native
+ABI compatibility is checked independently by semantics version; the extension
+is built separately from matching source.

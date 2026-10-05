@@ -1,6 +1,6 @@
-"""Exact F2 homology operator and finite filtration reference (unreleased)."""
+"""Exact F2 homology operator and finite filtration reference."""
 
-__version__ = "0.0.2.dev0"
+__version__ = "0.0.2"
 
 from .algebra import Matrix, CyclicAction, CompactAction
 from .chain import ChainWindow, InvalidInput

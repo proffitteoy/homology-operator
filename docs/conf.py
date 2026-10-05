@@ -8,7 +8,7 @@ from urllib.parse import quote, unquote, urlsplit
 project = "homology-operator"
 author = "homology-operator contributors"
 copyright = "2026, homology-operator contributors"
-release = "0.0.2.dev0"
+release = "0.0.2"
 language = "zh_CN"
 extensions = ["myst_parser", "sphinx.ext.mathjax", "sphinx_copybutton"]
 source_suffix = {".md": "markdown"}

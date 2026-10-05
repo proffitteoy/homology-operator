@@ -20,5 +20,6 @@
 
 产品包含标准库 Python 接口与可选 Rust 后端，保留同一个 P 的联合输出和独立认证。
 Rust 提供 packed 代数、复用分解、Factorized/HC action、限定 solver 与几何批查询。
-公开版本仍为源码开发快照 0.0.2.dev0，API/native ABI 兼容政策尚未冻结；采用 [MIT](../LICENSE)。
+Python 包版本为 0.0.2，采用 [MIT](../LICENSE)。PyPI 上传状态见[版本记录](https://pypi.org/project/homology-operator/0.0.2/)，
+兼容政策与 Trusted Publisher 流程见[发行说明](VALIDATION.md#公开发行)。
 文档站由 main 的严格双语构建自动发布到 GitHub Pages；PR 只构建检查。

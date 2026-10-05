@@ -152,7 +152,7 @@ assert op.stretch().value == Fraction(9, 8)
 
 ## 安装与计算后端
 
-Python 3.10+；reference 运行时仅依赖标准库。当前版本为源码开发快照 `0.0.2.dev0`。
+Python 3.10+；reference 运行时仅依赖标准库。Python 包版本为 `0.0.2`；PyPI 上传状态和安装命令见[安装](getting-started/installation.md)。
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git

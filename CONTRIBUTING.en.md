@@ -25,4 +25,5 @@ modified Python snippets must actually run. Mathematical or serialization change
 need independent invariants and rejection/round-trip evidence.
 
 Report problems through [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues).
-The project uses MIT; API and native ABI compatibility are not yet frozen.
+The project uses MIT; the 0.x compatibility policy and Trusted Publisher procedure
+are in [public releases](docs/en/VALIDATION.md#public-releases).

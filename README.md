@@ -22,8 +22,8 @@
 同一个带权作用给出代表质量、类距离和支撑；核之间的传输实现有限过滤的持久同调模。
 定义、构造与证明集中在[数学文档](docs/MATHEMATICS.md)，本页的[数学章节](#数学)概述核心关系。
 
-提供 Python 公共接口和可选 Rust 计算后端，版本为开发快照 `0.0.2.dev0`。
-采用 [MIT License](LICENSE)，尚未发行。完整产品说明见 [在线文档](https://proffitteoy.github.io/homology-operator/)。
+提供 Python 公共接口和可选 Rust 计算后端，Python 包版本为 `0.0.2`，属于早期发行。
+采用 [MIT License](LICENSE)。PyPI 上传状态以[版本记录](https://pypi.org/project/homology-operator/0.0.2/)为准。完整产品说明见 [在线文档](https://proffitteoy.github.io/homology-operator/)。
 
 目前支持：
 
@@ -39,7 +39,13 @@
 
 ## 安装
 
-Python 3.10+；reference 运行时仅依赖标准库。当前从源码安装：
+Python 3.10+；reference 运行时仅依赖标准库。PyPI 发行完成后安装：
+
+```console
+python -m pip install homology-operator==0.0.2
+```
+
+也可从源码安装：
 
 ```console
 git clone https://github.com/proffitteoy/homology-operator.git
@@ -194,5 +200,7 @@ $`L`$ 的特征值只有 $`0,1`$，几何信息由带权作用读取。
 
 ## 许可证与发行状态
 
-采用 [MIT License](LICENSE)。当前仓库已公开，尚无 PyPI 发行。
-公开发行还需确定版本兼容政策和发布流程。
+采用 [MIT License](LICENSE)。Python 包提供通用 wheel 与源码包，发布流程见
+[发行说明](docs/VALIDATION.md#公开发行)。0.x 是早期 API：补丁版本保持公共接口，
+不兼容变更提升次版本并在发行记录说明。结果恢复继续覆盖已有 schema 1/2；
+native ABI 独立按语义版本校验，扩展暂从匹配源码构建。

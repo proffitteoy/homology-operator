@@ -19,7 +19,7 @@ git diff --check
 ```
 
 测试数绑定实际 checkout；缺少扩展时 native 测试明确跳过。
-reference 通过不证明 native 路径通过。`uv build` 生成本地产物，尚无独立 typecheck 或公开发布命令。
+reference 通过不证明 native 路径通过。`uv build` 生成本地产物；公开上传见下方发行流程。尚无独立 typecheck 命令。
 
 ## Rust 后端
 
@@ -93,3 +93,45 @@ main 构建通过后自动部署 [GitHub Pages](https://proffitteoy.github.io/ho
 
 配置、本地通过和远端 CI 通过分别报告，远端结论绑定实际提交。
 临时结果、构建缓存和 wheel 写入 `.task-artifacts/` 或 `dist/`，不提交到产品目录。
+
+## 公开发行
+
+Python 包名为 `homology-operator`；发行 `0.0.2` 提供通用 wheel 和源码包，运行时仅标准库。
+Rust 扩展包暂不上传 PyPI，继续按匹配源码单独构建。0.x 属于早期 API：补丁版本保持公共接口，
+不兼容变更提升次版本并写入发行记录；已有 schema 1/2 恢复兼容由回归验证。
+
+发行前同步 pyproject.toml、包内 `__version__`、uv.lock、CITATION.cff 和文档版本。
+新结果的 backend/solver 版本取包版本；历史 fixture 的版本与 hash 保留。
+完成上方回归、示例、Ruff、文档检查及严格双语构建，并核对发行提交的全部 main CI。
+
+首次上传需在 [PyPI pending publishers](https://pypi.org/manage/account/publishing/) 登记：
+
+| 字段 | 值 |
+| --- | --- |
+| PyPI project name | `homology-operator` |
+| Owner | `proffitteoy` |
+| Repository name | `homology-operator` |
+| Workflow name | `release.yml` |
+| Environment name | `pypi` |
+
+[release.yml](../.github/workflows/release.yml) 在 GitHub Release 发布后运行。
+标签必须为 `v` 加包版本（例如 `v0.0.2`），且指向已经核对的发行提交。
+工作流在 Python 3.10/3.12 上回归、构建并检查 wheel/sdist 元数据，
+在隔离环境从 wheel 运行完整适用测试；只在全部通过后上传同一份产物。
+上传 job 使用 `pypi` environment 和短期 OIDC 身份，不保存长期 PyPI token。
+
+本地构建与元数据检查：
+
+```console
+uv build --no-build-isolation
+uv tool run --from twine==6.2.0 twine check --strict dist/*
+```
+
+核对包内容、隔离安装和准确源码身份后，可发布 GitHub Release：
+
+```console
+gh release create v0.0.2 --target <verified-commit-sha> --title "homology-operator 0.0.2" --notes-file <release-notes-file>
+```
+
+发布结束后检查 workflow、[PyPI 版本记录](https://pypi.org/project/homology-operator/0.0.2/)，
+对比上传产物 SHA-256，并在全新环境从 PyPI 安装运行。GitHub Release 或构建成功都不证明 PyPI 已上传。
