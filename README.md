@@ -39,7 +39,7 @@
 
 ## 安装
 
-Python 3.10+；reference 运行时仅依赖标准库。PyPI 发行完成后安装：
+Python 3.10+；reference 运行时仅依赖标准库。从 PyPI 安装：
 
 ```console
 python -m pip install homology-operator==0.0.2

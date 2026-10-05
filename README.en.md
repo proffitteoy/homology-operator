@@ -43,7 +43,7 @@ must be supplied by the caller. True minimum class mass is currently unavailable
 
 ## Installation
 
-Python 3.10+ is required. Once the PyPI release is published:
+Python 3.10+ is required. Install from PyPI:
 
 ```console
 python -m pip install homology-operator==0.0.2

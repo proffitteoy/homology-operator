@@ -4,7 +4,7 @@
 
 ## Install from PyPI
 
-Python 3.10+ is required. Once [version 0.0.2](https://pypi.org/project/homology-operator/0.0.2/) is published:
+Python 3.10+ is required. [Version 0.0.2 is available on PyPI](https://pypi.org/project/homology-operator/0.0.2/):
 
 ```console
 python -m pip install homology-operator==0.0.2
