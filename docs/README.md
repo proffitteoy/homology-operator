@@ -1,25 +1,35 @@
-# homology-operator 文档
+# homology-operator documentation
 
-[在线文档](https://proffitteoy.github.io/homology-operator/) · [English](en/index.md) · [贡献](../CONTRIBUTING.md)
+[Online documentation](https://proffitteoy.github.io/homology-operator/) · [中文](index.md) · [Contributing](../CONTRIBUTING.md)
 
-| 需要做什么 | 阅读入口 |
+English is the default documentation language. The site root serves English;
+Chinese documentation is available at [/zh/](https://proffitteoy.github.io/homology-operator/zh/).
+The existing [/en/](https://proffitteoy.github.io/homology-operator/en/) URLs remain available.
+
+| Task | Start here |
 | --- | --- |
-| 理解这个算子的定义与数学意义 | [算子理论](MATHEMATICS.md)：核、线性截面、伸长、几何与持久传输的完整论证 |
-| 安装并运行第一个例子 | [安装](getting-started/installation.md)、[快速上手](getting-started/quickstart.md) |
-| 运行同时读取拓扑与几何的完整算例 | [六边精确算子](guide/single-scale.md#六边复形的精确算子) |
-| 构造输入与查询单尺度/过滤 | [Python API](INTERFACE.md) |
-| 构建 Rust、packed 代数与批查询 | [native 指南](guide/native.md) |
-| 判断状态、身份与快照 | [结果模型](RESULT_MODEL.md) |
-| 理解算子、transport 与 barcode 算法 | [数学与架构](ARCHITECTURE.md) |
-| 选择 solver、理解支持域及认证 | [solver 契约](SOLVER_CONTRACT.md) |
-| 开发、运行测试与构建 | [验证说明](VALIDATION.md)、[测试输入](FIXTURES.md) |
-| 判断平台范围 | [平台支持](platforms.md) |
+| Understand the operator and its mathematical meaning | [Operator theory](en/MATHEMATICS.md): kernels, linear sections, stretch, geometry, and persistent transport |
+| Install and run the first example | [Installation](en/getting-started/installation.md), [quickstart](en/getting-started/quickstart.md) |
+| Run a complete joint topology and geometry example | [Exact six-edge operator](en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex) |
+| Construct inputs and query a single scale or filtration | [Python API](en/INTERFACE.md) |
+| Build Rust, use packed algebra and batch queries | [Native guide](en/guide/native.md) |
+| Interpret states, identities, and snapshots | [Result model](en/RESULT_MODEL.md) |
+| Understand the operator, transport, and barcode algorithms | [Mathematics and architecture](en/ARCHITECTURE.md) |
+| Select a solver and understand its domain and certificates | [Solver contract](en/SOLVER_CONTRACT.md) |
+| Develop, test, and build | [Validation](en/VALIDATION.md), [test inputs](FIXTURES.md) |
+| Check platform support | [Platforms](en/platforms.md) |
 
-数学主线从新算子的定义出发：在原链空间构造 L=I+P，以核实现同调，以同一作用读取几何，
-以核传输实现持久同调模。正式理论与 API、实现架构分别提供阅读入口。
+The mathematical starting point is the operator itself: construct L=I+P on the
+original chain space, realize homology through its kernel, read geometry from the
+same action, and realize the persistence module through transport between kernels.
+The formal theory, API, and implementation architecture have separate entry points.
 
-产品包含标准库 Python 接口与可选 Rust 后端，保留同一个 P 的联合输出和独立认证。
-Rust 提供 packed 代数、复用分解、Factorized/HC action、限定 solver 与几何批查询。
-Python 包版本为 0.0.2，采用 [MIT](../LICENSE)。PyPI 上传状态见[版本记录](https://pypi.org/project/homology-operator/0.0.2/)，
-兼容政策与 Trusted Publisher 流程见[发行说明](VALIDATION.md#公开发行)。
-文档站由 main 的严格双语构建自动发布到 GitHub Pages；PR 只构建检查。
+The product includes a standard-library Python interface and an optional Rust
+backend, with joint readouts from the same P and independent certification.
+Rust provides packed algebra, reusable decompositions, Factorized/HC actions,
+supported solvers, and geometric batch queries. The Python package version is
+0.0.2 and uses [MIT](../LICENSE). Check the [PyPI version record](https://pypi.org/project/homology-operator/0.0.2/)
+for upload status; the compatibility policy and Trusted Publisher procedure are
+in [public releases](en/VALIDATION.md#public-releases).
+Strict bilingual builds on main publish GitHub Pages automatically; pull requests
+only run build checks.

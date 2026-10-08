@@ -60,11 +60,13 @@ Sphinx + MyST + Furo；文档要求 Python 3.11+，CI 使用 3.12。
 ```powershell
 uv venv .task-artifacts/docs-env --python 3.12
 uv pip install --python .task-artifacts/docs-env/Scripts/python.exe -r docs/requirements.txt
-.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site
-.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site/en
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site/zh
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html -D html_baseurl=https://proffitteoy.github.io/homology-operator/en/ docs/en .task-artifacts/docs-site/en
 ```
 
-Linux 使用该环境的 `bin/python`。两语言首页为 `index.html` 和 `en/index.html`。
+Linux 使用该环境的 `bin/python`。默认英文首页为 `index.html`，中文首页为 `zh/index.html`；
+`en/index.html` 保留为现有英文链接的兼容入口。
 文档检查需要 PowerShell 7，只读检查根目录与 docs 下的 Markdown、UTF-8、冲突标记和本地文件链接。
 检查同时拒绝表格列数不一致和未保护的数学分隔符。行内公式使用 GitHub 的反引号保护写法，
 块公式使用 math 围栏；共享 Sphinx 配置在构建时转换为 MyST 数学节点。

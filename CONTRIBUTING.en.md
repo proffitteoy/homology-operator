@@ -1,6 +1,6 @@
 # Contributing to homology-operator
 
-[中文](CONTRIBUTING.md) · [Development](docs/en/VALIDATION.md)
+[中文](CONTRIBUTING.zh-CN.md) · [Development](docs/en/VALIDATION.md)
 
 Documentation, examples, input validation, correctness, performance and platform
 improvements are welcome. Read [project conventions](AGENTS.md) and the relevant

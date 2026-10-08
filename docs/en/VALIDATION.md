@@ -1,6 +1,6 @@
 # Development and validation
 
-[中文](../VALIDATION.md) · [Contributing](../../CONTRIBUTING.en.md)
+[中文](../VALIDATION.md) · [Contributing](../../CONTRIBUTING.md)
 
 ## Reference environment
 
@@ -57,11 +57,14 @@ Sphinx + MyST + Furo requires Python 3.11+; CI uses 3.12.
 ```console
 uv venv .task-artifacts/docs-env --python 3.12
 uv pip install --python .task-artifacts/docs-env/Scripts/python.exe -r docs/requirements.txt
-.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site
-.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site/en
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs/en .task-artifacts/docs-site
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html docs .task-artifacts/docs-site/zh
+.task-artifacts/docs-env/Scripts/python.exe -m sphinx -E -n -W --keep-going -b html -D html_baseurl=https://proffitteoy.github.io/homology-operator/en/ docs/en .task-artifacts/docs-site/en
 ```
 
-On Linux use `bin/python`. Run the PowerShell 7 Markdown checker and execute changed
+On Linux use `bin/python`. English is served at `index.html` by default; Chinese
+is served at `zh/index.html`. Existing `en/index.html` URLs remain available.
+Run the PowerShell 7 Markdown checker and execute changed
 code snippets separately. The checker rejects inconsistent table widths and unprotected
 math delimiters. Use GitHub backtick-protected inline math and math fences; shared
 Sphinx configuration converts them to MyST math nodes at build time. The checker

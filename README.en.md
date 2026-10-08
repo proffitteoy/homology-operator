@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/proffitteoy/homology-operator/blob/main/README.md">中文</a> ·
-  <a href="https://proffitteoy.github.io/homology-operator/en/">Documentation</a> ·
+  <a href="https://github.com/proffitteoy/homology-operator/blob/main/README.zh-CN.md">中文</a> ·
+  <a href="https://proffitteoy.github.io/homology-operator/">Documentation</a> ·
   <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/INTERFACE.md">API</a> ·
   <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/MATHEMATICS.md">Mathematics</a> ·
   <a href="https://github.com/proffitteoy/homology-operator/blob/main/docs/en/VALIDATION.md">Development</a> ·
@@ -209,7 +209,7 @@ task guides, API and mathematical references, and development instructions:
 - [Implementation status and evidence](https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md)
 
 Report issues through [GitHub Issues](https://github.com/proffitteoy/homology-operator/issues).
-See [Contributing](https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.en.md) before submitting changes. The early-release
+See [Contributing](https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.md) before submitting changes. The early-release
 compatibility policy and publishing procedure are in [development](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/VALIDATION.md#public-releases).
 
 For research, cite the actual software version and commit. Machine-readable

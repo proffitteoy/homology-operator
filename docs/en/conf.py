@@ -12,4 +12,4 @@ html_theme_options = dict(
     _shared_config["html_theme_options"], source_directory="docs/en/"
 )
 
-html_baseurl = "https://proffitteoy.github.io/homology-operator/en/"
+html_baseurl = "https://proffitteoy.github.io/homology-operator/"

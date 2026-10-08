@@ -41,7 +41,7 @@ platforms
 :caption: 项目
 
 VALIDATION
-贡献 <https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.md>
+贡献 <https://github.com/proffitteoy/homology-operator/blob/main/CONTRIBUTING.zh-CN.md>
 产品说明 <https://github.com/proffitteoy/homology-operator/blob/main/docs/README.md>
 源代码 <https://github.com/proffitteoy/homology-operator>
 ```

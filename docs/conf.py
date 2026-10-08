@@ -1,5 +1,6 @@
 """Public documentation: the same Sphinx/MyST/Furo layout as Topp."""
 
+import posixpath
 import re
 from html import escape
 from pathlib import Path
@@ -14,7 +15,7 @@ extensions = ["myst_parser", "sphinx.ext.mathjax", "sphinx_copybutton"]
 source_suffix = {".md": "markdown"}
 root_doc = "index"
 exclude_patterns = ["_build", "en/**", "README.md", "FIXTURES.md"]
-html_baseurl = "https://proffitteoy.github.io/homology-operator/"
+html_baseurl = "https://proffitteoy.github.io/homology-operator/zh/"
 myst_enable_extensions = ["colon_fence", "dollarmath", "fieldlist", "substitution"]
 myst_dmath_double_inline = True
 myst_heading_anchors = 4
@@ -71,7 +72,17 @@ def prepare_markdown(app, docname, source):
                 "USAGE.md",
             }
             if local in public or local.startswith(("getting-started/", "guide/")):
-                url = target.path[:-3] + ".html"
+                public_path = (
+                    "/homology-operator/"
+                    + ("zh/" if app.config.language == "en" else "")
+                    + local[:-3]
+                    + ".html"
+                )
+                url = posixpath.relpath(
+                    public_path,
+                    start=urlsplit(app.config.html_baseurl).path
+                    + posixpath.dirname(docname),
+                )
                 if target.fragment:
                     url += "#" + target.fragment
                 return (
