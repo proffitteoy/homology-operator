@@ -265,11 +265,8 @@ def build_windows(manifest):
 
             def boundary(rows, columns):
                 positions = {s: i for i, s in enumerate(rows)}
-                return Matrix.from_columns(
-                    (
-                        tuple(int(face in facets(s)) for face in positions)
-                        for s in columns
-                    ),
+                return Matrix.from_sparse_columns(
+                    (tuple(positions[face] for face in facets(s)) for s in columns),
                     len(rows),
                 )
 
@@ -370,12 +367,13 @@ def export_windows(manifest, windows):
                 (k, window.basis_current, window.basis_previous, window.A),
                 (k + 1, window.basis_next, window.basis_current, window.D),
             ):
+                coordinates = matrix.rows
                 for j, name in enumerate(basis):
                     vertices = reverse_labels[name]
                     boundary = sorted(
                         reverse_labels[rows[i]]
                         for i in range(matrix.nrows)
-                        if matrix.rows[i][j]
+                        if coordinates[i][j]
                     )
                     record = {
                         "vertices": vertices,

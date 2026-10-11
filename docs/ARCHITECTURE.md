@@ -45,7 +45,7 @@ ChainWindow → ProjectionProblem → solver → ProjectionSolution
 | [family.py](../src/homology_operator/family.py) / `OperatorFamily` | 包含关系、transport、rank/barcode、几何追踪、族快照与重验 |
 | [result.py](../src/homology_operator/result.py) | 六身份、`QueryResult`、单尺度结果、规范 JSON、内容 hash 和缓存边界 |
 | [native.py](../src/homology_operator/native.py) | 可选扩展适配、显式可行构造、批查询、packed 代数与 `PreparedMatrix` |
-| [native/src/](../native/src/) | safe Rust / PyO3 实现；单字宽构造与多字 packed 代数 |
+| [native/src/](../native/src/) | safe Rust / PyO3 实现；多字构造与 packed 代数 |
 | [tests/oracle/reference.py](../tests/oracle/reference.py) | 独立同调与 PH 测试 oracle；不能填充主结果 |
 
 Python 包位于 `src/homology_operator/`，采用上述现有文件。
@@ -96,14 +96,14 @@ Partial 族保留失败阶段，不能以空链空间补齐缺失结果。
 
 | 表示 | 实际范围 |
 | --- | --- |
-| `Matrix` | reference 的显式 P/L；单字宽 `NativeFeasibleSolver` 也回传显式 G/U/P |
+| `Matrix` | reference 的显式 packed P/L；`NativeFeasibleSolver` 回传同一 G/U/P |
 | `CyclicAction` | 已合并的固定 T-B1 结构族，m∈{2,3,4}；参数 handle，无完整 P 存储 |
 | `PreparedMatrix` | 已合并的不可变多字 packed 消元 handle；复用 rank/kernel/image/membership/solve，独立于权重与投影选择 |
 | `CompactAction` / `NativeFactorizedSolver` | 广义逆因子或 HC 表示，不物化完整 P/L |
 | `GeometryWorkspace` | 已合并的六身份绑定准备对象，复用 Matrix / Factorized / HC 的循环几何批查询 |
 
-多字代数已经存在；`NativeFeasibleSolver` 与 `apply_batch` 的显式构造仍有 64 维限制，
-`geometry_batch` 另支持多字 Matrix 与 Factorized/HC。
+`NativeFeasibleSolver` 与 `apply_batch` 支持多字链空间，
+`geometry_batch` 支持多字 Matrix 与 Factorized/HC。
 reference 安装无需扩展；扩展缺失或 solver 不支持请求时，solver/批查询返回 Unavailable。
 直接使用 packed 代数工具需要安装扩展，缺失时抛 ImportError。
 原生几何对同一 packed Pz 做 XOR/AND/OR，整数质量使用 checked u64；
@@ -113,7 +113,14 @@ workspace 不改变结果快照或查询历史；完整支持域见 API 的几�
 作用表示改变不能改变全部链上的 P/L 行为，包括非循环延拓。
 不同表示可以有不同内容身份；不要声称跨表示 hash 归一化。
 紧凑表示仍须独立验证、身份绑定、恢复重验；A/D、核基输出和 transport 矩阵仍是显式对象。
-API 不引入尚未存在的 `LinearAction` 基类、全流程稀疏 backend 或性能承诺。
+API 不引入 `LinearAction` 基类；自适应稀疏存储是原生内部策略，不改变公开类型。
+
+Matrix 内部采用整数 packed 行，坐标视图和 wire 格式保持兼容；不可变对象复用稳定消元和像坐标基。
+独立投影 validator 自己约化循环空间和 D 的像，不信任 solver 的分解缓存，
+同批残差共享一次像空间约化。构造及外部恢复仍重验候选；Betti 读取已验证窗口的边界秩。
+贪心构造使用增量 XOR 主元表，证书 verifier 仍独立扫描可选循环；完整搜索仍有指数成本。
+rank_table 复合相邻传输，历史代表每次读取只构造一次各阶段核矩阵。
+元数据一次遍历验证并冻结；不可变输入身份可复用，恢复输入仍重新计算身份。
 
 ## 验证、资源与测量
 
@@ -148,3 +155,9 @@ barcode_basis 在其全部活跃历史阶段加上同一组合，使死亡阶段
 这些更早向量的历史覆盖所需阶段，修改是可逆初等变换，保留历史基和逐阶段传输相容性。
 该归纳适用于有限 F2 映射序列；重复 scale 不改变 stage 次序。
 实现由独立全区间 rank、向量枚举、历史相容性与过滤 PH 回归验证。
+
+显式 native 路径在计算管线中保留不可变矩阵句柄；现有内部矩阵类型统一维护
+稀疏有序索引与连续 packed 存储，消元按实际填充单向切换。
+传输在 Rust 中嵌入源核矩阵、应用目标 P 并求目标坐标。
+独立 verifier 使用新的 Python reference 视图，不读取 native/solver 分解缓存；
+坐标导出、身份哈希与快照保留显式导出成本。

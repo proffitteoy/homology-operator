@@ -121,6 +121,10 @@ class SolverTests(unittest.TestCase):
             {"state_limit": -1},
             {"state_limit": True},
             {"wall_time_limit": float("nan")},
+            {"state_limit": None},
+            {"matrix_entry_limit": None},
+            {"packed_word_limit": -1},
+            {"packed_word_limit": True},
         ):
             with self.assertRaises(ValueError):
                 ResourceLimits(**options)
@@ -129,6 +133,13 @@ class SolverTests(unittest.TestCase):
         problem = ProjectionProblem(self.window())
         caps = dict(FeasibleSolver().capabilities())
         self.assertIsNone(check_solver_request(problem, caps))
+        self.assertEqual(
+            check_solver_request(
+                replace(problem, resource_limits=ResourceLimits(packed_word_limit=1)),
+                caps,
+            ),
+            ("Unavailable", "unsupported resource limits"),
+        )
         for changes in (
             {"arithmetic_policy": "MixedCertified"},
             {"arithmetic_policy": "ExactInteger"},
@@ -1271,6 +1282,9 @@ class SolverTests(unittest.TestCase):
             self.assertEqual(solution.status, "Solved", solution.diagnostics)
             self.assertEqual(solution.objective.value, optimum)
             self.assertEqual(solution.resource_usage["candidates_visited"], 64)
+            self.assertGreater(solution.resource_usage["candidates_pruned"], 0)
+            self.assertEqual(solution.resource_usage["incremental_section_updates"], 63)
+            self.assertLess(solution.resource_usage["cached_output_masses"], 64 * 31)
             record = HomologyOperator(window, solution).to_result()
             self.assertEqual(record, OperatorResult.from_json(record.to_json()))
 

@@ -35,6 +35,11 @@ assert Matrix.from_rows((), ncols=3) == Matrix.zero(0, 3)
 矩阵和向量只接受整数 0/1；bool、float、取模或截断输入均拒绝。
 形状和坐标错误抛 ValueError。reference 是小规模显式正确性基线，不承诺大尺寸效率。
 
+内部使用 Python 整数 bitset；构造参数、`rows` 的 tuple 坐标视图和 JSON 格式保持兼容。
+导出时一次读取 `rows`，避免反复解码。稳定 RREF 与像坐标基按不可变矩阵分别懒准备、复用；
+`solve_many(rhs)` 与 `solve(b)` 共享像坐标基。只查询秩不会分配平方规模行变换。
+恢复对象的进程内缓存从空开始。
+
 ## 链窗口
 
 实际构造签名：
@@ -63,7 +68,8 @@ ChainWindow(k, A, D, basis_previous, basis_current, basis_next, weights,
 ## 求解与构造算子
 
 ```text
-ResourceLimits(state_limit=100000, wall_time_limit=10.0, matrix_entry_limit=1000000)
+ResourceLimits(state_limit=100000, wall_time_limit=10.0, matrix_entry_limit=1000000,
+               packed_word_limit=None)
 ProjectionProblem(window, resource_limits=ResourceLimits(),
                   objective="MinimumStretch", requested_certificate_level="Feasible",
                   tie_break_policy="StableBasisOrder", arithmetic_policy=None,
@@ -151,13 +157,18 @@ stretch 定义为非零循环上 `m_w(Pz)/m_w(z)` 的最大值。
 
 普通 `barcode()`
 只消费相邻核坐标映射；历史区间基与全部区间 rank 按真实输出大小另行请求。
-`cache_limit=64` 分别限制 action/transport/rank 的 LRU 条目，0禁用；内部按索引嵌入，
-不物化公共 inclusion。核坐标分解随不同投影保留，缓存条目上限不是字节/RSS硬限制。
+`cache_limit=64` 分别限制 action/transport/rank 及阶段核的 LRU 条目，0全部禁用。
+`kernel_cache_byte_limit=16777216` 额外限制 Python 核基/坐标分解和原生核矩阵、
+分解、传输工作区的合计核算字节；0禁用阶段保留。Python容器/整数按实际大小计费，
+原生数据按payload与行开销估计；同一阶段的表示一起驱逐，超预算阶段只临时计算。
+重复查询可能重新计算；family不填充operator的核/原生几何工作区缓存。
+调用方输入/算子自身缓存、临时工作区、显式请求结果与分配器容量不在预算内，
+这不是进程RSS硬限制。运行时策略不进入身份或两种快照schema，恢复采用默认策略。
 
 ```text
 OperatorFamily(scales, windows, operators, weight_policy="Inherited",
                duplicate_policy="OrderedStages", terminal_extension="Constant",
-               cache_limit=64)
+               cache_limit=64, kernel_cache_byte_limit=16777216)
 ```
 
 阶段非空、有序且同次数；允许合法零维窗口。包含由三个次数的基标识建立，验证链映射及复合相容。
@@ -233,7 +244,7 @@ assert actions.state == geometry.state == "Computed"
 assert geometry.value["class_distance"] == (0,)
 ```
 
-`NativeFeasibleSolver` 只构造 StableBasisOrder/Feasible，三个链空间均至多 64 维。
+`NativeFeasibleSolver` 只构造 StableBasisOrder/Feasible，支持多字链空间，受逻辑条目预算约束。
 G/U/P 与 reference 完整相同，仍经独立 Python validator；不提供 native 优化认证。
 states 使用 feasible checkpoint 单位，成功为 `5+m+n`。
 `apply_batch` 返回 project/apply_operator/support；`geometry_batch` 先校验循环与 pair 索引，再复用 Pz。
@@ -260,7 +271,16 @@ assert packed_multiply(matrix, Matrix.identity(3)) == matrix
 `apply_many(vectors)`、`solve(b)`、`solve_many(rhs)`、`membership_many(rhs)` 和 `statistics()`。
 支持多字矩形及空形状、原列坐标、确定性 canonical 解；与权重、投影选择无关。
 statistics 是分解/非零位/存储 word 的诊断，不是峰值 RSS。
-这组多字工具不解除上节单字宽显式可行构造的限制，也未自动替换全部 reference 路径。
+
+`PreparedMatrix(matrix, full=False, diagnostics=False)` 不保存平方规模行变换，
+支持 rank/RREF/kernel/image/apply；solve、membership 和 inverse_rows 明确抛 ValueError。
+默认 full=True 保留完整求解能力，diagnostics=True 保留兼容的填充统计。
+关闭诊断时 peak_nonzero_bits 为 None；solver 内部关闭诊断并在请求内使用有界缓存。
+HC 在 Rust 中从已准备 A/D 直接构造 H/C，不物化 P、不逐列调用 Python。
+apply_batch 和未显式传 workspace 的 geometry_batch 懒准备并复用算子自己的原生作用与 scratch；
+原始链查询仍接受非循环，几何查询仍只接受循环。句柄不进入快照，恢复继续独立重验。
+适配器要求 binding API 3、F2 semantics 1；更新源码后须重建匹配扩展。
+reference 保持纯 Python；显式 native 可行构造和批查询也支持多字维数。
 
 缺扩展时，native solver/批查询返回 Unavailable；直接创建 PreparedMatrix 或调用 packed 工具抛 ImportError。
 直接 packed 工具没有后备；solver 仅支持前述显式同 solver 后备。无效矩阵、RHS 或坐标明确拒绝。
@@ -377,3 +397,15 @@ geometry 的显式 wall 上限包含本次准备/转换的经过时间，但只�
 必需独立验证、绑定、序列化和恢复重验/重放仍计入完整调用成本，不能因取消而省略。
 solver.resource_usage.wall_time 是该 solver 的预算经过时间；后备失败尝试与调度/算子构造/恢复
 需由调用者测量完整墙钟，不能把选中 solver 的 wall_time 当作全部入口成本。
+
+`Matrix.from_sparse_columns(columns, nrows)` 按每列的非零行索引构造，保留空列；
+索引必须为范围内不重复的整数，拒绝重复、bool 和越界值，不需要稠密坐标 tuple。
+显式 native 计算在乘法、分解、HC、传输与批查询间保留不可变矩阵句柄；
+坐标导出、内容身份、独立验证和 JSON 才懒解码 reference packed 视图。
+reference 构造不会加载扩展，快照恢复仍无需 Rust。
+
+原生矩阵每行至少八个 word 且非零索引数不超过稠密 word 总数的一半时，
+使用有序稀疏列索引；消元实际填充超过该阈值后单向转为连续 packed 行。
+较小或稠密矩阵直接使用 packed。statistics 新增 sparse_input、sparse_reduced
+和 sparse_to_dense_switches；stored_words 计算 u64 或 usize 槽位，不含行头与容量，
+不是 RSS。该阈值是存储策略，不是所有稀疏输入都会加速的承诺。

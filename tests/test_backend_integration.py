@@ -18,7 +18,12 @@ from homology_operator import (
     ProjectionProblem,
     QueryResult,
     solve_projection,
+    ValidationError,
+    validate_projection,
+    validate_solution,
+    OperatorResult,
 )
+from homology_operator.chain import action_data
 from homology_operator.native import (
     GeometryWorkspace,
     NativeFactorizedSolver,
@@ -87,6 +92,48 @@ class FamilyIntegrationChecks:
 
 
 class PortableIntegrationTests(FamilyIntegrationChecks, unittest.TestCase):
+    def test_foreign_inverse_factors_rejected_at_every_validation_boundary(self):
+        # Same shapes, different boundaries: the foreign zero factors give P=I.
+        for a, d, failure in (
+            (Matrix.from_rows(((1, 0),)), Matrix.zero(2, 1), "a_p_zero"),
+            (Matrix.zero(1, 2), Matrix.from_columns(((1, 0),), nrows=2), "p_d_zero"),
+        ):
+            with self.subTest(failure=failure):
+                window = ChainWindow(1, a, d, ("a",), ("x", "y"), ("b",), (1, 1))
+                candidate = CompactAction(
+                    "GeneralizedInverse",
+                    (
+                        Matrix.zero(1, 2),
+                        Matrix.zero(2, 1),
+                        Matrix.zero(0, 1),
+                        Matrix.zero(0, 2),
+                    ),
+                    ((), ()),
+                )
+                self.assertEqual(candidate.apply((1, 0)), (1, 0))
+                seed = solve_projection(ProjectionProblem(window))
+                identity = make_identity(window, candidate, seed.solver_run_id)
+                forged = replace(
+                    seed,
+                    projection=candidate,
+                    identity=identity,
+                    objective=QueryResult("NotComputed", identity=identity),
+                )
+                record = HomologyOperator(window, seed).to_result().to_dict()
+                record["projection"] = action_data(candidate)
+                record["identity"] = identity
+                record["solver"]["objective"] = forged.objective.to_dict()
+                for validate in (
+                    lambda: validate_projection(window, candidate),
+                    lambda: validate_solution(window, forged),
+                    lambda: HomologyOperator(window, forged),
+                    lambda: OperatorResult.from_dict(record),
+                ):
+                    with self.assertRaises(ValidationError) as error:
+                        validate()
+                    self.assertIn("factor_window", error.exception.failures)
+                    self.assertIn(failure, error.exception.failures)
+
     def test_reference_solvers_compact_actions_and_family_restore_without_native(self):
         window = small_window()
         operators = [

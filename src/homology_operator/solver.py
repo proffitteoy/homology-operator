@@ -19,9 +19,13 @@ class ResourceLimits:
     state_limit: int = 100_000
     wall_time_limit: float = 10.0
     matrix_entry_limit: int = 1_000_000
+    packed_word_limit: int | None = None
 
     def __post_init__(self):
-        for value in (self.state_limit, self.matrix_entry_limit):
+        counts = (self.state_limit, self.matrix_entry_limit)
+        if self.packed_word_limit is not None:
+            counts += (self.packed_word_limit,)
+        for value in counts:
             if type(value) is not int or value < 0:
                 raise ValueError("resource counts must be nonnegative integers")
         if (
@@ -67,6 +71,8 @@ class _Budget:
         self.cancellation = cancellation
         self.native = native
         self.native_detail = {}
+        self.prepared = {}
+        self.search_detail = {}
         self.limits = limits
         self.started = perf_counter()
         self.states = 0
@@ -89,6 +95,7 @@ class _Budget:
             "states": self.states,
             "wall_time": perf_counter() - self.started,
             "limits": asdict(self.limits),
+            **self.search_detail,
             **(
                 {
                     "execution_backend": "packed-rust-v1",
@@ -107,21 +114,18 @@ def generalized_inverse(matrix, budget=None):
     if budget is not None:
         budget.step()
         budget.entries(matrix.nrows * (matrix.ncols + matrix.nrows))
-    augmented = Matrix.from_rows(
-        (
-            row + unit
-            for row, unit in zip(matrix.rows, Matrix.identity(matrix.nrows).rows)
-        ),
-        ncols=matrix.ncols + matrix.nrows,
+    augmented = Matrix._from_packed(
+        (bits | (1 << (matrix.ncols + i)) for i, bits in enumerate(matrix._bits)),
+        matrix.ncols + matrix.nrows,
     )
-    reduced, pivots = augmented.rref()
-    rows = [(0,) * matrix.nrows for _ in range(matrix.ncols)]
+    reduced, pivots = augmented._reduction
+    rows = [0] * matrix.ncols
     for row, pivot in enumerate(pivots):
         if pivot < matrix.ncols:
-            rows[pivot] = reduced.rows[row][matrix.ncols :]
+            rows[pivot] = reduced[row] >> matrix.ncols
         if budget is not None:
             budget.step()
-    return Matrix(matrix.ncols, matrix.nrows, tuple(rows))
+    return Matrix._from_packed(rows, matrix.nrows)
 
 
 @dataclass(frozen=True)
@@ -597,15 +601,27 @@ def _cycle_objective(window, projection, cycles, budget):
     return value, witness
 
 
-def _prepare(matrix, budget):
+def _prepare(matrix, budget, *, full=True):
     if not budget.native:
         return matrix
     from .native import PreparedMatrix
 
+    budget.step(0)
+    key = (matrix, full)
+    if key in budget.prepared:
+        return budget.prepared[key]
+    if not full and (matrix, True) in budget.prepared:
+        return budget.prepared[matrix, True]
     budget.native_detail["prepared_decompositions"] = (
         budget.native_detail.get("prepared_decompositions", 0) + 1
     )
-    return PreparedMatrix(matrix, cancellation=budget.cancellation)
+    prepared = PreparedMatrix(
+        matrix, cancellation=budget.cancellation, full=full, diagnostics=False
+    )
+    if len(budget.prepared) >= 8:
+        del budget.prepared[next(iter(budget.prepared))]
+    budget.prepared[key] = prepared
+    return prepared
 
 
 def _multiply(left, right, budget):
@@ -617,6 +633,164 @@ def _multiply(left, right, budget):
         budget.native_detail.get("packed_products", 0) + 1
     )
     return packed_multiply(left, right)
+
+
+def _kernel_matrix(matrix, budget):
+    if budget.native:
+        return Matrix._from_native(
+            _prepare(matrix, budget, full=False)._handle.kernel_matrix()
+        )
+    return Matrix.from_columns(matrix.kernel_basis(), matrix.ncols)
+
+
+def _image_matrix(matrix, budget):
+    if budget.native:
+        return Matrix._from_native(
+            _prepare(matrix, budget, full=False)._handle.image_matrix()
+        )
+    return Matrix.from_columns(matrix.image_basis(), matrix.nrows)
+
+
+def _solve_matrix(matrix, rhs, budget):
+    if budget.native:
+        from .native import _matrix_handle
+
+        return Matrix._from_native(
+            _prepare(matrix, budget)._handle.solve_matrix(_matrix_handle(rhs))
+        )
+    return Matrix.from_columns(matrix.solve_many(rhs.transpose().rows), matrix.ncols)
+
+
+def _feasible_seed(problem, native):
+    if native:
+        from .native import NativeFeasibleSolver
+
+        return NativeFeasibleSolver().solve(problem)
+    return FeasibleSolver().solve(problem)
+
+
+def _section_search(
+    window, R, F, N, T, offsets, particulars, seed, value, witness, budget
+):
+    """Incremental rank-one section search; prune only a strict incumbent loss."""
+    beta, r = len(offsets), F.ncols
+    width, count = r * beta, 1 << (r * beta)
+    budget.entries(6 * window.n**2 + ((1 << N.ncols) - 1) * window.n)
+    Y = Matrix.from_rows(particulars, ncols=N.ncols)
+    current = R + _multiply(_multiply(F, Y, budget), T, budget)
+    corrections = _multiply(Matrix.from_rows(offsets, N.ncols), T, budget)
+    if budget.native:
+        from .native import (
+            _extension,
+            _integer_weights,
+            _matrix_handle,
+            _words,
+            _unwords,
+        )
+
+        normalized = _integer_weights(window.weights)
+        if normalized is not None:
+            started = perf_counter()
+            result = _extension().section_search(
+                *(_matrix_handle(m) for m in (current, F, corrections, N, seed)),
+                normalized[0],
+                value.numerator,
+                value.denominator,
+                None if witness is None else _words(witness),
+                max(0, budget.limits.state_limit - budget.states),
+                max(0.0, budget.limits.wall_time_limit - (started - budget.started)),
+                None
+                if budget.cancellation is None
+                else budget.cancellation._native_handle(),
+            )
+            best, a, b, z, visited, used, pruned, cached, reason = result
+            budget.states += used
+            budget.search_detail.update(
+                candidates_pruned=pruned,
+                cached_output_masses=cached,
+                incremental_section_updates=max(0, visited - 1),
+            )
+            budget.native_detail["section_search_calls"] = 1
+            budget.native_detail["section_search_seconds"] = perf_counter() - started
+            return (
+                Matrix._from_native(best),
+                Fraction(a, b),
+                None if z is None else _unwords(z, window.n),
+                visited,
+                reason,
+            )
+        budget.native_detail["exact_mass_fallback_calls"] = (
+            budget.native_detail.get("exact_mass_fallback_calls", 0) + 1
+        )
+
+    # Keep arbitrary integers/rationals exact on the reference path. Input cycle
+    # masses are computed once, and output masses are memoized within this search.
+    basis = N._reference().transpose()._bits
+    cycles, z = [], 0
+    for encoded in range(1, 1 << len(basis)):
+        budget.step(0)
+        changed = (encoded - 1) ^ encoded
+        while changed:
+            low = changed & -changed
+            z ^= basis[len(basis) - low.bit_length()]
+            changed ^= low
+        mass = sum(w for i, w in enumerate(window.weights) if z >> i & 1)
+        cycles.append((z, mass))
+    f_columns = F._reference().transpose()._bits
+    rows, delta = list(current._bits), corrections._bits
+    best, best_key = seed, seed._reference().transpose()._bits
+    cache, pruned, visited, reason = {}, 0, 0, None
+    try:
+        for encoded in range(count):
+            budget.step()
+            if encoded:
+                changed = (encoded - 1) ^ encoded
+                while changed:
+                    low = changed & -changed
+                    parameter = width - low.bit_length()
+                    support = f_columns[parameter // beta]
+                    while support:
+                        bit = support & -support
+                        rows[bit.bit_length() - 1] ^= delta[parameter % beta]
+                        support ^= bit
+                    changed ^= low
+            current_value, current_witness = Fraction(0), None
+            for z, denominator in cycles:
+                budget.step()
+                image = sum(
+                    ((row & z).bit_count() & 1) << i for i, row in enumerate(rows)
+                )
+                if image not in cache:
+                    cache[image] = sum(
+                        w for i, w in enumerate(window.weights) if image >> i & 1
+                    )
+                ratio = Fraction(cache[image]) / Fraction(denominator)
+                if current_witness is None or ratio > current_value:
+                    current_value, current_witness = ratio, Matrix._unpack(z, window.n)
+                # A visited cycle supplies a proved lower bound on this section's
+                # objective. Equality cannot be pruned because the tie may win.
+                if current_value > value:
+                    pruned += 1
+                    break
+            else:
+                candidate = Matrix._from_packed(rows, window.n)
+                key = candidate.transpose()._bits
+                if (current_value, key) < (value, best_key):
+                    best, value, witness, best_key = (
+                        candidate,
+                        current_value,
+                        current_witness,
+                        key,
+                    )
+            visited += 1
+    except _Exhausted as error:
+        reason = str(error)
+    budget.search_detail.update(
+        candidates_pruned=pruned,
+        cached_output_masses=len(cache),
+        incremental_section_updates=max(0, visited - 1),
+    )
+    return best, value, witness, visited, reason
 
 
 def _cycle_table(window, cycles, budget):
@@ -683,12 +857,13 @@ class ExhaustiveExactSolver:
         window = problem.window
         config = problem.solver_config(method)
         budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
-        seed = FeasibleSolver().solve(
+        seed = _feasible_seed(
             replace(
                 problem,
                 requested_certificate_level="Feasible",
                 tie_break_policy="StableBasisOrder",
-            )
+            ),
+            self.native,
         )
         if seed.projection is None:
             return replace(
@@ -707,12 +882,8 @@ class ExhaustiveExactSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            N = Matrix.from_columns(
-                _prepare(window.A, budget).kernel_basis(), nrows=window.n
-            )
-            F = Matrix.from_columns(
-                _prepare(window.D, budget).image_basis(), nrows=window.n
-            )
+            N = _kernel_matrix(window.A, budget)
+            F = _image_matrix(window.D, budget)
             d, r = N.ncols, F.ncols
             beta = d - r
             count, cycle_count = 1 << (r * beta), (1 << d) - 1
@@ -727,60 +898,27 @@ class ExhaustiveExactSolver:
             if count == 1:
                 visited = 1
             else:
-                M = Matrix.from_columns(
-                    (
-                        _prepare(N, budget).solve_many(F.transpose().rows)
-                        if budget.native
-                        else (N.solve(f) for f in F.transpose().rows)
-                    ),
-                    nrows=d,
-                )
+                M = _solve_matrix(N, F, budget)
                 constraints = M.transpose()
                 prepared = _prepare(constraints, budget)
                 offsets = prepared.kernel_basis()
                 particulars = tuple(
                     prepared.solve(unit) for unit in Matrix.identity(r).rows
                 )
-                T = Matrix.from_columns(
-                    (
-                        _prepare(N, budget).solve_many(R.transpose().rows)
-                        if budget.native
-                        else (N.solve(z) for z in R.transpose().rows)
-                    ),
-                    nrows=d,
+                T = _solve_matrix(N, R, budget)
+                best, best_value, best_witness, visited, exhausted = _section_search(
+                    window,
+                    R,
+                    F,
+                    N,
+                    T,
+                    offsets,
+                    particulars,
+                    best,
+                    best_value,
+                    best_witness,
+                    budget,
                 )
-                for parameters in product((0, 1), repeat=r * beta):
-                    budget.step()
-                    Y = Matrix.from_rows(
-                        (
-                            tuple(
-                                particular[j]
-                                ^ (
-                                    sum(
-                                        parameters[i * beta + h] * offsets[h][j]
-                                        for h in range(beta)
-                                    )
-                                    % 2
-                                )
-                                for j in range(d)
-                            )
-                            for i, particular in enumerate(particulars)
-                        ),
-                        ncols=d,
-                    )
-                    candidate = R + _multiply(_multiply(F, Y, budget), T, budget)
-                    value, witness = _cycle_objective(window, candidate, N, budget)
-                    visited += 1
-                    key = tuple(
-                        sum(bit << j for j, bit in enumerate(column))
-                        for column in candidate.transpose().rows
-                    )
-                    best_key = tuple(
-                        sum(bit << j for j, bit in enumerate(column))
-                        for column in best.transpose().rows
-                    )
-                    if (value, key) < (best_value, best_key):
-                        best, best_value, best_witness = candidate, value, witness
         except _Exhausted as error:
             exhausted = str(error)
         identity = make_identity(window, best, run_id, problem.tie_break_policy)
@@ -951,13 +1089,14 @@ class Rank2ExactSolver:
                 solver_config=config,
                 arithmetic_policy=window.arithmetic,
             )
-        seed = FeasibleSolver().solve(
+        seed = _feasible_seed(
             replace(
                 problem,
                 requested_certificate_level="Feasible",
                 input_structure="GeneralChainWindow",
                 solver_options={},
-            )
+            ),
+            self.native,
         )
         if seed.projection is None:
             return replace(
@@ -973,7 +1112,7 @@ class Rank2ExactSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            boundaries = _prepare(window.D, budget).image_basis()
+            boundaries = _prepare(window.D, budget, full=False).image_basis()
             r = len(boundaries)
             cycle_count, count = (1 << (r + 2)) - 1, 1 << (2 * r)
             if count * cycle_count > 100_000:
@@ -982,7 +1121,7 @@ class Rank2ExactSolver:
             full = list(boundaries)
             H = []
             if cut is None:
-                for z in _prepare(window.A, budget).kernel_basis():
+                for z in _prepare(window.A, budget, full=False).kernel_basis():
                     if _prepare(
                         Matrix.from_columns((*full, z), nrows=window.n), budget
                     ).rank() > len(full):
@@ -1211,9 +1350,10 @@ class StructuredFamilySolver:
                     + (0 if problem.matrix_free_output else window.n**2)
                 )
                 if (
-                    _prepare(window.A, budget).rank() != 0
+                    _prepare(window.A, budget, full=False).rank() != 0
                     or len(set(window.weights)) != 1
-                    or _prepare(window.D, budget).rank() != window.n - (1 << (m - 1))
+                    or _prepare(window.D, budget, full=False).rank()
+                    != window.n - (1 << (m - 1))
                     or any(
                         any(z)
                         for z in _structured_images(
@@ -1331,8 +1471,8 @@ class GreedyCertifiedSolver:
         window = problem.window
         config = problem.solver_config(method)
         budget = _Budget(problem.resource_limits, self.native, problem.cancellation)
-        seed = FeasibleSolver().solve(
-            replace(problem, requested_certificate_level="Feasible")
+        seed = _feasible_seed(
+            replace(problem, requested_certificate_level="Feasible"), self.native
         )
         if seed.projection is None:
             return replace(
@@ -1349,10 +1489,8 @@ class GreedyCertifiedSolver:
         try:
             budget.step()
             R = Matrix.identity(window.n) + seed.generalized_inverse_a @ window.A
-            N = Matrix.from_columns(
-                _prepare(window.A, budget).kernel_basis(), nrows=window.n
-            )
-            boundaries = _prepare(window.D, budget).image_basis()
+            N = _kernel_matrix(window.A, budget)
+            boundaries = _prepare(window.D, budget, full=False).image_basis()
             beta = N.ncols - len(boundaries)
             cycle_count = (1 << N.ncols) - 1
             if cycle_count * max(1, beta) > 100_000:
@@ -1366,10 +1504,23 @@ class GreedyCertifiedSolver:
                 ]
                 candidates.sort()
                 span_basis = list(boundaries)
+                pivots = {}
+
+                def insert(z):
+                    bits = sum(bit << i for i, bit in enumerate(z))
+                    while bits:
+                        pivot = bits.bit_length() - 1
+                        if pivot not in pivots:
+                            pivots[pivot] = bits
+                            return True
+                        bits ^= pivots[pivot]
+                    return False
+
+                for z in boundaries:
+                    insert(z)
                 for _, _, z in candidates:
                     budget.step()
-                    trial = Matrix.from_columns((*span_basis, z), nrows=window.n)
-                    if _prepare(trial, budget).rank() > len(span_basis):
+                    if insert(z):
                         selected.append(z)
                         span_basis.append(z)
                     if len(selected) == beta:

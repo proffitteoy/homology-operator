@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from fractions import Fraction
 from math import isfinite
 import json
+from sys import getsizeof
 from types import MappingProxyType
 
 from .algebra import Matrix
@@ -122,6 +123,7 @@ class OperatorFamily:
     duplicate_policy: str = "OrderedStages"
     terminal_extension: str = "Constant"
     cache_limit: int = 64
+    kernel_cache_byte_limit: int = 16 * 1024 * 1024
     _transports: dict = field(
         init=False, default_factory=OrderedDict, repr=False, compare=False
     )
@@ -132,7 +134,15 @@ class OperatorFamily:
     _ranks: dict = field(
         init=False, default_factory=OrderedDict, repr=False, compare=False
     )
-    _kernels: dict = field(init=False, default_factory=dict, repr=False, compare=False)
+    _kernels: dict = field(
+        init=False, default_factory=OrderedDict, repr=False, compare=False
+    )
+    _kernel_sizes: dict = field(
+        init=False, default_factory=dict, repr=False, compare=False
+    )
+    _native_kernels: dict = field(
+        init=False, default_factory=dict, repr=False, compare=False
+    )
     _barcode_basis: object = field(init=False, default=None, repr=False, compare=False)
     _schema_version: int = field(init=False, default=2, repr=False, compare=False)
 
@@ -141,6 +151,11 @@ class OperatorFamily:
     def __post_init__(self):
         if type(self.cache_limit) is not int or self.cache_limit < 0:
             raise ValueError("cache_limit must be a nonnegative integer")
+        if (
+            type(self.kernel_cache_byte_limit) is not int
+            or self.kernel_cache_byte_limit < 0
+        ):
+            raise ValueError("kernel_cache_byte_limit must be a nonnegative integer")
         scales = _ordered(self.scales, "scales")
         windows = _ordered(self.windows, "windows")
         operators = _ordered(self.operators, "operators")
@@ -223,9 +238,11 @@ class OperatorFamily:
             ):
                 row_locations = {target_row: row for row, target_row in enumerate(rows)}
                 if any(
-                    right.rows[r][target_column]
+                    ((right._bits[r] >> target_column) & 1)
                     != (
-                        left.rows[row_locations[r]][column] if r in row_locations else 0
+                        ((left._bits[row_locations[r]] >> column) & 1)
+                        if r in row_locations
+                        else 0
                     )
                     for column, target_column in enumerate(columns)
                     for r in range(right.nrows)
@@ -326,15 +343,82 @@ class OperatorFamily:
     def _kernel(self, i):
         operator = self.stage(i)
         key = operator.identity["projection_id"]
-        if key not in self._kernels:
+        if key in self._kernels:
+            self._kernels.move_to_end(key)
+            return self._kernels[key]
+        else:
             # Family-owned workspace never changes the existing operator's caches.
-            basis = operator.L.kernel_basis()
+            action = operator.L
+            basis = (
+                action._reference() if isinstance(action, Matrix) else action
+            ).kernel_basis()
             pivots = {}
             for column, vector in enumerate(basis):
                 if not _insert(pivots, _pack(vector), 1 << column)[0]:
                     raise ValueError("stage kernel basis is dependent")
-            self._kernels[key] = (basis, pivots)
-        return self._kernels[key]
+            return self._cache_kernel(key, (basis, pivots))
+
+    def _cache_kernel(self, key, kernel, native=None):
+        """One stage LRU owns Python and native kernels under one byte charge.
+
+        Charges include Python containers/integers and native payload estimates;
+        allocator capacity, live scratch and caller-owned operators are outside
+        this retention budget. Oversized stages are usable but not retained.
+        """
+        basis, pivots = kernel
+        size = getsizeof(basis) + sum(getsizeof(row) for row in basis)
+        size += getsizeof(pivots) + sum(
+            getsizeof(pivot) + getsizeof(pair) + sum(map(getsizeof, pair))
+            for pivot, pair in pivots.items()
+        )
+        if native is not None:
+            matrix, prepared, workspace = native
+            size += getsizeof(matrix) + getsizeof(matrix._bits)
+            size += sum(map(getsizeof, matrix._bits))
+            size += 8 * matrix.nrows * ((matrix.ncols + 63) // 64) + 64 * matrix.nrows
+            if prepared is not None:
+                size += 8 * prepared._handle.stored_words + 192 * matrix.nrows
+            if workspace is not None:
+                op = workspace.operator
+                factors = (op.P,) if isinstance(op.P, Matrix) else op.P.factors
+                for factor in (op.window.A, *factors):
+                    size += (
+                        8 * factor.nrows * ((factor.ncols + 63) // 64)
+                        + 64 * factor.nrows
+                    )
+                size += 8 * (op.window.n + op.window.m + op.window.p) + 1024
+        self._kernels.pop(key, None)
+        self._native_kernels.pop(key, None)
+        self._kernel_sizes.pop(key, None)
+        if self.cache_limit and size <= self.kernel_cache_byte_limit:
+            self._kernels[key] = kernel
+            self._kernel_sizes[key] = size
+            if native is not None:
+                self._native_kernels[key] = native
+            while (
+                len(self._kernels) > self.cache_limit
+                or sum(self._kernel_sizes.values()) > self.kernel_cache_byte_limit
+            ):
+                old, _ = self._kernels.popitem(last=False)
+                self._kernel_sizes.pop(old)
+                self._native_kernels.pop(old, None)
+        return kernel
+
+    def _native_kernel(self, i, target=False):
+        from .native import PreparedMatrix, GeometryWorkspace
+
+        key = self.stage(i).identity["projection_id"]
+        kernel = self._kernel(i)
+        native = self._native_kernels.get(key)
+        if native is None:
+            native = (Matrix.from_columns(kernel[0], self.windows[i].n), None, None)
+        matrix, prepared, workspace = native
+        if target and prepared is None:
+            prepared = PreparedMatrix(matrix, diagnostics=False)
+            workspace = GeometryWorkspace(self.stage(i))
+            native = (matrix, prepared, workspace)
+        self._cache_kernel(key, kernel, native)
+        return native
 
     def _solve_many(self, i, vectors):
         basis, pivots = self._kernel(i)
@@ -385,6 +469,24 @@ class OperatorFamily:
         else:
             target = self.stage(j)
             indices = self._indices(i, j)
+            factors = (
+                (target.P,)
+                if isinstance(target.P, Matrix)
+                else getattr(target.P, "factors", ())
+            )
+            if any(hasattr(f, "_native_matrix") for f in factors):
+                from .native import _matrix_handle
+
+                source = self._native_kernel(i)[0]
+                _, prepared, workspace = self._native_kernel(j, target=True)
+                action = Matrix._from_native(
+                    workspace._handle.transport_matrix(
+                        _matrix_handle(source),
+                        indices,
+                        prepared._handle,
+                    )
+                )
+                return self._cached(self._actions, key, action)
             projected = tuple(
                 target.P.apply(self._embed(x, indices, target.window.n))
                 for x in source_basis
@@ -456,13 +558,24 @@ class OperatorFamily:
         """Explicit quadratic rank output; does not retain all chain actions."""
         values = {}
         last = len(self.windows) - 1
+        for stage in range(last + 1):
+            failure = self._failure(stage, stage)
+            if failure is not None:
+                return self._query(
+                    failure.state,
+                    None,
+                    0,
+                    last,
+                    details={"failed_interval": (0, stage)},
+                )
+        adjacent = tuple(self._coordinate_action(i, i + 1) for i in range(last))
         for i in range(last + 1):
+            action = Matrix.identity(len(self._kernel(i)[0]))
             for j in range(i, last + 1):
-                rank = self.transport_rank(i, j)
-                if rank.state != "Computed":
-                    return self._query(
-                        rank.state, None, 0, last, details={"failed_interval": (i, j)}
-                    )
+                if j > i:
+                    action = adjacent[j - 1] @ action
+                rank = self._query("Computed", action.rank(), i, j, True)
+                self._cached(self._ranks, (i, j), rank)
                 values[f"{i}:{j}"] = rank.value
         return self._query("Computed", values, 0, last, True)
 
@@ -473,7 +586,7 @@ class OperatorFamily:
         source, target = self.stage(i), self.stage(j)
         action = matrix_from_data(result.value["action"])
         chain = matrix_from_data(result.value["chain_action"])
-        source_kernel = Matrix.from_columns(source.kernel_basis(), source.window.n)
+        source_kernel = Matrix.from_columns(self._kernel(i)[0], source.window.n)
         differences = self.inclusion(i, j) @ source_kernel + chain
         quotient_preserved = all(
             target.window.D.solve(x) is not None for x in differences.transpose().rows
@@ -817,13 +930,16 @@ class OperatorFamily:
             result = bars
         else:
             values = []
+            kernels = {}
             for birth, death, history in bars:
                 vectors = []
                 for stage, vector in enumerate(history, birth):
                     coordinates = _unpack(vector, len(self._kernel(stage)[0]))
-                    representative = Matrix.from_columns(
-                        self._kernel(stage)[0], self.windows[stage].n
-                    ).apply(coordinates)
+                    if stage not in kernels:
+                        kernels[stage] = Matrix.from_columns(
+                            self._kernel(stage)[0], self.windows[stage].n
+                        )
+                    representative = kernels[stage].apply(coordinates)
                     vectors.append(
                         {
                             "stage": stage,
@@ -885,7 +1001,7 @@ def _expand_windows(data):
             ("D", d, active[1], active[2]),
         ):
             restricted = Matrix.from_rows(
-                (tuple(matrix.rows[r][c] for c in columns) for r in rows),
+                (tuple((matrix._bits[r] >> c) & 1 for c in columns) for r in rows),
                 ncols=len(columns),
             )
             wire[name] = matrix_data(restricted)

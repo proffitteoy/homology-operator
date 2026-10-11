@@ -1,8 +1,9 @@
 """Independent exhaustive checks for the small F2 reference algebra."""
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, asdict, replace
 from itertools import product
 import unittest
+from random import Random
 
 from homology_operator.algebra import Matrix, validate_vector
 
@@ -34,6 +35,14 @@ def span(basis, dimension):
 
 
 class MatrixInputTests(unittest.TestCase):
+    def test_sparse_column_input_and_rejection(self):
+        sparse = Matrix.from_sparse_columns(((0, 2), (), (1, 2)), 3)
+        self.assertEqual(sparse, Matrix.from_rows(((1, 0, 0), (0, 0, 1), (1, 0, 1))))
+        self.assertEqual(Matrix.from_sparse_columns(((), ()), 0), Matrix.zero(0, 2))
+        for column in ((0, 0), (True,), (-1,), (3,), (1.0,)):
+            with self.assertRaises(ValueError):
+                Matrix.from_sparse_columns((column,), 3)
+
     def test_construction_preserves_coordinates_and_immutability(self):
         rows = [[1, 0], [0, 1]]
         matrix = Matrix(2, 2, rows)
@@ -43,6 +52,10 @@ class MatrixInputTests(unittest.TestCase):
             matrix.nrows = 3
         self.assertEqual(Matrix.from_columns(((1, 0), (0, 1)), 2), matrix)
         self.assertEqual(validate_vector(iter((1, 0)), 2), (1, 0))
+        self.assertEqual(asdict(matrix), {"nrows": 2, "ncols": 2, "rows": matrix.rows})
+        self.assertEqual(replace(matrix), matrix)
+        self.assertEqual(replace(matrix, rows=((0, 1), (1, 0))).rows, ((0, 1), (1, 0)))
+        self.assertEqual(Matrix.__match_args__, ("nrows", "ncols", "rows"))
 
     def test_invalid_coordinates_and_dimensions(self):
         for value in (-1, 2, 0.0, 1.0, True, False, "1", None):
@@ -92,6 +105,25 @@ class MatrixInputTests(unittest.TestCase):
 
 
 class MatrixAlgebraTests(unittest.TestCase):
+    def test_multiword_rectangular_batches_against_coordinate_oracle(self):
+        rng = Random(11011)
+        for nrows, ncols in ((0, 129), (129, 0), (65, 129), (129, 65), (127, 128)):
+            rows = tuple(
+                tuple(rng.randrange(2) for _ in range(ncols)) for _ in range(nrows)
+            )
+            matrix = Matrix(nrows, ncols, rows)
+            inputs = tuple(
+                tuple(rng.randrange(2) for _ in range(ncols)) for _ in range(8)
+            )
+            rhs = tuple(multiply_rows(rows, x) for x in inputs)
+            self.assertEqual(tuple(matrix.apply(x) for x in inputs), rhs)
+            solved = matrix.solve_many(rhs)
+            self.assertTrue(all(x is not None for x in solved))
+            self.assertEqual(tuple(multiply_rows(rows, x) for x in solved), rhs)
+            right = Matrix.from_columns(inputs, ncols)
+            self.assertEqual(matrix @ right, Matrix.from_columns(rhs, nrows))
+            self.assertEqual(matrix.transpose().transpose(), matrix)
+
     def test_rectangular_products_and_f2_addition(self):
         left = Matrix.from_rows(((1, 1, 0), (0, 1, 1)))
         right = Matrix.from_rows(((1, 0), (1, 1), (0, 1)))

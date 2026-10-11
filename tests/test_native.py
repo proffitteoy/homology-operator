@@ -68,7 +68,7 @@ class NativeAvailabilityTests(unittest.TestCase):
         )
         self.assertEqual(
             solve_projection(ProjectionProblem(w), NativeFeasibleSolver()).status,
-            "Unavailable",
+            "FeasibleOnly" if extension is not None else "Unavailable",
         )
         self.assertEqual(
             solve_projection(
@@ -81,6 +81,147 @@ class NativeAvailabilityTests(unittest.TestCase):
 
 @unittest.skipUnless(extension is not None, "optional native wheel not installed")
 class NativeTests(unittest.TestCase):
+    def test_adaptive_sparse_fill_and_handle_algebra(self):
+        from homology_operator.native import _matrix_handle
+
+        # Sparse at input, dense after the first pivot fills many rows.
+        matrix = Matrix._from_packed(
+            (
+                (1 << 17) - 1,
+                *(1 | (1 << (17 + i)) for i in range(1, 24)),
+            ),
+            512,
+        )
+        prepared = PreparedMatrix(matrix)
+        stats = prepared.statistics()
+        self.assertTrue(stats["sparse_input"])
+        self.assertFalse(stats["sparse_reduced"])
+        self.assertEqual(stats["sparse_to_dense_switches"], 1)
+        self.assertEqual(prepared.rref(), matrix.rref())
+        rhs = matrix.apply((1,) + (0,) * 511)
+        self.assertEqual(prepared.solve(rhs), matrix.solve(rhs))
+        identity = Matrix.identity(512)
+        sparse = PreparedMatrix(identity, full=False, diagnostics=False)
+        self.assertTrue(sparse.statistics()["sparse_reduced"])
+        self.assertLess(sparse.statistics()["stored_words"], 2 * 512 * 8)
+        product = packed_multiply(matrix, identity)
+        self.assertNotIn("_bits", product.__dict__)
+        summed = packed_add(product, matrix)
+        self.assertNotIn("_bits", summed.__dict__)
+        self.assertEqual(summed, Matrix.zero(24, 512))
+        self.assertIs(_matrix_handle(matrix), _matrix_handle(matrix))
+        for indices in ((1, 1), (2, 1), (512,)):
+            with self.assertRaises(ValueError):
+                extension.NativeMatrix.from_sparse_rows([indices], 512)
+
+    def test_native_handles_do_not_enter_independent_projection_checks(self):
+        w = window(oracle.load_fixtures()[0])
+        solution = solve_projection(ProjectionProblem(w), NativeFeasibleSolver())
+        with patch(
+            "homology_operator.native._matrix_handle", side_effect=AssertionError
+        ):
+            validate_projection(w, solution.projection)
+        if HomologyOperator(w, solution).betti():
+            with self.assertRaises(ValidationError):
+                validate_projection(w, Matrix.zero(w.n, w.n))
+
+    def test_multiword_construction_all_chain_dimensions_and_raw_reuse(self):
+        for n in (65, 127, 128, 129):
+            m, p = n + 1, n + 2
+            A = Matrix.from_rows(
+                (
+                    tuple(int(j == n - 1 and i % 3 == 0) for j in range(n))
+                    for i in range(m)
+                )
+            )
+            D = Matrix.from_rows(
+                (tuple(int(i == 0 or i == 1) for _ in range(p)) for i in range(n))
+            )
+            w = ChainWindow(
+                1,
+                A,
+                D,
+                tuple(map(str, range(m))),
+                tuple(map(str, range(n))),
+                tuple(map(str, range(p))),
+                (1,) * n,
+            )
+            native = solve_projection(ProjectionProblem(w), NativeFeasibleSolver())
+            reference = solve_projection(ProjectionProblem(w))
+            self.assertEqual(native.status, "FeasibleOnly", native.diagnostics)
+            self.assertEqual(native.projection, reference.projection)
+            self.assertEqual(
+                native.generalized_inverse_a, reference.generalized_inverse_a
+            )
+            self.assertEqual(
+                native.generalized_inverse_d, reference.generalized_inverse_d
+            )
+            op = HomologyOperator(w, native)
+            noncycle = (0,) * (n - 1) + (1,)
+            before = op.to_result()
+            first = apply_batch(op, (noncycle,))
+            second = apply_batch(op, (noncycle,))
+            self.assertEqual(first.value["project"], (op.project(noncycle),))
+            self.assertEqual(
+                first.value["apply_operator"], (op.apply_operator(noncycle),)
+            )
+            self.assertFalse(first.details["workspace_reused"])
+            self.assertTrue(second.details["workspace_reused"])
+            self.assertEqual(before, op.to_result())
+            with self.assertRaisesRegex(ValueError, "cycle"):
+                geometry_batch(op, (noncycle,))
+            for limits in (
+                ResourceLimits(state_limit=0),
+                ResourceLimits(matrix_entry_limit=0),
+                ResourceLimits(wall_time_limit=0),
+            ):
+                failed = solve_projection(
+                    ProjectionProblem(w, resource_limits=limits), NativeFeasibleSolver()
+                )
+                self.assertEqual(failed.status, "ResourceExhausted")
+                self.assertIsNone(failed.projection)
+
+    def test_light_decomposition_and_optional_fill_statistics(self):
+        matrix = Matrix.from_rows(((1, 0, 1), (1, 1, 0), (0, 1, 1)))
+        full = PreparedMatrix(matrix, diagnostics=False)
+        light = PreparedMatrix(matrix, full=False, diagnostics=False)
+        self.assertEqual(light.rank(), matrix.rank())
+        self.assertEqual(light.rref(), matrix.rref())
+        self.assertEqual(light.kernel_basis(), matrix.kernel_basis())
+        self.assertEqual(light.image_basis(), matrix.image_basis())
+        self.assertIsNone(light.statistics()["peak_nonzero_bits"])
+        self.assertEqual(light.statistics()["stored_words"], 6)
+        self.assertEqual(full.statistics()["stored_words"], 9)
+        self.assertEqual(full.solve_many(((1, 0, 1),)), matrix.solve_many(((1, 0, 1),)))
+        for call in (
+            lambda: light.solve((1, 0, 1)),
+            lambda: light.membership_many(((1, 0, 1),)),
+            light._handle.inverse_rows,
+        ):
+            with self.assertRaisesRegex(ValueError, "full=False"):
+                call()
+
+    def test_tall_multiword_inverse_respects_its_logical_entry_budget(self):
+        w = ChainWindow(
+            0,
+            Matrix.zero(129, 1),
+            Matrix.zero(1, 0),
+            tuple(map(str, range(129))),
+            ("x",),
+            (),
+            (1,),
+        )
+        # The overall P/G/U bound fits 512; [A | I_129] does not.
+        result = solve_projection(
+            ProjectionProblem(
+                w, resource_limits=ResourceLimits(matrix_entry_limit=512)
+            ),
+            NativeFeasibleSolver(),
+        )
+        self.assertEqual(result.status, "ResourceExhausted")
+        self.assertEqual(result.diagnostics, ("matrix_entry_limit",))
+        self.assertIsNone(result.projection)
+
     def operator(self, w):
         solution = solve_projection(ProjectionProblem(w), NativeFeasibleSolver())
         self.assertEqual(solution.status, "FeasibleOnly", solution.diagnostics)
@@ -406,6 +547,49 @@ class PackedAlgebraTests(unittest.TestCase):
 
 @unittest.skipIf(extension is None, "optional native wheel not installed")
 class NativeSolverTests(unittest.TestCase):
+    def test_resident_section_search_pruning_and_zero_quota(self):
+        from homology_operator.native import _matrix_handle
+
+        w = ChainWindow(
+            2,
+            Matrix.zero(0, 5),
+            Matrix.from_columns(((1, 1, 1, 0, 0), (0, 0, 0, 1, 1)), 5),
+            (),
+            ("a", "b", "c", "d", "e"),
+            ("f", "g"),
+            (3, 2, 1, 5, 1),
+        )
+        actual = self.compare(ProjectionProblem(w), "ExhaustiveExactSolver")
+        self.assertEqual(
+            actual.resource_usage["native_detail"]["section_search_calls"], 1
+        )
+        self.assertGreater(actual.resource_usage["candidates_pruned"], 0)
+        self.assertEqual(actual.resource_usage["candidates_visited"], 64)
+        identity_handle = _matrix_handle(Matrix.identity(1))
+        for token, quota, expected in (
+            (None, 0, "state_limit"),
+            (extension.CancellationFlag(), 100, "cancelled"),
+        ):
+            if token is not None:
+                token.cancel()
+            result = extension.section_search(
+                identity_handle,
+                identity_handle,
+                identity_handle,
+                identity_handle,
+                identity_handle,
+                [1],
+                1,
+                1,
+                [1],
+                quota,
+                10,
+                token,
+            )
+            self.assertEqual(result[-1], expected)
+            self.assertEqual(result[4:6], (0, 0))
+            self.assertEqual(Matrix._from_native(result[0]), Matrix.identity(1))
+
     def compare(self, problem, method):
         reference = solve_projection(problem, method)
         actual = solve_projection(problem, "Native" + method)
@@ -811,9 +995,13 @@ class CompactActionTests(unittest.TestCase):
                     ref = HomologyOperator(
                         w, FeasibleSolver().solve(ProjectionProblem(w))
                     )
-                    op = HomologyOperator(w, self.solution(w))
-                    self.assertEqual(op.kernel_basis(), ref.kernel_basis())
-                    self.assertEqual(op.betti(), ref.betti())
+                    for form in ("Factorized", "HC"):
+                        op = HomologyOperator(w, self.solution(w, form))
+                        self.assertEqual(op.kernel_basis(), ref.kernel_basis())
+                        self.assertEqual(op.betti(), ref.betti())
+                        for j in range(n):
+                            x = tuple(int(i == j) for i in range(n))
+                            self.assertEqual(op.project(x), ref.project(x))
 
     def test_no_dense_projection_inverse_identity_or_rust_required_for_restore(self):
         fixture = next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
@@ -935,7 +1123,7 @@ class CompactActionTests(unittest.TestCase):
         for limits in (
             ResourceLimits(state_limit=0),
             ResourceLimits(wall_time_limit=0),
-            ResourceLimits(matrix_entry_limit=0),
+            ResourceLimits(packed_word_limit=0),
         ):
             result = solve_projection(
                 ProjectionProblem(w, matrix_free_output=True, resource_limits=limits),
@@ -961,6 +1149,75 @@ class CompactActionTests(unittest.TestCase):
             ).status,
             "Unavailable",
         )
+
+    def test_compact_storage_guard_includes_outputs_and_allows_small_logical_limit(
+        self,
+    ):
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        solver = NativeFactorizedSolver()
+        for form in ("Factorized", "HC"):
+            problem = ProjectionProblem(
+                w,
+                matrix_free_output=True,
+                solver_options={"representation": form},
+                resource_limits=ResourceLimits(matrix_entry_limit=0),
+            )
+            solution = solve_projection(problem, solver)
+            HomologyOperator(w, solution)
+            usage = solution.resource_usage
+            self.assertEqual(usage["materialized_projection_entries"], 0)
+            required = usage["packed_words_upper"]
+            accepted = solve_projection(
+                replace(
+                    problem,
+                    resource_limits=ResourceLimits(
+                        matrix_entry_limit=0,
+                        packed_word_limit=required,
+                    ),
+                ),
+                solver,
+            )
+            self.assertIsNotNone(accepted.projection)
+            rejected = solve_projection(
+                replace(
+                    problem,
+                    resource_limits=ResourceLimits(
+                        packed_word_limit=required - 1,
+                    ),
+                ),
+                solver,
+            )
+            self.assertEqual(rejected.status, "ResourceExhausted")
+            self.assertEqual(rejected.diagnostics, ("packed_word_limit",))
+            self.assertIsNone(rejected.projection)
+            detail = usage["storage_breakdown"]
+            self.assertGreater(detail["elimination_words_upper"], 0)
+            self.assertEqual(detail["output_words_upper"] > 0, form == "HC")
+
+    def test_native_family_stage_caches_are_bounded_without_operator_retention(self):
+        from homology_operator import OperatorFamily
+
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        op = HomologyOperator(w, self.solution(w, "HC"))
+        for limit, byte_limit in ((0, 10**7), (1, 10**7), (64, 1)):
+            family = OperatorFamily(
+                (0, 1),
+                (w, w),
+                (op, op),
+                cache_limit=limit,
+                kernel_cache_byte_limit=byte_limit,
+            )
+            self.assertEqual(family.transport_rank(0, 1).value, op.betti())
+            self.assertEqual(family.transport_certificate(0, 1).state, "Computed")
+            self.assertLessEqual(len(family._kernels), limit)
+            self.assertLessEqual(sum(family._kernel_sizes.values()), byte_limit)
+            self.assertEqual(set(family._native_kernels), set(family._kernels))
+            self.assertIsNone(op._native_workspace)
+            self.assertIsNone(op._kernel)
 
     def test_compact_family_transport_ranks_barcode_and_restore(self):
         from homology_operator import OperatorFamily, OperatorFamilyResult
@@ -1237,7 +1494,15 @@ class GeometryWorkspaceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             workspace._handle.query([[0]], [(0, 1)])
         with self.assertRaises(ValueError):
-            extension.GeometryWorkspace([], "Matrix", [[[1]]], [1], [], False, [0])
+            extension.GeometryWorkspace(
+                extension.NativeMatrix([], 1),
+                "Matrix",
+                [extension.NativeMatrix([[1]], 1)],
+                [1],
+                [],
+                False,
+                [0],
+            )
         self.assert_geometry(op, (zero,), ((0, 0),), workspace)
         self.assertEqual(op.to_result(), before)
 

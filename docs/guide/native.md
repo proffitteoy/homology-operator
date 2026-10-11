@@ -22,10 +22,16 @@ uv pip install --python $pythonPath $wheel.FullName
 
 | 入口 | 范围 |
 | --- | --- |
-| NativeFeasibleSolver | 三个链空间至多 64 维、StableBasisOrder/Feasible |
+| NativeFeasibleSolver | 多字链空间、StableBasisOrder/Feasible；受逻辑条目预算约束 |
 | NativeFactorizedSolver | 同 P 的 Factorized/HC，matrix_free_output=True，无最优证书 |
 | PreparedMatrix | 多字 packed 分解、多 RHS 与复用，独立于投影选择 |
 | GeometryWorkspace / geometry_batch | Matrix 与 Factorized/HC 的循环几何；六身份绑定 |
+
+只需秩/核/像时可使用 `PreparedMatrix(matrix, full=False, diagnostics=False)`，
+不保存平方规模行变换或填充计数；solve 和 membership 要求 full=True。
+HC 在原生端直接构造；未指定 workspace 的批查询复用算子自己的作用句柄。
+句柄不进入快照，也不省略独立验证与恢复重验。详细行为见 [API](../INTERFACE.md)。
+此适配器要求 binding API 3，须从匹配源码重建扩展。
 
 四种限定优化 solver 支持显式 native 选择，支持域与认证要求保持原契约。
 GeometryWorkspace 不支持 CyclicAction 原生几何；准备/批查询不改变已有快照与查询历史。
@@ -38,3 +44,5 @@ backend_info 报告实际扩展来源与可用性。缺扩展时 solver/批入�
 Factorized 没有 reference 后备，不把 matrix-free 请求改为显式矩阵。
 CancellationToken 在受支持检查点协作取消，报告 ResourceExhausted；不提供 RSS 硬限制或全流程抢占。
 完整签名、缓冲与失败语义见[Python API](../INTERFACE.md#后端可用性与协作取消)。
+
+原生矩阵句柄、自适应稀疏填充与完整搜索复用见 [API](../INTERFACE.md) 与[求解器契约](../SOLVER_CONTRACT.md)。

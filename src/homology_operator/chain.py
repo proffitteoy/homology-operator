@@ -43,7 +43,7 @@ def matrix_data(matrix):
     return {
         "nrows": matrix.nrows,
         "ncols": matrix.ncols,
-        "rows": [list(row) for row in matrix.rows],
+        "rows": [list(Matrix._unpack(row, matrix.ncols)) for row in matrix._bits],
     }
 
 
