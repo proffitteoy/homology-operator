@@ -92,7 +92,7 @@ def validate_projection(
         raise ValidationError(("projection_shape",))
 
     # Native handles and decomposition caches are never verifier inputs.
-    A, D = window.A._reference(), window.D._reference()
+    A_window, D_window = window.A._reference(), window.D._reference()
     if isinstance(P, Matrix):
         P = P._reference()
     elif isinstance(P, CompactAction):
@@ -118,45 +118,47 @@ def validate_projection(
         )
         if isinstance(P, CompactAction):
             if P.form == "GeneralizedInverse":
-                A, D, _, _ = P.factors
-                checks["factor_window"] = A == A and D == D
+                A_factor, D_factor, _, _ = P.factors
+                checks["factor_window"] = A_factor == A_window and D_factor == D_window
                 checks["a_g_a"] = all(
-                    A.apply(P._inverse(0, column)) == column
-                    for column in A.transpose().rows
+                    A_factor.apply(P._inverse(0, column)) == column
+                    for column in A_factor.transpose().rows
                 )
                 checks["d_u_d"] = all(
-                    D.apply(P._inverse(1, column)) == column
-                    for column in D.transpose().rows
+                    D_factor.apply(P._inverse(1, column)) == column
+                    for column in D_factor.transpose().rows
                 )
             else:
                 H, C = P.factors
-                checks["a_h_zero"] = A @ H == Matrix.zero(window.m, H.ncols)
-                checks["c_d_zero"] = C @ D == Matrix.zero(C.nrows, window.p)
+                checks["a_h_zero"] = A_window @ H == Matrix.zero(window.m, H.ncols)
+                checks["c_d_zero"] = C @ D_window == Matrix.zero(C.nrows, window.p)
                 checks["c_h_identity"] = C @ H == Matrix.identity(C.nrows)
         for j in range(window.n):
             e = tuple(int(i == j) for i in range(window.n))
             p, image_l = P.apply(e), L.apply(e)
             checks["p_idempotent"] &= P.apply(p) == p
             checks["l_idempotent"] &= L.apply(image_l) == image_l
-            checks["a_p_zero"] &= not any(A.apply(p))
-        checks["p_d_zero"] = all(not any(P.apply(z)) for z in D.transpose().rows)
+            checks["a_p_zero"] &= not any(A_window.apply(p))
+        checks["p_d_zero"] = all(not any(P.apply(z)) for z in D_window.transpose().rows)
         residuals = (
-            tuple(a ^ b for a, b in zip(z, P.apply(z))) for z in _cycle_basis(A)
+            tuple(a ^ b for a, b in zip(z, P.apply(z))) for z in _cycle_basis(A_window)
         )
-        checks["cycle_homology_preservation"] = all(_batch_membership(D, residuals))
+        checks["cycle_homology_preservation"] = all(
+            _batch_membership(D_window, residuals)
+        )
     else:
         L = Matrix.identity(window.n) + P
         checks = {
             "p_idempotent": P @ P == P,
             "l_idempotent": L @ L == L,
-            "a_p_zero": A @ P == Matrix.zero(window.m, window.n),
-            "p_d_zero": P @ D == Matrix.zero(window.n, window.p),
+            "a_p_zero": A_window @ P == Matrix.zero(window.m, window.n),
+            "p_d_zero": P @ D_window == Matrix.zero(window.n, window.p),
             "cycle_homology_preservation": all(
                 _batch_membership(
-                    D,
+                    D_window,
                     (
                         tuple(left ^ right for left, right in zip(z, P.apply(z)))
-                        for z in _cycle_basis(A)
+                        for z in _cycle_basis(A_window)
                     ),
                 )
             ),
