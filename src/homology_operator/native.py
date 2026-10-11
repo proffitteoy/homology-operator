@@ -344,6 +344,10 @@ class NativeFactorizedSolver:
             **FeasibleSolver().capabilities(),
             "matrix_free_output": True,
             "solver_options": ("representation",),
+            "resource_limits": (
+                *FeasibleSolver().capabilities()["resource_limits"],
+                "packed_word_limit",
+            ),
         }
 
     def solve(self, problem):
@@ -385,12 +389,54 @@ class NativeFactorizedSolver:
         budget = _Budget(problem.resource_limits, cancellation=problem.cancellation)
         try:
             budget.step()
-            # Keep reference's logical entry guard; not a claim about packed RSS.
-            budget.entries(w.m * w.n + w.n * w.p + w.n * w.m + w.p * w.n + 4 * w.n**2)
+
+            # Packed payload, sparse indices and possible elimination fill are
+            # charged separately from logical entries of explicit matrices.
+            def buffer_words(rows, columns):
+                dense = rows * ((columns + 63) // 64)
+                # Sparse/dense transition can coexist with one replaced row.
+                return 2 * dense + columns if dense else 0
+
+            detail = {
+                "input_nonzero_entries": sum(
+                    row.bit_count() for matrix in (w.A, w.D) for row in matrix._bits
+                ),
+                "boundary_words_upper": sum(
+                    buffer_words(matrix.nrows, matrix.ncols) for matrix in (w.A, w.D)
+                ),
+                "elimination_words_upper": sum(
+                    buffer_words(matrix.nrows, matrix.ncols)
+                    + 2 * buffer_words(matrix.nrows, matrix.nrows)
+                    for matrix in (w.A, w.D)
+                ),
+                "factor_words_upper": sum(
+                    3 * buffer_words(min(matrix.nrows, matrix.ncols), matrix.nrows)
+                    for matrix in (w.A, w.D)
+                ),
+                "output_words_upper": 0,
+                "scratch_words_upper": 16 * (w.m + w.n + w.p),
+            }
+
+            def check_storage():
+                count = sum(
+                    value for key, value in detail.items() if key.endswith("_upper")
+                )
+                budget.search_detail.update(
+                    storage_accounting="CompactPackedPayloadV1",
+                    storage_breakdown=detail.copy(),
+                    packed_words_upper=count,
+                    materialized_projection_entries=0,
+                )
+                limit = problem.resource_limits.packed_word_limit
+                limit = 8_000_000 if limit is None else limit
+                budget.search_detail["effective_packed_word_limit"] = limit
+                if count > limit:
+                    raise _Exhausted("packed_word_limit")
+
+            check_storage()
             prepared = []
             for matrix in (w.A, w.D):
                 budget.step()
-                budget.entries(matrix.nrows * (matrix.ncols + matrix.nrows))
                 prepared.append(
                     PreparedMatrix(
                         matrix, cancellation=problem.cancellation, diagnostics=False
@@ -399,6 +445,12 @@ class NativeFactorizedSolver:
                 budget.step(matrix.nrows)
             budget.step()
             if representation == "HC":
+                beta = w.n - sum(part.rank() for part in prepared)
+                # H/C output plus the reduced span used while constructing H.
+                detail["output_words_upper"] = 3 * buffer_words(
+                    w.n, beta
+                ) + 3 * buffer_words(beta, w.n)
+                check_storage()
                 budget.step(w.n)
                 try:
                     h, c = _extension().hc_factors(

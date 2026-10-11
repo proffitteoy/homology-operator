@@ -68,7 +68,8 @@ ChainWindow(k, A, D, basis_previous, basis_current, basis_next, weights,
 ## 求解与构造算子
 
 ```text
-ResourceLimits(state_limit=100000, wall_time_limit=10.0, matrix_entry_limit=1000000)
+ResourceLimits(state_limit=100000, wall_time_limit=10.0, matrix_entry_limit=1000000,
+               packed_word_limit=None)
 ProjectionProblem(window, resource_limits=ResourceLimits(),
                   objective="MinimumStretch", requested_certificate_level="Feasible",
                   tie_break_policy="StableBasisOrder", arithmetic_policy=None,
@@ -156,13 +157,18 @@ stretch 定义为非零循环上 `m_w(Pz)/m_w(z)` 的最大值。
 
 普通 `barcode()`
 只消费相邻核坐标映射；历史区间基与全部区间 rank 按真实输出大小另行请求。
-`cache_limit=64` 分别限制 action/transport/rank 的 LRU 条目，0禁用；内部按索引嵌入，
-不物化公共 inclusion。核坐标分解随不同投影保留，缓存条目上限不是字节/RSS硬限制。
+`cache_limit=64` 分别限制 action/transport/rank 及阶段核的 LRU 条目，0全部禁用。
+`kernel_cache_byte_limit=16777216` 额外限制 Python 核基/坐标分解和原生核矩阵、
+分解、传输工作区的合计核算字节；0禁用阶段保留。Python容器/整数按实际大小计费，
+原生数据按payload与行开销估计；同一阶段的表示一起驱逐，超预算阶段只临时计算。
+重复查询可能重新计算；family不填充operator的核/原生几何工作区缓存。
+调用方输入/算子自身缓存、临时工作区、显式请求结果与分配器容量不在预算内，
+这不是进程RSS硬限制。运行时策略不进入身份或两种快照schema，恢复采用默认策略。
 
 ```text
 OperatorFamily(scales, windows, operators, weight_policy="Inherited",
                duplicate_policy="OrderedStages", terminal_extension="Constant",
-               cache_limit=64)
+               cache_limit=64, kernel_cache_byte_limit=16777216)
 ```
 
 阶段非空、有序且同次数；允许合法零维窗口。包含由三个次数的基标识建立，验证链映射及复合相容。

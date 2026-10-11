@@ -19,9 +19,13 @@ class ResourceLimits:
     state_limit: int = 100_000
     wall_time_limit: float = 10.0
     matrix_entry_limit: int = 1_000_000
+    packed_word_limit: int | None = None
 
     def __post_init__(self):
-        for value in (self.state_limit, self.matrix_entry_limit):
+        counts = (self.state_limit, self.matrix_entry_limit)
+        if self.packed_word_limit is not None:
+            counts += (self.packed_word_limit,)
+        for value in counts:
             if type(value) is not int or value < 0:
                 raise ValueError("resource counts must be nonnegative integers")
         if (

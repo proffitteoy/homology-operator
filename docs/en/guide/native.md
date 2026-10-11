@@ -50,6 +50,8 @@ for cache and diagnostic behavior, and rebuild from matching source for binding 
 ## Budgets and cancellation
 
 `ResourceLimits` provides state, wall-time, and logical matrix-entry limits.
+Compact Factorized/HC construction uses the separate `packed_word_limit`
+(None selects 8,000,000 words); see the [accounting contract](../SOLVER_CONTRACT.md#resources-cancellation-and-comparison).
 Checks are cooperative checkpoints, not hard process memory or step preemption.
 Independent validation, certificate replay, serialization, and recovery have
 their own costs and cannot be omitted from complete timing.

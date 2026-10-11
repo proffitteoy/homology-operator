@@ -96,6 +96,14 @@ objective、并列、预算和独立证书重放。超出原生整数质量范�
 ## 资源与取消
 
 state、wall-time、逻辑 matrix-entry 预算通过协作检查点执行。
+`NativeFactorizedSolver` 单独使用 `ResourceLimits.packed_word_limit`；None采用
+8000000个字，0拒绝非空构造。显式solver继续使用逻辑`matrix_entry_limit`，
+紧凑路线不为未物化的P计费。核算边界副本、最坏消元填充、行变换、紧凑逆因子、
+scratch和HC输出/构造基；HC在rank确定输出形状后、分配前检查。
+成功与耗尽usage均报告`packed_words_upper`、`effective_packed_word_limit`、
+`storage_breakdown`和`materialized_projection_entries`。
+字数约束编码payload估计及稀疏/稠密转换，不包含分配器容量、Python对象开销或RSS。
+输入构造与独立验证仍在求解预算之外；其他solver拒绝显式packed-word请求，不静默忽略。
 证书重放、算子构造和恢复验证有独立成本；没有 RSS 硬限制或单步抢占保证。
 取消返回 ResourceExhausted 并保存原因；保留的任何候选仍须独立验证。
 读取、恢复和后备的实际行为见 [结果模型](RESULT_MODEL.md)和 [API](INTERFACE.md)。

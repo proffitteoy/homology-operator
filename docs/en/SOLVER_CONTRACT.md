@@ -118,6 +118,19 @@ matrix. Unknown/unavailable extensions or domains are reported as Unavailable.
 ## Resources, cancellation, and comparison
 
 State, wall-time and logical matrix-entry budgets are checked cooperatively.
+`NativeFactorizedSolver` uses the separate `ResourceLimits.packed_word_limit`
+for compact storage; `None` selects 8,000,000 words and 0 rejects nonempty
+construction. The logical `matrix_entry_limit` continues to govern explicit
+solvers; it is not charged for an unmaterialized P in the compact solver.
+The compact guard accounts boundary copies, worst-case elimination fill and
+row transforms, compact inverse rows, scratch, and HC output/span workspace.
+HC output is checked after ranks determine its actual shapes, before allocation.
+`packed_words_upper`, `effective_packed_word_limit`, `storage_breakdown` and
+`materialized_projection_entries` expose the accounting on success and exhaustion.
+Word charges bound encoded payload estimates including sparse/dense transitions,
+not allocator capacity, Python object overhead or process RSS. Input creation and
+independent validation remain outside the solve budget. Other solvers reject an
+explicit packed-word request as unsupported instead of silently ignoring it.
 Independent certificate replay and operator/recovery validation have separate
 costs; there is no hard RSS or step-preemption guarantee. Cooperative cancellation
 is ResourceExhausted with a reason. Any retained candidate remains validated.

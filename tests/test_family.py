@@ -614,9 +614,37 @@ class AdjacentFiltrationTests(unittest.TestCase):
                 self.assertEqual(uncached.transport(i, j), small.transport(i, j))
         self.assertEqual(uncached._actions, {})
         self.assertEqual(uncached._transports, {})
+        self.assertEqual(uncached._kernels, {})
+        self.assertEqual(uncached._native_kernels, {})
+        self.assertEqual(uncached._kernel_sizes, {})
         for bad in (True, -1, 1.5):
             with self.assertRaises(ValueError):
                 replace(small, cache_limit=bad)
+            with self.assertRaises(ValueError):
+                replace(small, kernel_cache_byte_limit=bad)
+
+    def test_kernel_byte_budget_eviction_and_oversized_uncached_stage(self):
+        small = merge_family()
+        small._kernel(0)
+        limit = sum(small._kernel_sizes.values())
+        bounded = replace(small, kernel_cache_byte_limit=limit)
+        for i in range(3):
+            for j in range(i, 3):
+                self.assertEqual(bounded.transport(i, j), small.transport(i, j))
+                self.assertLessEqual(sum(bounded._kernel_sizes.values()), limit)
+        uncached = replace(small, kernel_cache_byte_limit=0)
+        self.assertEqual(uncached.barcode().value, small.barcode().value)
+        self.assertEqual(uncached.transport_certificate(0, 2).state, "Computed")
+        self.assertEqual(uncached._kernels, {})
+        self.assertEqual(uncached._kernel_sizes, {})
+        # Recompute from evicted kernels; runtime policy does not alter identity
+        # or appear in either snapshot schema.
+        self.assertEqual(uncached.identity, small.identity)
+        for version in (1, 2):
+            restored = OperatorFamilyResult.from_json(
+                uncached.to_result(schema_version=version).to_json()
+            ).to_family()
+            self.assertEqual(restored.barcode().value, small.barcode().value)
 
     def test_compact_shared_storage_and_legacy_roundtrip(self):
         family = merge_family()

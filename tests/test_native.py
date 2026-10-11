@@ -1123,7 +1123,7 @@ class CompactActionTests(unittest.TestCase):
         for limits in (
             ResourceLimits(state_limit=0),
             ResourceLimits(wall_time_limit=0),
-            ResourceLimits(matrix_entry_limit=0),
+            ResourceLimits(packed_word_limit=0),
         ):
             result = solve_projection(
                 ProjectionProblem(w, matrix_free_output=True, resource_limits=limits),
@@ -1149,6 +1149,75 @@ class CompactActionTests(unittest.TestCase):
             ).status,
             "Unavailable",
         )
+
+    def test_compact_storage_guard_includes_outputs_and_allows_small_logical_limit(
+        self,
+    ):
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        solver = NativeFactorizedSolver()
+        for form in ("Factorized", "HC"):
+            problem = ProjectionProblem(
+                w,
+                matrix_free_output=True,
+                solver_options={"representation": form},
+                resource_limits=ResourceLimits(matrix_entry_limit=0),
+            )
+            solution = solve_projection(problem, solver)
+            HomologyOperator(w, solution)
+            usage = solution.resource_usage
+            self.assertEqual(usage["materialized_projection_entries"], 0)
+            required = usage["packed_words_upper"]
+            accepted = solve_projection(
+                replace(
+                    problem,
+                    resource_limits=ResourceLimits(
+                        matrix_entry_limit=0,
+                        packed_word_limit=required,
+                    ),
+                ),
+                solver,
+            )
+            self.assertIsNotNone(accepted.projection)
+            rejected = solve_projection(
+                replace(
+                    problem,
+                    resource_limits=ResourceLimits(
+                        packed_word_limit=required - 1,
+                    ),
+                ),
+                solver,
+            )
+            self.assertEqual(rejected.status, "ResourceExhausted")
+            self.assertEqual(rejected.diagnostics, ("packed_word_limit",))
+            self.assertIsNone(rejected.projection)
+            detail = usage["storage_breakdown"]
+            self.assertGreater(detail["elimination_words_upper"], 0)
+            self.assertEqual(detail["output_words_upper"] > 0, form == "HC")
+
+    def test_native_family_stage_caches_are_bounded_without_operator_retention(self):
+        from homology_operator import OperatorFamily
+
+        w = window(
+            next(f for f in oracle.load_fixtures() if f["id"] == "h1_k4_stage_4")
+        )
+        op = HomologyOperator(w, self.solution(w, "HC"))
+        for limit, byte_limit in ((0, 10**7), (1, 10**7), (64, 1)):
+            family = OperatorFamily(
+                (0, 1),
+                (w, w),
+                (op, op),
+                cache_limit=limit,
+                kernel_cache_byte_limit=byte_limit,
+            )
+            self.assertEqual(family.transport_rank(0, 1).value, op.betti())
+            self.assertEqual(family.transport_certificate(0, 1).state, "Computed")
+            self.assertLessEqual(len(family._kernels), limit)
+            self.assertLessEqual(sum(family._kernel_sizes.values()), byte_limit)
+            self.assertEqual(set(family._native_kernels), set(family._kernels))
+            self.assertIsNone(op._native_workspace)
+            self.assertIsNone(op._kernel)
 
     def test_compact_family_transport_ranks_barcode_and_restore(self):
         from homology_operator import OperatorFamily, OperatorFamilyResult

@@ -114,7 +114,8 @@ stretch over projections are separate facts.
 ## Finite filtrations
 
 `OperatorFamily(scales, windows, operators, weight_policy="Inherited",
-duplicate_policy="OrderedStages", terminal_extension="Constant", cache_limit=64)`
+duplicate_policy="OrderedStages", terminal_extension="Constant", cache_limit=64,
+kernel_cache_byte_limit=16777216)`
 accepts a nonempty ordered sequence in one degree. Basis identifiers establish
 inclusions in the previous, current, and next spaces; chain-map conditions are
 validated. `Inherited` requires inherited coordinate weights; explicit
@@ -133,7 +134,18 @@ Those larger outputs are explicit requests and can have quadratic cost.
 `track_class`, `track_mass`, and support tracking accept source cycles and use
 the target projection. A dead class yields a zero chain, zero mass, and empty
 support. Failed stages remain missing; a failed rank is never an empty barcode.
-`cache_limit` bounds entries in each LRU query cache, not bytes or process RSS.
+`cache_limit` bounds entries in each LRU query cache and the stage-kernel LRU;
+0 disables all of them. `kernel_cache_byte_limit` additionally bounds the shared
+charge for retained Python kernel bases/coordinate decompositions and native
+kernel matrices, preparations and transport workspaces. It defaults to 16 MiB;
+0 disables stage retention. Charges use Python container/integer sizes and
+native payload/row overhead estimates. Eviction removes all representations of
+that stage together; oversized stages are computed without retention. Repeated
+queries may therefore recompute a kernel. Family queries do not populate the
+operator's kernel or native geometry workspace. Caller-owned input/action caches,
+temporary computation, requested readouts and allocator capacity are outside
+this budget; it is not a hard process RSS cap. Runtime cache policies are absent
+from identities and both snapshot schemas; recovery uses the defaults.
 
 Default family snapshots use schema 2 with shared boundary/basis storage. Legacy
 schema 1 is readable and reissued at its original version; use

@@ -121,6 +121,10 @@ class SolverTests(unittest.TestCase):
             {"state_limit": -1},
             {"state_limit": True},
             {"wall_time_limit": float("nan")},
+            {"state_limit": None},
+            {"matrix_entry_limit": None},
+            {"packed_word_limit": -1},
+            {"packed_word_limit": True},
         ):
             with self.assertRaises(ValueError):
                 ResourceLimits(**options)
@@ -129,6 +133,13 @@ class SolverTests(unittest.TestCase):
         problem = ProjectionProblem(self.window())
         caps = dict(FeasibleSolver().capabilities())
         self.assertIsNone(check_solver_request(problem, caps))
+        self.assertEqual(
+            check_solver_request(
+                replace(problem, resource_limits=ResourceLimits(packed_word_limit=1)),
+                caps,
+            ),
+            ("Unavailable", "unsupported resource limits"),
+        )
         for changes in (
             {"arithmetic_policy": "MixedCertified"},
             {"arithmetic_policy": "ExactInteger"},
