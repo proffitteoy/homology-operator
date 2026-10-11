@@ -81,7 +81,7 @@ basis-lift enumeration. The supported limit is at most 100,000 nonzero cycles an
 at most 100,000 for candidate count times `max(1, nonzero cycle count)`.
 Tie-breaking is deterministic in the original coordinates under the fixed
 retraction, not a claim of global lexicographic order over every noncycle extension.
-Only completed exhaustive evaluation certifies ExactOptimal.
+Only completed section coverage and independent replay certify ExactOptimal.
 
 GreedyCertifiedSolver sorts all cycles by mass then packed original-coordinate
 order and chooses independent homology generators modulo boundaries. Its
@@ -100,8 +100,8 @@ The detailed reduction records remain in the [Chinese contract](../SOLVER_CONTRA
 
 ## Optional native selection
 
-NativeFeasibleSolver requires each chain space at most 64 dimensions and returns
-the same deterministic G/U/P as the reference. NativeFactorizedSolver requires
+NativeFeasibleSolver supports multiword chain spaces and returns the same
+deterministic G/U/P as the reference, subject to its logical-entry budget. NativeFactorizedSolver requires
 matrix_free_output=True and provides Factorized or HC action with Feasible and
 uncomputed objective; it does not add an optimality certificate.
 
@@ -127,3 +127,16 @@ certificate request and achieved level, budget, determinism and tie policy.
 ExactOptimal, feasibility-only, bounds and heuristic timings are not interchangeable.
 Record source/build/input/output identities, conversion and mandatory validation,
 query and recovery costs, and all interrupted/unavailable/failure cases.
+
+The exhaustive solver caches cycle denominators and output masses, and updates
+consecutive sections by rank-one XOR changes in the original parameter order.
+A section is pruned only after a visited cycle proves its objective strictly
+exceeds the incumbent. Equality is fully checked to preserve deterministic ties.
+Completion covers every section by evaluation or that strict lower bound;
+independent replay still enumerates the original full search without trusting
+pruning counters. Native supported exact weights run the complete section loop
+in Rust; unbounded arithmetic has explicit Python fallback. Resource usage
+reports candidates_pruned, cached_output_masses and incremental_section_updates.
+An interrupted search retains only a fully evaluated incumbent and never claims
+completed optimality. Enumeration/replay domains remain exponential and retain
+their existing finite support limits.

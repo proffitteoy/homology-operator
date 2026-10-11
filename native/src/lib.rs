@@ -268,14 +268,19 @@ fn _homology_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(packed::packed_add, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_product, module)?)?;
     module.add_class::<packed::PreparedMatrix>()?;
+    module.add_class::<packed::NativeMatrix>()?;
+    module.add_function(wrap_pyfunction!(packed::hc_factors, module)?)?;
+    module.add_function(wrap_pyfunction!(packed::construct_multi, module)?)?;
     module.add_function(wrap_pyfunction!(packed::compact_actions, module)?)?;
     module.add_class::<packed::GeometryWorkspace>()?;
 
     module.add_function(wrap_pyfunction!(packed::span_objective, module)?)?;
     module.add_function(wrap_pyfunction!(packed::span_table, module)?)?;
+    module.add_function(wrap_pyfunction!(packed::section_search, module)?)?;
     module.add_function(wrap_pyfunction!(packed::packed_apply, module)?)?;
     module.add_function(wrap_pyfunction!(packed::cyclic_batch, module)?)?;
     module.add("__version__", "0.0.2.dev0")?;
     module.add("__semantics_version__", 1)?;
+    module.add("__api_version__", 3)?;
     Ok(())
 }

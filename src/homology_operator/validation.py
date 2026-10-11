@@ -20,6 +20,32 @@ class ValidationError(ValueError):
         super().__init__("projection validation failed: " + ", ".join(self.failures))
 
 
+def _cycle_basis(matrix):
+    """Validator-owned packed elimination; ignore solver/algebra caches."""
+    rows, pivots = list(matrix._bits), []
+    for column in range(matrix.ncols):
+        pivot_row = len(pivots)
+        selected = next(
+            (i for i in range(pivot_row, matrix.nrows) if rows[i] >> column & 1), None
+        )
+        if selected is None:
+            continue
+        rows[pivot_row], rows[selected] = rows[selected], rows[pivot_row]
+        for i in range(matrix.nrows):
+            if i != pivot_row and rows[i] >> column & 1:
+                rows[i] ^= rows[pivot_row]
+        pivots.append(column)
+    basis = []
+    occupied = set(pivots)
+    for free in range(matrix.ncols):
+        if free not in occupied:
+            bits = 1 << free
+            for i, pivot in enumerate(pivots):
+                bits |= ((rows[i] >> free) & 1) << pivot
+            basis.append(tuple((bits >> i) & 1 for i in range(matrix.ncols)))
+    return tuple(basis)
+
+
 def _batch_membership(matrix, vectors):
     """Independent Python image decomposition, reused for all residuals.
 
@@ -27,7 +53,9 @@ def _batch_membership(matrix, vectors):
     Packed Python integers describe the original columns of D's image basis.
     """
     pivots = {}
-    for column in matrix.image_basis():
+    # Read every original column; do not trust the algebra/solver's rank or
+    # pivot cache. This independent reduction is shared only within this call.
+    for column in matrix.transpose().rows:
         bits = sum(bit << i for i, bit in enumerate(column))
         while bits:
             pivot = bits.bit_length() - 1
@@ -53,7 +81,7 @@ def validate_projection(
 
     Idempotence and AP=PD=0 do not ensure preservation: the zero projection
     satisfies them even when the homology is nonzero. Membership in im(D) is
-    checked independently by solving D b = z + P z for each kernel basis vector.
+    checked by an independent image reduction of D shared across all residuals.
     The exactness reported here concerns F2 algebra, not weighted objectives.
     """
     if not isinstance(window, ChainWindow):
@@ -62,6 +90,15 @@ def validate_projection(
         raise ValidationError(("projection_type",))
     if (P.nrows, P.ncols) != (window.n, window.n):
         raise ValidationError(("projection_shape",))
+
+    # Native handles and decomposition caches are never verifier inputs.
+    A, D = window.A._reference(), window.D._reference()
+    if isinstance(P, Matrix):
+        P = P._reference()
+    elif isinstance(P, CompactAction):
+        P = CompactAction(
+            P.form, tuple(f._reference() for f in P.factors), P.pivots, P.complement
+        )
 
     if isinstance(P, (CyclicAction, CompactAction)):
         checks = dict.fromkeys(
@@ -82,7 +119,7 @@ def validate_projection(
         if isinstance(P, CompactAction):
             if P.form == "GeneralizedInverse":
                 A, D, _, _ = P.factors
-                checks["factor_window"] = A == window.A and D == window.D
+                checks["factor_window"] = A == A and D == D
                 checks["a_g_a"] = all(
                     A.apply(P._inverse(0, column)) == column
                     for column in A.transpose().rows
@@ -93,35 +130,35 @@ def validate_projection(
                 )
             else:
                 H, C = P.factors
-                checks["a_h_zero"] = window.A @ H == Matrix.zero(window.m, H.ncols)
-                checks["c_d_zero"] = C @ window.D == Matrix.zero(C.nrows, window.p)
+                checks["a_h_zero"] = A @ H == Matrix.zero(window.m, H.ncols)
+                checks["c_d_zero"] = C @ D == Matrix.zero(C.nrows, window.p)
                 checks["c_h_identity"] = C @ H == Matrix.identity(C.nrows)
         for j in range(window.n):
             e = tuple(int(i == j) for i in range(window.n))
             p, image_l = P.apply(e), L.apply(e)
             checks["p_idempotent"] &= P.apply(p) == p
             checks["l_idempotent"] &= L.apply(image_l) == image_l
-            checks["a_p_zero"] &= not any(window.A.apply(p))
-        checks["p_d_zero"] = all(not any(P.apply(z)) for z in window.D.transpose().rows)
+            checks["a_p_zero"] &= not any(A.apply(p))
+        checks["p_d_zero"] = all(not any(P.apply(z)) for z in D.transpose().rows)
         residuals = (
-            tuple(a ^ b for a, b in zip(z, P.apply(z))) for z in window.A.kernel_basis()
+            tuple(a ^ b for a, b in zip(z, P.apply(z))) for z in _cycle_basis(A)
         )
-        checks["cycle_homology_preservation"] = all(
-            _batch_membership(window.D, residuals)
-        )
+        checks["cycle_homology_preservation"] = all(_batch_membership(D, residuals))
     else:
         L = Matrix.identity(window.n) + P
         checks = {
             "p_idempotent": P @ P == P,
             "l_idempotent": L @ L == L,
-            "a_p_zero": window.A @ P == Matrix.zero(window.m, window.n),
-            "p_d_zero": P @ window.D == Matrix.zero(window.n, window.p),
+            "a_p_zero": A @ P == Matrix.zero(window.m, window.n),
+            "p_d_zero": P @ D == Matrix.zero(window.n, window.p),
             "cycle_homology_preservation": all(
-                window.D.solve(
-                    tuple(left ^ right for left, right in zip(z, P.apply(z)))
+                _batch_membership(
+                    D,
+                    (
+                        tuple(left ^ right for left, right in zip(z, P.apply(z)))
+                        for z in _cycle_basis(A)
+                    ),
                 )
-                is not None
-                for z in window.A.kernel_basis()
             ),
         }
     failures = tuple(name for name, valid in checks.items() if not valid)
@@ -228,6 +265,15 @@ def validate_solver_certificate(window, projection, solver, certificate, identit
     It proves exact optimality only when this meets a certified upper bound.
     Complete search certificates require a separate supported verifier.
     """
+    if isinstance(projection, Matrix):
+        projection = projection._reference()
+    elif isinstance(projection, CompactAction):
+        projection = CompactAction(
+            projection.form,
+            tuple(f._reference() for f in projection.factors),
+            projection.pivots,
+            projection.complement,
+        )
     native = _replay_native(solver)
     level = solver.get("certificate_level")
     if level not in {

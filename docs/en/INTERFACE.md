@@ -29,6 +29,13 @@ reduction modulo 2 are rejected. `solve(b)` returns a deterministic solution wit
 free variables set to zero, or `None` when no solution exists. A valid empty
 solution is `()`.
 
+`Matrix` stores rows as Python integer bitsets. Its constructor and `rows`
+coordinate view retain binary tuples and the existing JSON format; read `rows`
+once when exporting coordinates. Rank, kernel and image reuse a lazy stable
+reduction; `solve_many(rhs)` shares a separate lazy image-coordinate basis with
+`solve(b)`. Rank-only work does not allocate a row-transform matrix. Restored
+matrices start with fresh process-local caches.
+
 | `arithmetic` | Accepted weights | Geometry |
 | --- | --- | --- |
 | `ExactInteger` | Arbitrary-precision integers | Exact; objective ratios use `Fraction` |
@@ -156,10 +163,25 @@ extension; reinstall it after another sync. `backend_info()` in
 
 | Native entry | Scope |
 | --- | --- |
-| `NativeFeasibleSolver` | StableBasisOrder/Feasible; each chain space at most 64 dimensions |
+| `NativeFeasibleSolver` | StableBasisOrder/Feasible; multiword chain spaces, subject to logical-entry budgets |
 | `NativeFactorizedSolver` | Same-P Factorized/HC action; `matrix_free_output=True`; no optimality certificate |
 | `PreparedMatrix` | Multiword packed stable decomposition and reusable multi-RHS; not a projection solver |
 | `GeometryWorkspace` / `geometry_batch` | Same-P cyclic geometry for Matrix and Factorized/HC; six-identity binding |
+
+`PreparedMatrix(matrix, full=False, diagnostics=False)` retains the original and
+reduced packed rows for rank, RREF, kernel, image and application. It omits the
+square row transform: solve, membership and inverse-row requests then raise
+`ValueError`. Default `full=True` retains those operations. Fill tracking is
+optional; with `diagnostics=False`, `peak_nonzero_bits` is `None`. Default
+diagnostics remain enabled for compatibility. Solver-internal preparations
+disable diagnostics and use a bounded per-request cache.
+
+HC construction computes H/C in Rust from prepared A/D, without a dense P or
+per-column Python calls. `apply_batch` and implicit `geometry_batch` prepare one
+operator-owned workspace lazily and reuse its packed action and scratch. Raw
+application accepts noncycles; geometric queries still require cycles. Native
+handles and caches do not enter snapshots. Rebuild the extension from matching
+source: the adapter requires binding API 3 and F2 semantics 1.
 
 Native geometry does not support CyclicAction. Integer mass uses checked u64
 where possible; noninteger rational weights, large integers, and overflow use
@@ -184,3 +206,21 @@ retained candidate must still pass independent validation. Not all algebra or
 filtration operations accept a cancellation token; see the [API](INTERFACE.md).
 
 See [result serialization](RESULT_MODEL.md), [solver certificates](SOLVER_CONTRACT.md), and the [quickstart](getting-started/quickstart.md).
+
+`Matrix.from_sparse_columns(columns, nrows)` accepts the nonzero row indices of
+each column, including empty columns. Indices must be unique integers in range;
+duplicates, booleans and out-of-range indices are rejected. No dense coordinate
+tuples are needed to construct a boundary matrix.
+
+Optional native algebra retains immutable matrix handles between products,
+decomposition, HC construction, transport and batch queries. The reference packed
+view is decoded lazily for coordinates, identity hashing, independent verification
+and JSON. Reference-only construction does not load the extension.
+
+Native matrices of at least eight words per row start with sorted sparse column
+indices when their count fits within half the dense word count. Actual elimination
+fill triggers a one-way switch to contiguous packed rows; small/dense matrices use
+packed rows directly. `PreparedMatrix.statistics()` adds `sparse_input`,
+`sparse_reduced`, and `sparse_to_dense_switches`. `stored_words` counts u64 slots or
+usize index slots, excluding row headers/capacity; it remains distinct from RSS.
+The threshold is a storage rule, not a promise that every sparse input is faster.

@@ -122,7 +122,11 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(info["native"], "Unavailable")
             self.assertIn("old wheel", info["reason"])
 
-        for old in (SimpleNamespace(), SimpleNamespace(__semantics_version__=0)):
+        for old in (
+            SimpleNamespace(),
+            SimpleNamespace(__semantics_version__=0),
+            SimpleNamespace(__semantics_version__=1),
+        ):
             with patch.dict(sys.modules, {"_homology_native": old}):
                 with self.assertRaisesRegex(ImportError, "rebuild"):
                     _extension()

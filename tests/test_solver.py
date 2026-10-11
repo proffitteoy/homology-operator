@@ -1271,6 +1271,9 @@ class SolverTests(unittest.TestCase):
             self.assertEqual(solution.status, "Solved", solution.diagnostics)
             self.assertEqual(solution.objective.value, optimum)
             self.assertEqual(solution.resource_usage["candidates_visited"], 64)
+            self.assertGreater(solution.resource_usage["candidates_pruned"], 0)
+            self.assertEqual(solution.resource_usage["incremental_section_updates"], 63)
+            self.assertLess(solution.resource_usage["cached_output_masses"], 64 * 31)
             record = HomologyOperator(window, solution).to_result()
             self.assertEqual(record, OperatorResult.from_json(record.to_json()))
 

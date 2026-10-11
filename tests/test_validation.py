@@ -2,6 +2,7 @@
 
 from itertools import product
 import unittest
+from unittest.mock import patch
 
 from homology_operator.algebra import Matrix
 from homology_operator.chain import ChainWindow
@@ -78,6 +79,23 @@ def enumerated_checks(window, projection):
 
 
 class ProjectionValidationTests(unittest.TestCase):
+    def test_independent_reductions_ignore_solver_rank_and_solve_caches(self):
+        w = chain(Matrix.zero(0, 3), Matrix.from_columns(((1, 1, 0),), 3))
+        P = Matrix.from_columns(((1, 0, 0), (1, 0, 0), (0, 0, 1)), 3)
+        with (
+            patch.object(Matrix, "solve", side_effect=AssertionError("solver solve")),
+            patch.object(
+                Matrix, "image_basis", side_effect=AssertionError("solver image")
+            ),
+            patch.object(
+                Matrix, "kernel_basis", side_effect=AssertionError("solver kernel")
+            ),
+        ):
+            self.assertTrue(validate_projection(w, P)["cycle_homology_preservation"])
+            with self.assertRaises(ValidationError) as error:
+                validate_projection(w, Matrix.zero(3, 3))
+            self.assertEqual(error.exception.failures, ("cycle_homology_preservation",))
+
     def test_zero_projection_cannot_erase_nonzero_homology(self):
         window = chain(Matrix.zero(0, 2), Matrix.zero(2, 0))
         projection = Matrix.zero(2, 2)

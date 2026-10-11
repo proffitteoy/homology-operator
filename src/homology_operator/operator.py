@@ -22,6 +22,9 @@ class HomologyOperator:
     solution: ProjectionSolution
     repository_revision: str = "unknown"
     _kernel: object = field(init=False, default=None, repr=False, compare=False)
+    _native_workspace: object = field(
+        init=False, default=None, repr=False, compare=False
+    )
     _queries: dict = field(init=False, default_factory=dict, repr=False, compare=False)
 
     def __post_init__(self):
@@ -103,7 +106,9 @@ class HomologyOperator:
         return self._kernel
 
     def betti(self):
-        return self.window.n - self.L.rank()
+        # Legality was checked at construction; ranks belong to these immutable
+        # boundary matrices, and do not require elimination of P or I+P.
+        return self.window.n - self.window.A.rank() - self.window.D.rank()
 
     def is_cycle(self, x):
         return self.window.A.apply(x) == (0,) * self.window.m

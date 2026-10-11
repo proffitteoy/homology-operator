@@ -75,12 +75,15 @@ def _decode(value):
 
 
 def _freeze(value):
-    # Validate before copying so NaN and unsupported objects cannot hide in metadata.
-    _encode(value)
+    # Validate and copy once; recursively encoding each subtree costs quadratic
+    # work in nesting depth. Wire escaping remains exclusively in _encode.
     if isinstance(value, Mapping):
+        if any(not isinstance(key, str) for key in value):
+            raise ValueError("JSON keys must be strings")
         return MappingProxyType({key: _freeze(item) for key, item in value.items()})
     if isinstance(value, (tuple, list)):
         return tuple(_freeze(item) for item in value)
+    _encode(value)
     return value
 
 
@@ -104,6 +107,9 @@ def content_id(kind, value):
 def input_identity(window):
     if not isinstance(window, ChainWindow):
         raise ValueError("identity requires a validated ChainWindow")
+    cached = getattr(window, "_content_identity", None)
+    if cached is not None:
+        return dict(cached)
     data = window.to_dict()
     basis = {
         key: data[key] for key in ("basis_previous", "basis_current", "basis_next")
@@ -112,12 +118,14 @@ def input_identity(window):
     weights = {
         key: data[key] for key in ("weights", "arithmetic", "weight_semantics", "unit")
     }
-    return {
+    identity = {
         "input_id": content_id("input", chain),
         "chain_window_hash": content_id("chain", chain),
         "basis_id": content_id("basis", basis),
         "weight_id": content_id("weight", weights),
     }
+    object.__setattr__(window, "_content_identity", MappingProxyType(identity))
+    return dict(identity)
 
 
 def make_identity(

@@ -133,6 +133,9 @@ class OperatorFamily:
         init=False, default_factory=OrderedDict, repr=False, compare=False
     )
     _kernels: dict = field(init=False, default_factory=dict, repr=False, compare=False)
+    _native_kernels: dict = field(
+        init=False, default_factory=dict, repr=False, compare=False
+    )
     _barcode_basis: object = field(init=False, default=None, repr=False, compare=False)
     _schema_version: int = field(init=False, default=2, repr=False, compare=False)
 
@@ -223,9 +226,11 @@ class OperatorFamily:
             ):
                 row_locations = {target_row: row for row, target_row in enumerate(rows)}
                 if any(
-                    right.rows[r][target_column]
+                    ((right._bits[r] >> target_column) & 1)
                     != (
-                        left.rows[row_locations[r]][column] if r in row_locations else 0
+                        ((left._bits[row_locations[r]] >> column) & 1)
+                        if r in row_locations
+                        else 0
                     )
                     for column, target_column in enumerate(columns)
                     for r in range(right.nrows)
@@ -385,6 +390,37 @@ class OperatorFamily:
         else:
             target = self.stage(j)
             indices = self._indices(i, j)
+            factors = (
+                (target.P,)
+                if isinstance(target.P, Matrix)
+                else getattr(target.P, "factors", ())
+            )
+            if any(hasattr(f, "_native_matrix") for f in factors):
+                from .native import PreparedMatrix, _matrix_handle, _prepared_workspace
+
+                for stage in (i, j):
+                    matrix_key = (self.stage(stage).identity["projection_id"], "matrix")
+                    if matrix_key not in self._native_kernels:
+                        self._native_kernels[matrix_key] = Matrix.from_columns(
+                            self._kernel(stage)[0], self.windows[stage].n
+                        )
+                source = self._native_kernels[
+                    (self.stage(i).identity["projection_id"], "matrix")
+                ]
+                target_id = target.identity["projection_id"]
+                if target_id not in self._native_kernels:
+                    kernel = self._native_kernels[(target_id, "matrix")]
+                    self._native_kernels[target_id] = PreparedMatrix(
+                        kernel, diagnostics=False
+                    )
+                action = Matrix._from_native(
+                    _prepared_workspace(target)._handle.transport_matrix(
+                        _matrix_handle(source),
+                        indices,
+                        self._native_kernels[target_id]._handle,
+                    )
+                )
+                return self._cached(self._actions, key, action)
             projected = tuple(
                 target.P.apply(self._embed(x, indices, target.window.n))
                 for x in source_basis
@@ -456,13 +492,24 @@ class OperatorFamily:
         """Explicit quadratic rank output; does not retain all chain actions."""
         values = {}
         last = len(self.windows) - 1
+        for stage in range(last + 1):
+            failure = self._failure(stage, stage)
+            if failure is not None:
+                return self._query(
+                    failure.state,
+                    None,
+                    0,
+                    last,
+                    details={"failed_interval": (0, stage)},
+                )
+        adjacent = tuple(self._coordinate_action(i, i + 1) for i in range(last))
         for i in range(last + 1):
+            action = Matrix.identity(len(self._kernel(i)[0]))
             for j in range(i, last + 1):
-                rank = self.transport_rank(i, j)
-                if rank.state != "Computed":
-                    return self._query(
-                        rank.state, None, 0, last, details={"failed_interval": (i, j)}
-                    )
+                if j > i:
+                    action = adjacent[j - 1] @ action
+                rank = self._query("Computed", action.rank(), i, j, True)
+                self._cached(self._ranks, (i, j), rank)
                 values[f"{i}:{j}"] = rank.value
         return self._query("Computed", values, 0, last, True)
 
@@ -817,13 +864,16 @@ class OperatorFamily:
             result = bars
         else:
             values = []
+            kernels = {}
             for birth, death, history in bars:
                 vectors = []
                 for stage, vector in enumerate(history, birth):
                     coordinates = _unpack(vector, len(self._kernel(stage)[0]))
-                    representative = Matrix.from_columns(
-                        self._kernel(stage)[0], self.windows[stage].n
-                    ).apply(coordinates)
+                    if stage not in kernels:
+                        kernels[stage] = Matrix.from_columns(
+                            self._kernel(stage)[0], self.windows[stage].n
+                        )
+                    representative = kernels[stage].apply(coordinates)
                     vectors.append(
                         {
                             "stage": stage,
@@ -885,7 +935,7 @@ def _expand_windows(data):
             ("D", d, active[1], active[2]),
         ):
             restricted = Matrix.from_rows(
-                (tuple(matrix.rows[r][c] for c in columns) for r in rows),
+                (tuple((matrix._bits[r] >> c) & 1 for c in columns) for r in rows),
                 ncols=len(columns),
             )
             wire[name] = matrix_data(restricted)

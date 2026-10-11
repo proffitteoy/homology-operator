@@ -24,7 +24,7 @@ extension; reinstall it after another sync. `backend_info()` in
 
 | Native entry | Scope |
 | --- | --- |
-| `NativeFeasibleSolver` | StableBasisOrder/Feasible; each chain space at most 64 dimensions |
+| `NativeFeasibleSolver` | StableBasisOrder/Feasible; multiword chain spaces, subject to logical-entry budgets |
 | `NativeFactorizedSolver` | Same-P Factorized/HC action; `matrix_free_output=True`; no optimality certificate |
 | `PreparedMatrix` | Multiword packed stable decomposition and reusable multi-RHS; not a projection solver |
 | `GeometryWorkspace` / `geometry_batch` | Same-P cyclic geometry for Matrix and Factorized/HC; six-identity binding |
@@ -39,6 +39,14 @@ Missing or incompatible extensions produce `Unavailable` for supported solver
 and batch entries. Direct packed tools and workspace creation require an
 extension and raise `ImportError` when missing. There is no implicit fallback.
 
+Rank/kernel/image preparation can use
+`PreparedMatrix(matrix, full=False, diagnostics=False)` to omit the square row
+transform and fill counters. Solves and membership require `full=True`.
+HC factors are built in Rust without materializing P; implicit batch calls reuse
+an operator-owned action workspace. These handles remain process-local and do
+not skip independent validation or snapshot recovery. See the [API](../INTERFACE.md)
+for cache and diagnostic behavior, and rebuild from matching source for binding API 3.
+
 ## Budgets and cancellation
 
 `ResourceLimits` provides state, wall-time, and logical matrix-entry limits.
@@ -50,3 +58,6 @@ their own costs and cannot be omitted from complete timing.
 geometry. Cancellation is reported as `ResourceExhausted` with a reason, and any
 retained candidate must still pass independent validation. Not all algebra or
 filtration operations accept a cancellation token; see the [API](../INTERFACE.md).
+
+Native matrix handles, adaptive sparse fill and section-search reuse are described
+in the [API](../INTERFACE.md) and [solver contract](../SOLVER_CONTRACT.md).

@@ -93,8 +93,22 @@ the [filtration guide](guide/filtration.md).
 | result.py | Six identities, query state, canonical JSON and cache boundaries |
 | native.py / native/src | Optional safe Rust adaptation, packed algebra and supported batch operations |
 
-There is no public LinearAction base class or universal sparse backend;
+There is no public LinearAction base class; native adaptive storage is internal, and
 callers construct based chain windows for the supported input domain.
+
+Matrix uses integer-packed rows internally and exports the same tuple coordinates
+and JSON. Stable reductions and image coordinates are cached per immutable matrix.
+The independent projection validator performs its own packed cycle/image reductions,
+without using solver decomposition caches. D's image reduction is shared across
+the residual batch. Each construction and untrusted recovery still validates the
+candidate. Betti reads the validated window's boundary ranks.
+
+Greedy construction updates an XOR pivot table for independence; its independent
+certificate verifier still checks the minimum admissible choice. Exhaustive
+solvers remain exponential. `rank_table()` composes adjacent transports, and
+historical basis readout constructs each stage's kernel matrix once per request.
+Metadata is validated and frozen in one traversal; immutable input identities
+can be reused, while restored inputs recompute them.
 
 ## Action and native boundaries
 
@@ -103,7 +117,7 @@ CompactAction stores generalized-inverse or HC factors without materializing ful
 P/L. Every representation preserves the same action on all chains, including
 noncycle extension, and undergoes independent validation and recovery.
 
-NativeFeasibleSolver and explicit apply_batch remain limited to 64 dimensions;
+NativeFeasibleSolver and apply_batch support multiword chain spaces;
 geometry_batch supports multiword Matrix and Factorized/HC. GeometryWorkspace
 binds all six identities and reuses process-local action/weight buffers. Checked
 u64 mass and explicit exact/floating Python fallback preserve the arithmetic policy.
@@ -120,3 +134,11 @@ Independent PH reduction and GUDHI are test/measurement oracles. They do not
 populate production barcodes, replace representatives, or fill missing results.
 Performance comparisons match input, P, arithmetic, certificates and budgets,
 and retain conversion, validation, query, snapshot and recovery costs.
+
+The native path owns immutable matrix handles across the compute pipeline.
+Sparse sorted indices and contiguous dense words share the existing internal
+matrix type; actual fill switches the sparse working matrix to packed storage.
+Transport embeds and projects a source kernel matrix, then solves the target
+coordinates inside Rust. The independent verifier first obtains fresh Python
+reference views and never reads native/solver decomposition caches. Coordinates,
+identity hashing and snapshots retain explicit export costs.

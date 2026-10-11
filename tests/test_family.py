@@ -106,6 +106,25 @@ class FamilyInputTests(unittest.TestCase):
 
 
 class TransportTests(unittest.TestCase):
+    def test_rank_table_composes_adjacent_maps_with_the_same_interval_ranks(self):
+        family = merge_family()
+        expected = {
+            f"{i}:{j}": family.transport_rank(i, j).value
+            for i in range(3)
+            for j in range(i, 3)
+        }
+        original = OperatorFamily._coordinate_action
+        intervals = []
+
+        def adjacent(owner, i, j):
+            intervals.append((i, j))
+            return original(owner, i, j)
+
+        with patch.object(OperatorFamily, "_coordinate_action", adjacent):
+            actual = family.rank_table()
+        self.assertEqual(actual.value, expected)
+        self.assertEqual(intervals, [(0, 1), (1, 2)])
+
     def test_identity_composition_rank_and_original_chain_action(self):
         family = merge_family()
         for i in range(3):

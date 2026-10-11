@@ -28,8 +28,11 @@ from .solver import (
 def _extension():
     import _homology_native
 
-    if getattr(_homology_native, "__semantics_version__", None) != 1:
-        raise ImportError("incompatible native extension; rebuild the S4-08 wheel")
+    if (
+        getattr(_homology_native, "__semantics_version__", None) != 1
+        or getattr(_homology_native, "__api_version__", None) != 3
+    ):
+        raise ImportError("incompatible native extension; rebuild from matching source")
     return _homology_native
 
 
@@ -50,6 +53,7 @@ def backend_info():
         "reference": "Available",
         "native": "Available",
         "semantics_version": extension.__semantics_version__,
+        "api_version": extension.__api_version__,
         "extension_path": getattr(extension, "_homology_native", extension).__file__,
         "platform": platform.platform(),
         "threads": 1,
@@ -61,9 +65,7 @@ def _pack(vector):
 
 
 def _matrix(rows, ncols):
-    return Matrix.from_rows(
-        (tuple((row >> j) & 1 for j in range(ncols)) for row in rows), ncols=ncols
-    )
+    return Matrix._from_packed(rows, ncols)
 
 
 def _words(vector):
@@ -74,6 +76,52 @@ def _unwords(words, size):
     return tuple((words[i // 64] >> (i % 64)) & 1 for i in range(size))
 
 
+def _matrix_words(matrix):
+    """Convert packed rows directly; never expand binary coordinate tuples."""
+    mask = (1 << 64) - 1
+    return tuple(
+        tuple((row >> i) & mask for i in range(0, matrix.ncols, 64))
+        for row in matrix._bits
+    )
+
+
+def _from_matrix_words(rows, ncols):
+    return Matrix._from_packed(
+        (sum(word << (64 * i) for i, word in enumerate(row)) for row in rows), ncols
+    )
+
+
+def _matrix_handle(matrix):
+    """Convert an immutable input once; never enable native dispatch on it."""
+    if hasattr(matrix, "_native_matrix"):
+        return matrix._native_matrix
+    if not hasattr(matrix, "_cached_native_matrix"):
+        extension = _extension()
+        words = (matrix.ncols + 63) // 64
+        if (
+            words >= 8
+            and sum(row.bit_count() for row in matrix._bits)
+            <= matrix.nrows * words // 2
+        ):
+            rows = []
+            for bits in matrix._bits:
+                indices = []
+                while bits:
+                    low = bits & -bits
+                    indices.append(low.bit_length() - 1)
+                    bits ^= low
+                rows.append(indices)
+            handle = extension.NativeMatrix.from_sparse_rows(rows, matrix.ncols)
+        else:
+            handle = extension.NativeMatrix(_matrix_words(matrix), matrix.ncols)
+        object.__setattr__(
+            matrix,
+            "_cached_native_matrix",
+            handle,
+        )
+    return matrix._cached_native_matrix
+
+
 @dataclass(frozen=True)
 class PreparedMatrix:
     """One immutable native RREF reused for canonical algebra, without weights."""
@@ -82,22 +130,27 @@ class PreparedMatrix:
     cancellation: CancellationToken | None = field(
         default=None, repr=False, compare=False
     )
+    full: bool = True
+    diagnostics: bool = True
     _handle: object = field(init=False, repr=False, compare=False)
 
     def __post_init__(self):
         if not isinstance(self.matrix, Matrix):
             raise ValueError("prepare requires a validated Matrix")
+        if type(self.full) is not bool or type(self.diagnostics) is not bool:
+            raise ValueError("full and diagnostics must be booleans")
         if self.cancellation is not None and not isinstance(
             self.cancellation, CancellationToken
         ):
             raise ValueError("cancellation must be a CancellationToken")
         try:
-            handle = _extension().PreparedMatrix(
-                tuple(map(_words, self.matrix.rows)),
-                self.matrix.ncols,
+            handle = _extension().PreparedMatrix.from_matrix(
+                _matrix_handle(self.matrix),
                 None
                 if self.cancellation is None
                 else self.cancellation._native_handle(),
+                self.full,
+                self.diagnostics,
             )
         except ValueError as error:
             if str(error).startswith("resource_exhausted:cancelled:"):
@@ -113,10 +166,9 @@ class PreparedMatrix:
         return self._handle.rank()
 
     def rref(self):
-        return Matrix.from_rows(
-            (_unwords(row, self.matrix.ncols) for row in self._handle.rref()),
-            ncols=self.matrix.ncols,
-        ), tuple(self._handle.pivots)
+        return Matrix._from_native(self._handle.reduced_matrix()), tuple(
+            self._handle.pivots
+        )
 
     def kernel_basis(self):
         return tuple(
@@ -149,7 +201,7 @@ class PreparedMatrix:
         return tuple(self._handle.membership_many(vectors))
 
     def statistics(self):
-        return {
+        result = {
             name: getattr(self._handle, name)
             for name in (
                 "decomposition_count",
@@ -159,38 +211,29 @@ class PreparedMatrix:
                 "stored_words",
             )
         }
+        sparse_input, sparse_reduced, switches = self._handle.storage()
+        result.update(
+            sparse_input=sparse_input,
+            sparse_reduced=sparse_reduced,
+            sparse_to_dense_switches=switches,
+        )
+        return result
 
 
 def packed_add(left, right):
     if not isinstance(left, Matrix) or not isinstance(right, Matrix):
         raise ValueError("packed addition requires validated matrices")
-    rows = _extension().packed_add(
-        tuple(map(_words, left.rows)),
-        left.ncols,
-        tuple(map(_words, right.rows)),
-        right.ncols,
-    )
-    return Matrix.from_rows(
-        (_unwords(row, left.ncols) for row in rows), ncols=left.ncols
-    )
+    return Matrix._from_native(_matrix_handle(left).add(_matrix_handle(right)))
 
 
 def packed_multiply(left, right):
     if not isinstance(left, Matrix) or not isinstance(right, Matrix):
         raise ValueError("packed product requires validated matrices")
-    rows = _extension().packed_product(
-        tuple(map(_words, left.rows)),
-        left.ncols,
-        tuple(map(_words, right.rows)),
-        right.ncols,
-    )
-    return Matrix.from_rows(
-        (_unwords(row, right.ncols) for row in rows), ncols=right.ncols
-    )
+    return Matrix._from_native(_matrix_handle(left).product(_matrix_handle(right)))
 
 
 class NativeFeasibleSolver:
-    """One-word stable feasible construction; not a native optimizer."""
+    """Stable packed feasible construction; not a native optimizer."""
 
     def capabilities(self):
         return FeasibleSolver().capabilities()
@@ -208,13 +251,6 @@ class NativeFeasibleSolver:
             tie_break_policy=problem.tie_break_policy,
             solver_config=problem.solver_config(method),
         )
-        if max(window.m, window.n, window.p) > 64:
-            return ProjectionSolution(
-                "Unavailable",
-                run_id,
-                diagnostics=("prototype dimensions exceed 64",),
-                **common,
-            )
         try:
             extension = _extension()
         except ImportError:
@@ -225,11 +261,10 @@ class NativeFeasibleSolver:
                 **common,
             )
         started = perf_counter()
-        a, d = tuple(map(_pack, window.A.rows)), tuple(map(_pack, window.D.rows))
+        a, d = _matrix_handle(window.A), _matrix_handle(window.D)
         converted = perf_counter()
-        g, u, p, states, native_wall, reason = extension.construct(
+        g, u, p, states, native_wall, reason = extension.construct_multi(
             a,
-            window.m,
             window.n,
             d,
             window.p,
@@ -258,10 +293,14 @@ class NativeFeasibleSolver:
                 diagnostics=(reason,),
                 **common,
             )
-        G, U, P = _matrix(g, window.m), _matrix(u, window.n), _matrix(p, window.n)
+        G, U, P = (Matrix._from_native(handle) for handle in (g, u, p))
         decoded = perf_counter()
         # These checks and the independent projection validator are not bypassed.
-        if window.A @ G @ window.A != window.A or window.D @ U @ window.D != window.D:
+        if (
+            window.A._reference() @ G._reference() @ window.A._reference() != window.A
+            or window.D._reference() @ U._reference() @ window.D._reference()
+            != window.D
+        ):
             raise ValueError("native generalized inverse failed independent validation")
         identity = make_identity(window, P, run_id, problem.tie_break_policy)
         usage.update(
@@ -348,44 +387,56 @@ class NativeFactorizedSolver:
             budget.step()
             # Keep reference's logical entry guard; not a claim about packed RSS.
             budget.entries(w.m * w.n + w.n * w.p + w.n * w.m + w.p * w.n + 4 * w.n**2)
-            parts, indices = [], []
+            prepared = []
             for matrix in (w.A, w.D):
                 budget.step()
                 budget.entries(matrix.nrows * (matrix.ncols + matrix.nrows))
-                prepared = PreparedMatrix(matrix, cancellation=problem.cancellation)
-                rows = prepared._handle.inverse_rows()
-                parts.append(
-                    Matrix.from_rows(
-                        (_unwords(row, matrix.nrows) for row in rows),
-                        ncols=matrix.nrows,
+                prepared.append(
+                    PreparedMatrix(
+                        matrix, cancellation=problem.cancellation, diagnostics=False
                     )
                 )
-                indices.append(tuple(prepared._handle.pivots))
                 budget.step(matrix.nrows)
             budget.step()
-            action = CompactAction(
-                "GeneralizedInverse", (w.A, w.D, *parts), tuple(indices)
-            )
-            if any(
-                w.A.apply(action._inverse(0, z)) != z for z in w.A.transpose().rows
-            ) or any(
-                w.D.apply(action._inverse(1, z)) != z for z in w.D.transpose().rows
-            ):
-                raise ValueError(
-                    "compact generalized inverse failed independent validation"
-                )
             if representation == "HC":
-                # Stream columns of P to construct its image. Never store all P.
-                H = Matrix.from_columns(action.image_basis(), nrows=w.n)
                 budget.step(w.n)
-                prepared_h = PreparedMatrix(H, cancellation=problem.cancellation)
-                coordinates = []
-                for j in range(w.n):
-                    budget.step()
-                    z = action.apply(tuple(int(i == j) for i in range(w.n)))
-                    coordinates.append(prepared_h.solve(z))
-                C = Matrix.from_columns(coordinates, nrows=H.ncols)
+                try:
+                    h, c = _extension().hc_factors(
+                        prepared[0]._handle,
+                        prepared[1]._handle,
+                        None
+                        if problem.cancellation is None
+                        else problem.cancellation._native_handle(),
+                        max(
+                            0.0,
+                            problem.resource_limits.wall_time_limit
+                            - (perf_counter() - budget.started),
+                        ),
+                    )
+                except ValueError as error:
+                    if str(error).startswith("resource_exhausted:"):
+                        raise _Exhausted(str(error).split(":")[1]) from error
+                    raise
+                budget.step(w.n)
+                H, C = Matrix._from_native(h), Matrix._from_native(c)
                 action = CompactAction("HC", (H, C))
+            else:
+                parts = tuple(
+                    Matrix._from_native(part._handle.inverse_matrix())
+                    for part, matrix in zip(prepared, (w.A, w.D))
+                )
+                indices = tuple(tuple(part._handle.pivots) for part in prepared)
+                action = CompactAction(
+                    "GeneralizedInverse", (w.A, w.D, *parts), indices
+                )
+                if any(
+                    w.A.apply(action._inverse(0, z)) != z for z in w.A.transpose().rows
+                ) or any(
+                    w.D.apply(action._inverse(1, z)) != z for z in w.D.transpose().rows
+                ):
+                    raise ValueError(
+                        "compact generalized inverse failed independent validation"
+                    )
             budget.step()
             identity = make_identity(w, action, run_id, problem.tie_break_policy)
             budget.step(0)
@@ -427,49 +478,25 @@ def apply_batch(operator, vectors):
     ):
         raise ValueError("native batch requires an explicit/compact validated operator")
     n = operator.window.n
-    if n > 64 and isinstance(operator.P, Matrix):
-        return QueryResult(
-            "Unavailable",
-            identity=operator.identity,
-            details={"reason": "prototype dimensions exceed 64"},
-        )
+    started = perf_counter()
+    vectors = tuple(validate_vector(x, n) for x in vectors)
     try:
-        extension = _extension()
+        _extension()
+        reused = operator._native_workspace is not None
+        workspace = _prepared_workspace(operator)
     except ImportError:
         return QueryResult(
             "Unavailable",
             identity=operator.identity,
             details={"reason": "optional native extension is not installed"},
         )
-    started = perf_counter()
-    vectors = tuple(validate_vector(x, n) for x in vectors)
-    if isinstance(operator.P, CompactAction):
-        action = operator.P
-        packed = tuple(map(_words, vectors))
-        rows = tuple(tuple(map(_words, matrix.rows)) for matrix in action.factors)
-    else:
-        packed = tuple(map(_pack, vectors))
-        rows = tuple(map(_pack, operator.P.rows))
+    packed = tuple(map(_words, vectors))
     converted = perf_counter()
-    if isinstance(operator.P, CompactAction):
-        projected, applied, supports, native_wall = extension.compact_actions(
-            action.form,
-            rows,
-            tuple(x.ncols for x in action.factors),
-            action.pivots,
-            action.complement,
-            packed,
-        )
-    else:
-        projected, applied, supports, native_wall = extension.actions(rows, n, packed)
+    projected, applied, supports, native_wall = workspace._handle.apply_many(packed)
     returned = perf_counter()
     result = {
-        "project": tuple(_unwords(z, n) for z in projected)
-        if isinstance(operator.P, CompactAction)
-        else tuple(tuple((z >> j) & 1 for j in range(n)) for z in projected),
-        "apply_operator": tuple(_unwords(z, n) for z in applied)
-        if isinstance(operator.P, CompactAction)
-        else tuple(tuple((z >> j) & 1 for j in range(n)) for z in applied),
+        "project": tuple(_unwords(z, n) for z in projected),
+        "apply_operator": tuple(_unwords(z, n) for z in applied),
         "support": tuple(tuple(indices) for indices in supports),
     }
     return QueryResult(
@@ -479,6 +506,7 @@ def apply_batch(operator, vectors):
         True,
         {
             "arguments": vectors,
+            "workspace_reused": reused,
             "conversion_seconds": converted - started,
             "native_seconds": native_wall,
             "binding_seconds": max(0.0, returned - converted - native_wall),
@@ -519,8 +547,8 @@ class GeometryWorkspace:
                 action.pivots,
                 action.complement,
             )
-        rows = tuple(tuple(map(_words, matrix.rows)) for matrix in factors)
-        boundary = tuple(map(_words, op.window.A.rows))
+        rows = tuple(_matrix_handle(matrix) for matrix in factors)
+        boundary = _matrix_handle(op.window.A)
         fallback, weights = None, None
         if op.window.arithmetic == "FloatingPoint":
             fallback = "binary64 fsum"
@@ -566,6 +594,12 @@ class GeometryWorkspace:
         }
 
 
+def _prepared_workspace(operator):
+    if operator._native_workspace is None:
+        object.__setattr__(operator, "_native_workspace", GeometryWorkspace(operator))
+    return operator._native_workspace
+
+
 def geometry_batch(
     operator, cycles, pairs=(), *, workspace=None, limits=None, cancellation=None
 ):
@@ -602,9 +636,10 @@ def geometry_batch(
             identity=operator.identity,
             details={"reason": "unsupported native geometry action"},
         )
-    reused = workspace is not None
+    reused = workspace is not None or operator._native_workspace is not None
     try:
-        workspace = workspace or GeometryWorkspace(operator)
+        _extension()
+        workspace = workspace or _prepared_workspace(operator)
     except ImportError:
         for z in cycles:
             operator._cycle(z)
@@ -807,9 +842,7 @@ def _apply_many(projection, vectors):
                 tuple(a ^ b for a, b in zip(x, y)) for x, y in zip(packed, output)
             )
     else:
-        output = _extension().packed_apply(
-            tuple(map(_words, projection.rows)), projection.ncols, packed
-        )
+        output = _matrix_handle(projection).apply_many(packed)
     return tuple(_unwords(row, projection.nrows) for row in output)
 
 

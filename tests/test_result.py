@@ -13,6 +13,19 @@ from homology_operator.result import (
 
 
 class ResultTests(unittest.TestCase):
+    def test_nested_metadata_is_copied_losslessly_and_bad_leaves_rejected(self):
+        leaf = {"literal": {"$fraction": [1, 2]}, "mass": Fraction(3, 7)}
+        metadata = {"nested": [{"nested": [leaf]}]}
+        query = QueryResult("Computed", 0, details=metadata)
+        leaf["mass"] = Fraction(9)
+        self.assertEqual(
+            query.details["nested"][0]["nested"][0]["mass"], Fraction(3, 7)
+        )
+        self.assertEqual(QueryResult.from_dict(query.to_dict()), query)
+        for bad in (float("nan"), float("inf"), object(), {1: "bad key"}):
+            with self.assertRaises(ValueError):
+                QueryResult("Computed", 0, details={"nested": [{"leaf": bad}]})
+
     def window(self, **changes):
         values = dict(
             k=1,
