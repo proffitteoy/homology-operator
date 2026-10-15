@@ -111,6 +111,54 @@ homology class. `selected_mass` is not the true minimum mass of a class.
 Feasibility, exact evaluation of the current stretch, and minimum possible
 stretch over projections are separate facts.
 
+## Fixed-boundary minimum filling
+
+`minimum_filling(window, z, filling_window, *, limits=None, cancellation=None)`
+minimizes upper-chain mass subject to `window.D c=z`. Import it and
+`validate_minimum_filling` from `homology_operator`. This is a standalone query;
+it does not select a projection or impose persistence birth/death pairing.
+
+Reuse `ChainWindow` at degree k+1 for the upper costs: its `A` must equal
+`window.D`, its `basis_previous` must equal `window.basis_current`, and its
+`basis_current` must equal `window.basis_next`, including order. Its `D` may
+describe higher boundaries but does not constrain this fixed-boundary problem.
+Supply its own positive `weights`, explicit `unit`, and nonempty string
+`source_metadata["source"]`. The original window's weights are never used for
+filling mass. Geometric length/area/volume semantics require upper degree 1/2/3;
+`unit` counting requires all weights to be 1. A declared source binds provenance,
+but does not itself establish the physical correctness of measured weights.
+
+```python
+from homology_operator import ChainWindow, Matrix, minimum_filling, validate_minimum_filling
+
+window = ChainWindow(0, Matrix.zero(0, 2), Matrix.from_rows(((1,), (1,))),
+                     (), ("v0", "v1"), ("edge",), (10, 1))
+upper = ChainWindow(1, window.D, Matrix.zero(1, 0), window.basis_current,
+                    window.basis_next, (), (3,), unit="cost",
+                    source_metadata={"source": "hand-derived edge cost"})
+result = minimum_filling(window, (1, 1), upper)
+assert result.state == "Computed" and result.value["mass"] == 3
+assert validate_minimum_filling(window, (1, 1), upper, result)["optimality_verified"]
+```
+
+Noncycles and mismatched input/source contracts raise `ValueError`. Computed
+`value` contains `chain`, its recomputed `boundary`, upper-basis support indices,
+and exact `mass`; details contain equal optimal bounds and independently checked
+evidence. Zero boundary has the certified zero filling, including empty spaces.
+`Infeasible` has `value=None` and an exact dual obstruction. `ResourceExhausted`
+has `value=None`, a checkpoint reason and optionally a feasible `details.candidate`;
+it never certifies an optimum. `Unavailable` covers floating upper costs,
+explicit packed-word requests, and more than 100,000 feasible fillings.
+Integer/rational search enumerates `c0+ker(D)`; the finite replay cap means
+`dim ker(D) <= 16`, except for zero-boundary and infeasibility proofs.
+Ties minimize `sum(c_i*2**i)` in the original upper basis.
+
+`limits` reuses `ResourceLimits`: states count evaluated fillings; time and
+logical-entry guards are cooperative. Input validation/hashing and mandatory
+independent verification have separate costs. There is no native filling solver
+or hard RSS/preemption guarantee. See [certification](SOLVER_CONTRACT.md#fixed-boundary-filling-certificates)
+and [result binding](RESULT_MODEL.md#standalone-filling-results).
+
 ## Finite filtrations
 
 `OperatorFamily(scales, windows, operators, weight_policy="Inherited",

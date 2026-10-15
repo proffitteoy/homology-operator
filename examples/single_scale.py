@@ -9,6 +9,7 @@ from homology_operator import (
     ProjectionProblem,
     ResourceLimits,
     solve_projection,
+    minimum_filling,
 )
 
 
@@ -46,6 +47,21 @@ def main():
         op.readout(name, *args)
     op.stretch(limits)
     print(op.to_result().to_json())
+    # Independent fixed-boundary query: costs belong to the upper edge basis.
+    upper = ChainWindow(
+        1,
+        window.D,
+        Matrix.zero(1, 0),
+        window.basis_current,
+        window.basis_next,
+        (),
+        (3,),
+        unit="cost",
+        source_metadata={"source": "hand-derived edge cost"},
+    )
+    filling = minimum_filling(window, (1, 1), upper)
+    assert filling.state == "Computed" and filling.value["chain"] == (1,)
+    assert filling.value["mass"] == 3
 
 
 if __name__ == "__main__":

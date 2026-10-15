@@ -12,6 +12,7 @@
 | `ResourceExhausted` | Attempt stopped at the budget |
 | `EmptyDomain` | Explicitly empty domain; empty-cycle stretch has the declared value 0 |
 | `NoClass` | Explicit absence of a class, distinct from a dead class's zero representative |
+| `Infeasible` | Fixed boundary has no filling; value is None, with a verified obstruction |
 
 `exact` describes the query arithmetic, not global optimality. Nonempty cycle
 space with Betti zero has a legitimate computed stretch of 0.
@@ -37,6 +38,21 @@ queries. `OperatorResult.from_json` returns a record; it does not expose a
 `to_operator()` method. Family records provide `to_family()` using the saved P.
 Snapshots preserve unqueried states and do not compute every query on export.
 See the [result contract](RESULT_MODEL.md).
+
+## Standalone filling results
+
+Fixed-boundary filling reuses `QueryResult` with `identity=None`: there is no
+projection/operator/run to which the six operator IDs could refer. Instead,
+`details.problem_id` hashes both complete window encodings (including ordered
+bases, upper costs, units, arithmetic and source metadata) and the target boundary.
+Verification checks that binding against the supplied inputs, and separately
+recomputes feasibility and optimality. It never fills operator query history.
+
+`QueryResult.to_dict/from_dict` preserves the evidence and exact fractions but
+only checks record structure. On untrusted recovery call
+`validate_minimum_filling(window, z, filling_window, result)`; returned checks,
+rather than saved verification flags, establish acceptance. Retain both inputs
+and z alongside the record. Existing operator/family schemas remain unchanged.
 
 ## Single-scale wire format
 

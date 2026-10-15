@@ -6,7 +6,7 @@ from itertools import product, combinations
 from math import isfinite
 
 from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
-from .chain import ChainWindow, matrix_from_data
+from .chain import ChainWindow, matrix_from_data, _filling_request
 from .result import QueryResult, content_id, make_identity
 
 
@@ -72,6 +72,141 @@ def _batch_membership(matrix, vectors):
             bits ^= pivots[bits.bit_length() - 1]
         output.append(bits == 0)
     return tuple(output)
+
+
+def validate_minimum_filling(window, z, filling_window, result):
+    """Recheck fixed-boundary evidence without solver elimination or counters.
+
+    A feasible chain plus a validator-owned complete kernel spans every filling.
+    Replay recomputes all masses and the original-coordinate tie winner. JSON
+    QueryResult decoding alone does not perform this semantic verification.
+    """
+    z, problem_id = _filling_request(window, z, filling_window)
+    if not isinstance(result, QueryResult) or result.identity is not None:
+        raise ValidationError(("filling_result_type_or_identity",))
+    details = result.details
+    if (
+        details.get("problem_id") != problem_id
+        or details.get("method") != "ExhaustiveMinimumFilling"
+        or details.get("weight_semantics") != filling_window.weight_semantics
+        or details.get("unit") != filling_window.unit
+        or details.get("arithmetic") != filling_window.arithmetic
+        or details.get("source_metadata") != filling_window.source_metadata
+    ):
+        raise ValidationError(("filling_request_binding",))
+    D = window.D._reference()
+    rows = D.rows
+
+    def boundary(chain):
+        return tuple(sum(a * b for a, b in zip(row, chain)) % 2 for row in rows)
+
+    if result.state in {"ResourceExhausted", "Unavailable"}:
+        candidate = details.get("candidate")
+        level = "Feasible" if candidate is not None else None
+        if (
+            details.get("certificate_level") != level
+            or result.exact is not None
+            or "certificate" in details
+            or "lower_bound" in details
+            or "upper_bound" in details
+        ):
+            raise ValidationError(("unfinished_filling_certificate",))
+        if (
+            candidate is not None
+            and boundary(validate_vector(candidate, window.p)) != z
+        ):
+            raise ValidationError(("filling_candidate_boundary",))
+        return {
+            "optimality_verified": False,
+            "feasibility_verified": candidate is not None,
+        }
+    proof = details.get("certificate", {})
+    if not isinstance(proof, Mapping) or result.exact is not True:
+        raise ValidationError(("filling_certificate",))
+    if result.state == "Infeasible":
+        if (
+            proof.get("kind") != "DualObstruction"
+            or details.get("certificate_level") is not None
+            or "lower_bound" in details
+            or "upper_bound" in details
+        ):
+            raise ValidationError(("filling_obstruction",))
+        witness = validate_vector(proof.get("witness"), window.n)
+        if (
+            any(
+                sum(witness[i] * rows[i][j] for i in range(window.n)) % 2
+                for j in range(window.p)
+            )
+            or sum(a * b for a, b in zip(witness, z)) % 2 != 1
+        ):
+            raise ValidationError(("filling_obstruction",))
+        return {"infeasibility_verified": True, "optimality_verified": False}
+    if (
+        result.state != "Computed"
+        or filling_window.arithmetic == "FloatingPoint"
+        or details.get("certificate_level") != "ExactOptimal"
+    ):
+        raise ValidationError(("filling_certificate_level",))
+    value = result.value
+    if not isinstance(value, Mapping) or set(value) != {
+        "chain",
+        "boundary",
+        "support",
+        "mass",
+    }:
+        raise ValidationError(("filling_value",))
+    chain = validate_vector(value["chain"], window.p)
+    mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
+    if (
+        boundary(chain) != z
+        or validate_vector(value["boundary"], window.n) != z
+        or value["support"] != tuple(i for i, bit in enumerate(chain) if bit)
+        or any(type(i) is not int for i in value["support"])
+        or isinstance(value["mass"], bool)
+        or not isinstance(value["mass"], (int, Fraction))
+        or value["mass"] != mass
+        or details.get("lower_bound") != mass
+        or details.get("upper_bound") != mass
+        or any(
+            isinstance(details.get(name), bool)
+            or not isinstance(details.get(name), (int, Fraction))
+            for name in ("lower_bound", "upper_bound")
+        )
+    ):
+        raise ValidationError(("filling_chain_mass_or_bounds",))
+    count = 1
+    if proof.get("kind") == "PositiveWeightsZeroBoundary":
+        if any(z) or any(chain) or mass != 0:
+            raise ValidationError(("filling_zero_lower_bound",))
+    elif proof.get("kind") == "CompleteAffineEnumeration":
+        kernel = _cycle_basis(D)
+        if len(kernel) > 16:
+            raise ValidationError(("filling_replay_domain",))
+        count = 1 << len(kernel)
+        if (
+            type(proof.get("candidate_count")) is not int
+            or proof["candidate_count"] != count
+        ):
+            raise ValidationError(("filling_coverage",))
+        key = (mass, sum(bit << i for i, bit in enumerate(chain)))
+        for coefficients in product((0, 1), repeat=len(kernel)):
+            other = list(chain)
+            for bit, vector in zip(coefficients, kernel):
+                if bit:
+                    other = [a ^ b for a, b in zip(other, vector)]
+            other_key = (
+                sum(w * bit for w, bit in zip(filling_window.weights, other)),
+                sum(bit << i for i, bit in enumerate(other)),
+            )
+            if other_key < key:
+                raise ValidationError(("filling_optimum_or_tie",))
+    else:
+        raise ValidationError(("unsupported_filling_proof",))
+    return {
+        "feasibility_verified": True,
+        "optimality_verified": True,
+        "replayed_candidates": count,
+    }
 
 
 def validate_projection(

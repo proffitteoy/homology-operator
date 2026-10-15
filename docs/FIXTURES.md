@@ -31,6 +31,19 @@ oracle 加载时检查 hash、形状、二元元素、AD=0、正权、基和 Bet
 [单尺度联合测试](../tests/test_joint.py)与[过滤联合测试](../tests/test_family_joint.py)
 核对投影、几何、transport composition、rank 与独立 PH。
 
+## Fixed-boundary filling inputs
+
+[test_filling.py](../tests/test_filling.py) generates local, hand-derived inputs;
+no research fixture is migrated. H1 uses all triangle faces on four planar
+vertices `(0,0), (2,0), (2,2), (0,2)`, with determinant areas 2 m^2 each.
+H2 uses tetrahedra on `(0,0,0), (6,0,0), (0,6,0), (0,0,6), (1,1,1)`, with
+exact determinant volumes `(36,6,6,6,18)` m^3 in combination order.
+The tests build actual face incidences, enumerate all upper chains independently,
+and compare minimum mass and ties. Abstract costs, counting, invalid sources,
+nonboundaries, zero chains, budgets, cancellation and tampered certificates are
+tested separately. These finite checks establish neither general performance
+nor correctness of caller-declared real-world measurements.
+
 ## 快照兼容样本
 
 [legacy_results.json](../tests/fixtures/legacy_results.json) 保存 7 份旧 schema 快照，
