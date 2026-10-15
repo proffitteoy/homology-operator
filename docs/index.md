@@ -148,7 +148,10 @@ assert op.stretch().value == Fraction(9, 8)
 
 代码中的投影经独立合法性与最优证书验证。默认 `FeasibleSolver` 则构造合法算子，
 保持同一读取语义；solver 支持域、搜索代价和认证见[契约](SOLVER_CONTRACT.md)。
-`selected_mass` 表示选定代表质量，真正最短类质量查询当前不可用。
+`selected_mass` 表示选定代表质量。当前源码的
+[`minimum_class_mass(z, limits=None)`](INTERFACE.md#单尺度查询) 在整数/有理权和预算内
+计算一个类的真正最短质量，返回原链代表与边界见证；它不改变 P，也不认证最小 stretch。
+浮点权返回 `Unavailable`。
 
 ## 安装与计算后端
 

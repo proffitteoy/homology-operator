@@ -156,8 +156,11 @@ assert op.stretch().value == Fraction(9, 8)
 The projection undergoes independent legality and optimality verification.
 The default `FeasibleSolver` constructs a legal operator with the same readout
 semantics. Domains, search cost, and certificates are in the [solver contract](SOLVER_CONTRACT.md).
-`selected_mass` measures the selected representative; true minimum class mass
-is currently unavailable as a public query.
+`selected_mass` measures the selected representative. In the current source,
+[`minimum_class_mass(z, limits=None)`](INTERFACE.md#single-scale-queries) computes
+the true minimum for one class with integer/rational weights within a budget,
+returning its original-chain representative and boundary witness. It does not
+change P or certify minimum stretch; floating weights return `Unavailable`.
 
 ## Installation and backends
 

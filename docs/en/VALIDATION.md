@@ -165,28 +165,51 @@ efficiency, a machine-independent speedup, or new graph/mesh complexity results.
 Admission is restricted to the independently proven singleton-anchor case;
 all other inputs retain exhaustive search.
 
+This remains a correctness reference with bounded acceleration evidence.
+Further performance work must measure independent validation, optimal search
+and cross-scale construction as complete workflows. PH-only timings from GUDHI
+omit projection construction and geometric certification, so they do not compare
+equivalent functionality or establish this library's PH competitiveness.
+
 Six additional negative/domain samples retain state-limit-zero exhaustion,
 unsupported packed-word requests and fan20. On fan20 the ordinary affine query
 remains unavailable (nullity 17); its dependent fixed-boundary query is explicitly
 not run. Stable volume changes from unavailable to an exact singleton-anchor
 certificate. That support-domain expansion is not counted as a speed ratio.
 
-Per project rules, one-time harnesses and raw data stay in ignored
-`.task-artifacts`, separate from product fixtures and historical reports.
+One-time harnesses and raw data are preserved in the separate
+[PR #110 evidence archive](https://github.com/proffitteoy/homology-operator/tree/570f390ce4daebb76998f3ffb39b95a9e4e00702),
+commit `570f390ce4daebb76998f3ffb39b95a9e4e00702` on
+`archive/pr110-geometry-cost-20261015`. They are extracted to ignored
+`.task-artifacts`, keeping measurement tools and results outside the product tree.
 `geometry-cost.jsonl` (102 rows) SHA256 is
 `a71b0e8122d181d815152deaaaeb5b9b733c38aacf914206cf730df6b375c3fe`.
 The matched-sample harness `geometry_cost_matched.py` SHA256 is
 `56b249de732654cb89c59176ef91477467a689715fa88acbb46e59df0c352226`;
-the negative-domain harness `geometry_cost.py` SHA256 is
+the fan20 negative-domain harness `geometry_cost.py` SHA256 is
 `db25720efabebd4a2d812e736a13081d6f6c1da12dd584952c404de058d230a0`.
-The latter handles the unavailable upstream boundary explicitly. Example local
-replay, after retaining these task artifacts and exporting the baseline sources:
+The latter handles the unavailable upstream boundary explicitly. The archive's
+standard-library `reproduce.py` verifies the original bytes, all recorded module
+hashes against the pinned Git sources, the frozen fixture, sample coverage and
+matched output equality. It reconstructs the table and exports source/test trees
+directly from Git, without depending on an unpublished baseline directory.
+From a fresh repository clone, with Git and Python 3.12 on PATH:
 
-```console
-.venv/Scripts/python.exe .task-artifacts/geometry_cost_matched.py --source .task-artifacts/reference-7094739 --case fan16 --mode cold
-.venv/Scripts/python.exe .task-artifacts/geometry_cost_matched.py --source . --case fan16 --mode cold
-.venv/Scripts/python.exe .task-artifacts/geometry_cost.py --source . --case fan20 --mode cold
+```powershell
+git fetch origin archive/pr110-geometry-cost-20261015
+New-Item -ItemType Directory -Force .task-artifacts | Out-Null
+git archive --format=zip --output=.task-artifacts/pr110-cost.zip 570f390ce4daebb76998f3ffb39b95a9e4e00702
+Expand-Archive .task-artifacts/pr110-cost.zip -DestinationPath .task-artifacts/pr110-cost
+python .task-artifacts/pr110-cost/reproduce.py verify
+python .task-artifacts/pr110-cost/reproduce.py summarize
+python .task-artifacts/pr110-cost/reproduce.py run
 ```
+
+Verification and table reconstruction are portable. Rerunning the unchanged
+historical harness requires Windows for `GetProcessMemoryInfo`; it writes 102
+fresh records to `replay.jsonl`, never replacing the original data. Timings and
+memory peaks depend on the host. The archive README documents smaller runs and
+output selection. The archive is research evidence, not a runtime dependency.
 
 ## Native and oracle checks
 
@@ -262,8 +285,9 @@ certificate replay; identity mixing/tampering; JSON and legacy round trips.
 Native changes require independent reference/enumeration checks and word boundaries.
 
 Reference CI checks Linux Python 3.10/3.12 and isolated reference wheels. Native CI
-checks Windows Python 3.10 and Linux Python 3.12 with required native tests and
-isolated dual wheels. Oracle CI forces GUDHI comparisons. Documentation CI builds
+checks Windows Python 3.10 and Linux Python 3.12 with Rust fmt/Clippy,
+`cargo test --lib`, required Python native differential tests and isolated dual
+wheels. Oracle CI forces GUDHI comparisons. Documentation CI builds
 both languages strictly and deploys main. Local and remote results belong to their
 exact source identities. Temporary outputs and wheels stay in ignored directories.
 

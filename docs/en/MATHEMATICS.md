@@ -449,7 +449,7 @@ chain coordinates, weight meanings, tie rules, and projection identity.
 | Current $`\Gamma`$ | Complete `stretch()` enumeration within a budget; exhaustion is distinct |
 | Optimal $`\Gamma_*`$ | Exact solvers in their supported domains with independent certificates |
 | Persistence module and barcode | `OperatorFamily` kernel transport and rank invariant |
-| True minimum class mass $`\mu_w`$ | Budgeted exact boundary-coset enumeration, original representative and boundary witness |
+| True minimum class mass $`\mu_w`$ | `minimum_class_mass`: budgeted exact boundary-coset enumeration for integer/rational weights, original representative and boundary witness |
 
 Integer and rational weights support exact geometry. Binary algebra stays exact
 with floating weights, while geometric and optimality precision are reported

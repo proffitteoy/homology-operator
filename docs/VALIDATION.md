@@ -37,6 +37,17 @@ cargo +1.98.1 test --manifest-path native/Cargo.toml --locked --lib
 `--no-sync` 保留单独安装的扩展；改 Rust 源码必须重建。强制变量防止用跳过冒充验证。
 Linux 的 PYO3_PYTHON 使用 `.venv/bin/python`。Rust 单测和 Python 差分分别验证内部边界与公共结果。
 
+## 几何查询性能复现
+
+PR #110 的原始 102 条采样、两份原始 harness 与标准库复现入口保存在
+[独立证据归档](https://github.com/proffitteoy/homology-operator/tree/570f390ce4daebb76998f3ffb39b95a9e4e00702)，
+固定提交为 `570f390ce4daebb76998f3ffb39b95a9e4e00702`，不进入产品目录或安装包。
+[英文验证说明](en/VALIDATION.md#complete-geometry-query-cost-admission-2026-10-15)
+提供从全新 clone 获取材料、核验哈希、重建原始表格与重跑完整实验的命令。
+重跑从固定 Git 提交导出前后源码和测试输入，不依赖原作者的本地快照目录。
+哈希核验与表格重建可跨平台；原始计时 harness 使用 Windows 的进程峰值接口，
+重跑仍需 Windows，计时结果不保证相同。有限样本不证明一般加速或普通 PH 性能优势。
+
 ## 独立拓扑 oracle
 
 GUDHI 只用于产品测试，不填充生产投影、几何或 barcode。
@@ -89,7 +100,7 @@ main 构建通过后自动部署 [GitHub Pages](https://proffitteoy.github.io/ho
 ## CI 与打包边界
 
 - [reference.yml](../.github/workflows/reference.yml)：Linux Python 3.10/3.12，回归、示例、Ruff、构建与无扩展隔离 wheel。
-- [native.yml](../.github/workflows/native.yml)：Windows/MSVC Python 3.10 与 Linux Python 3.12，Rust 检查、强制 native 与隔离双 wheel。
+- [native.yml](../.github/workflows/native.yml)：Windows/MSVC Python 3.10 与 Linux Python 3.12，Rust fmt/Clippy、`cargo test --lib`、强制 native 差分与隔离双 wheel。
 - [oracle.yml](../.github/workflows/oracle.yml)：锁定 GUDHI 的 Windows/Linux 拓扑差分。
 - [docs.yml](../.github/workflows/docs.yml)：严格双语构建及 main 的 Pages 部署。
 

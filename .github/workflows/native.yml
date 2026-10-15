@@ -32,6 +32,12 @@ jobs:
       - run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --manifest-path native/Cargo.toml --check
       - run: cargo clippy --manifest-path native/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Run Rust library unit tests
+        run: |
+          $env:PYO3_PYTHON = uv run --locked --no-sync python -c "import sys; print(sys.executable)"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          cargo test --manifest-path native/Cargo.toml --locked --lib
+          exit $LASTEXITCODE
       - name: Build and install optional release wheel
         run: |
           $pythonPath = uv run --locked python -c "import sys; print(sys.executable)"
