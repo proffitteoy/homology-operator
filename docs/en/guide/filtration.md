@@ -99,6 +99,70 @@ external data provider. Schemas 3 references and sources restore together and
 reject changed sources or saved pairings; legacy snapshots keep their existing
 format until feature APIs are requested.
 
+## Birth-pair cycle contract
+
+For an H1 reference with birth b, let z be its certified historical representative
+at b. `optimal_1_cycle` searches exactly `z + im(D_b)` in the original edge
+coordinates and returns the least `(mass, coordinate_bitset)`. It does not change
+the interval generator, P, transport, barcode, or the default representative.
+`FixedClassMinimum` permits an arbitrary cycle/stage; this birth-pair specialization
+requires a genuine one-simplex birth, its total order, and the whole chosen
+interval history. The result explicitly records `BirthHistoricalClass`, rather
+than claiming an unrestricted birth-pair or birth-edge optimum.
+
+**Feasibility and history.** The source protocol independently rebuilds all
+boundaries. Face-first insertion means no triangle already present at b can
+contain the new birth edge. Every vector in `im(D_b)` therefore has zero on that
+edge, while z has coefficient one. Every candidate is a cycle and uses that edge.
+Conversely, every cycle in this fixed historical class is z plus such a boundary,
+so enumerating an independent image basis covers the entire feasible set exactly
+once. Independent verification reduces raw D columns again, checks the birth
+class and cycle/edge conditions, and replays all exact masses/ties. Equal lower
+and upper bounds follow from this finite coverage, not from the search counter.
+
+The [complete historical certificate](#historical-certificate-and-cost) establishes
+the interval-module isomorphism first. A birth-class boundary remains a boundary
+under all forward inclusions; hence a candidate has the same class as every
+selected historical vector and dies at the certified death when finite. The
+validator additionally checks these residuals against each stage's raw boundary
+image and the actual death boundary space. A future face is never used to justify
+birth-class membership. Thus neither containing the birth edge nor vanishing at
+some later stage replaces full history certification.
+
+**Shortest-path boundary.** With positive edge costs, any F2 cycle containing a
+specified edge contains an endpoint path after deleting that edge. Keeping this
+path and the edge cannot increase mass; a shortest such path solves the larger
+birth-edge-only problem. It solves our historical-class problem only with an
+additional equivalence certificate. For example, if beta1 at birth equals one,
+any difference of two birth-edge cycles avoids the new edge, comes from the
+previous stage, and belongs to its zero homology. Their classes therefore agree.
+With more surviving classes this argument fails, even if faces are filled later.
+The present implementation always enumerates the certified fiber and uses no
+shortest-path shortcut.
+
+**HomCloud scope.** The frozen unit-cost comparisons in
+[optimal_cycles.json](../../../tests/fixtures/optimal_cycles.json) execute the
+unchanged Python `search` functions from
+[HomCloud 5.4.0 source](https://files.pythonhosted.org/packages/2c/14/0e520f2019bbea4e027adb464cd19055323bd892c220b03190685e32d058/homcloud-5.4.0.tar.gz),
+`homcloud/optimal_one_cycle.py`. The archive and file SHA-256, entry and exact
+simplex order are recorded in the fixture. This is source-function replay; the
+compiled extension and public Pair integration were not executed. Both inputs
+use F2 edge supports, the same insertion order, birth edge, birth prefix and unit
+costs. Triangle/previously-filled-face examples have beta1=1 and equal feasible
+sets, so their optimal values agree; tie support equality is not promised.
+A separate example has an older class: HomCloud returns a 3-edge birth cycle
+while the chosen death-compatible history requires 4 edges. That row compares
+representatives of different objectives and makes no equality/speed claim.
+
+HomCloud's default source path takes no death or historical-class constraint;
+its separate weighted graph path uses filtration values as costs and rejects
+repeated birth values. Our actual-length query separates filtration scales,
+total order and geometric costs, so it is not claimed as a reproduction of that
+weighted mode. Research definitions and the original counterexample are fixed in
+[D-GQ1/T-GQ1](https://github.com/proffitteoy/homology-operator-lab/blob/d1c76bc7ed276a7a65b7aab97c4fbfcdad2530da/docs/proof/PROOF.md#D-GQ1).
+This product test uses directly specified simplices and all-chain enumeration;
+research code is not a product dependency or imported validation score.
+
 ## Historical certificate and cost
 
 Finite H1/H2 references can additionally request

@@ -12,6 +12,7 @@ from homology_operator import (
     OperatorFamily,
     ProjectionProblem,
     ResourceLimits,
+    validate_optimal_1_cycle,
 )
 
 
@@ -88,12 +89,51 @@ def main():
     for reference in simplex_family.features().value:
         assert simplex_family.feature_pairing(reference).state == "Computed"
         simplex_family.resolve_feature(reference, 2)
+    # A finite H1 birth pair, with unit costs and an explicit simplex order.
+    stream = ((0,), (1,), (2,), (0, 1), (1, 2), (0, 2), (0, 1, 2))
+    cycle_windows = []
+    for count in range(1, len(stream) + 1):
+        cells = tuple(
+            tuple(s for s in stream[:count] if len(s) == d) for d in (1, 2, 3)
+        )
+        boundaries = tuple(
+            Matrix.from_columns(
+                (tuple(int(set(r) < set(c)) for r in rows) for c in columns), len(rows)
+            )
+            for rows, columns in zip(cells, cells[1:])
+        )
+        cycle_windows.append(
+            ChainWindow(
+                1,
+                *boundaries,
+                *(tuple(map(str, group)) for group in cells),
+                (1,) * len(cells[1]),
+                weight_semantics="unit",
+            )
+        )
+    cycle_family = OperatorFamily(
+        tuple(range(len(stream))),
+        tuple(cycle_windows),
+        tuple(
+            HomologyOperator(w, FeasibleSolver().solve(ProjectionProblem(w)))
+            for w in cycle_windows
+        ),
+        simplex_source={
+            "stage_convention": "AfterInsertion",
+            "simplices": [{"vertices": s, "label": str(s)} for s in stream],
+        },
+    )
+    feature = cycle_family.features().value[0]
+    cycle = cycle_family.optimal_1_cycle(feature)
+    assert cycle.state == "Computed" and cycle.value["mass"] == 3
+    assert validate_optimal_1_cycle(cycle_family, feature, cycle)["optimality_verified"]
     print(
         json.dumps(
             {
                 "family_result": family.to_result().to_dict(),
                 "simplex_family_result": simplex_family.to_result().to_dict(),
                 "endpoint_mass_control": controls,
+                "optimal_1_cycle": cycle.to_dict(),
             },
             sort_keys=True,
             separators=(",", ":"),

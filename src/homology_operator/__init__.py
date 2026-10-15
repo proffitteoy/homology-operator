@@ -24,6 +24,7 @@ from .validation import (
     validate_solution,
     validate_minimum_filling,
     validate_optimal_volume,
+    validate_optimal_1_cycle,
 )
 from .operator import HomologyOperator
 from .family import OperatorFamily, OperatorFamilyResult
@@ -52,6 +53,7 @@ __all__ = [
     "validate_solution",
     "validate_minimum_filling",
     "validate_optimal_volume",
+    "validate_optimal_1_cycle",
     "HomologyOperator",
     "OperatorFamily",
     "OperatorFamilyResult",
