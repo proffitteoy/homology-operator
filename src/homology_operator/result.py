@@ -125,6 +125,21 @@ def input_identity(window):
         "basis_id": content_id("basis", basis),
         "weight_id": content_id("weight", weights),
     }
+    if "source_mapping" in window.source_metadata:
+        identity["source_mapping_id"] = content_id(
+            "source_mapping",
+            {
+                "chain_window_hash": identity["chain_window_hash"],
+                "basis_id": identity["basis_id"],
+                "mapping": window.source_metadata["source_mapping"],
+                "weight_semantics": window.weight_semantics,
+                "unit": window.unit,
+            },
+        )
+        identity["input_id"] = content_id(
+            "input",
+            {"chain": chain, "source_mapping_id": identity["source_mapping_id"]},
+        )
     object.__setattr__(window, "_content_identity", MappingProxyType(identity))
     return dict(identity)
 

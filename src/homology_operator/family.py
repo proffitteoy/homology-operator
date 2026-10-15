@@ -185,6 +185,37 @@ class OperatorFamily:
             raise ValueError("family inputs must be validated ChainWindows")
         if any(w.k != windows[0].k for w in windows):
             raise ValueError("all stages must have the same homological degree")
+        mappings = [w.source_metadata.get("source_mapping") for w in windows]
+        if any(m is not None for m in mappings):
+            if any(m is None for m in mappings):
+                raise ValueError(
+                    "mapped families require a source mapping at every stage"
+                )
+            first = mappings[0]
+            for i, mapping in enumerate(mappings):
+                if (
+                    mapping["stage"] != i
+                    or mapping["scale"] != scales[i]
+                    or len(mapping["stage_order"]) != len(windows)
+                    or any(
+                        mapping[key] != first[key]
+                        for key in (
+                            "stage_order",
+                            "source_hash",
+                            "vertices",
+                            "embedding",
+                        )
+                    )
+                ):
+                    raise ValueError(
+                        "source mapping dataset, embedding or stage order mismatch"
+                    )
+            for source, target in zip(mappings, mappings[1:]):
+                if any(
+                    target["simplices"].get(label) != record
+                    for label, record in source["simplices"].items()
+                ):
+                    raise ValueError("source simplex mapping changed across stages")
         for window, operator in zip(windows, operators):
             if isinstance(operator, HomologyOperator):
                 if operator.window != window:
@@ -732,6 +763,8 @@ class OperatorFamily:
                     value = target._mass(chains[0].value)
                 elif name == "support":
                     value = supports[0]
+                elif name == "locate_support":
+                    value = target.window.locate_chain(chains[0].value)
                 elif name == "shared_support":
                     value = tuple(sorted(set(supports[0]) & set(supports[1])))
                 else:
@@ -754,7 +787,12 @@ class OperatorFamily:
                 value,
                 i,
                 j,
-                name != "selected_mass" or target.window.arithmetic != "FloatingPoint",
+                None
+                if name == "locate_support"
+                else (
+                    name != "selected_mass"
+                    or target.window.arithmetic != "FloatingPoint"
+                ),
                 {
                     "weight_policy": self.weight_policy,
                     "coordinate_labels": target.window.basis_current,
@@ -764,6 +802,7 @@ class OperatorFamily:
         public_name = {
             "selected_mass": "track_mass",
             "support": "track_support",
+            "locate_support": "track_location",
             "shared_support": "track_shared_support",
             "union_support": "track_union_support",
         }[name]
@@ -774,6 +813,10 @@ class OperatorFamily:
 
     def track_support(self, x, i, j):
         return self._track_geometry("support", (x,), i, j)
+
+    def track_location(self, x, i, j):
+        """Locate the transported same-P chain with this filtration's identity."""
+        return self._track_geometry("locate_support", (x,), i, j)
 
     def track_shared_support(self, x, y, i, j):
         return self._track_geometry("shared_support", (x, y), i, j)
@@ -1158,6 +1201,7 @@ class OperatorFamilyResult:
                 "track_class",
                 "track_mass",
                 "track_support",
+                "track_location",
                 "track_shared_support",
                 "track_union_support",
             }:
