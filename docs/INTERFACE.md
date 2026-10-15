@@ -153,6 +153,33 @@ stretch 定义为非零循环上 `m_w(Pz)/m_w(z)` 的最大值。
 该约定来自 [固定理论正文 §1.2](https://github.com/proffitteoy/homology-operator-lab/blob/6143729669902ee875b211b58085e954c76cdf88/docs/proof/PROOF.md)，
 资源耗尽或未计算不能用这个 0 替代。
 
+## 固定边界最小填充
+
+`minimum_filling(window, z, filling_window, *, limits=None, cancellation=None)`
+与 `validate_minimum_filling` 从 `homology_operator` 导入；独立求解
+`min m_{k+1}(c), D c=z`，不依赖投影，不附加出生/死亡配对，不改变 PH。
+
+填充成本复用次数 k+1 的 `ChainWindow`：`A=window.D`，
+`basis_previous=window.basis_current`，`basis_current=window.basis_next`，
+基标识和顺序必须一致。上维窗口的 D 可以描述更高边界，但不约束本查询。
+必须显式提供上维正权、unit 和非空字符串 `source_metadata["source"]`；
+原窗口的当前维权重不用于填充质量。长度/面积/体积语义要求上维次数为 1/2/3，
+unit 计数要求所有上维权重为 1。来源声明参与绑定，不自动证明实际几何测量正确。
+
+返回现有 `QueryResult`：Computed 的 value 包含 chain、重算 boundary、上维 support 索引和 mass，
+details 含独立复核的 ExactOptimal 证据及相等上下界。零边界返回合法零填充；
+Infeasible 的 value=None 并附对偶不可行见证；ResourceExhausted 的 value=None，
+保留 reason 和可选的可行 details.candidate，不宣称最优；Unavailable 表示浮点上维权、
+显式 packed-word 请求或超出精确重放域。非循环、基/矩阵/次数/来源不匹配抛 ValueError。
+
+整数/有理数搜索完整枚举 `c0+ker(D)`，最多 100,000 个可行填充，
+即核维数最多 16；零边界与不可行证据不受该枚举上限约束。
+并列按原上维坐标的 `sum(c_i*2**i)` 最小选择。
+limits 复用 ResourceLimits，state 为已评估填充数，时间与逻辑条目在检查点核对。
+输入验证/hash 和独立证书重放另计成本；没有 native 填充求解器或 RSS/硬抢占保证。
+完整可执行例子见 [英文 API](en/INTERFACE.md#fixed-boundary-minimum-filling) 和
+[single_scale.py](../examples/single_scale.py)。
+
 ## 过滤与传输
 
 普通 `barcode()`

@@ -27,6 +27,7 @@ QUERY_STATES = {
     "ResourceExhausted",
     "EmptyDomain",
     "NoClass",
+    "Infeasible",
 }
 
 
@@ -196,7 +197,14 @@ class QueryResult:
         if self.state == "Computed" and self.value is None:
             raise ValueError("Computed queries require a value; zero is valid")
         if (
-            self.state in {"NotComputed", "Unavailable", "ResourceExhausted", "NoClass"}
+            self.state
+            in {
+                "NotComputed",
+                "Unavailable",
+                "ResourceExhausted",
+                "NoClass",
+                "Infeasible",
+            }
             and self.value is not None
         ):
             raise ValueError("missing query states cannot carry a computed value")

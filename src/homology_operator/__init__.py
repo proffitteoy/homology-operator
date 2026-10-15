@@ -16,8 +16,14 @@ from .solver import (
     ResourceLimits,
     CancellationToken,
     solve_projection,
+    minimum_filling,
 )
-from .validation import ValidationError, validate_projection, validate_solution
+from .validation import (
+    ValidationError,
+    validate_projection,
+    validate_solution,
+    validate_minimum_filling,
+)
 from .operator import HomologyOperator
 from .family import OperatorFamily, OperatorFamilyResult
 
@@ -39,9 +45,11 @@ __all__ = [
     "ResourceLimits",
     "CancellationToken",
     "solve_projection",
+    "minimum_filling",
     "ValidationError",
     "validate_projection",
     "validate_solution",
+    "validate_minimum_filling",
     "HomologyOperator",
     "OperatorFamily",
     "OperatorFamilyResult",

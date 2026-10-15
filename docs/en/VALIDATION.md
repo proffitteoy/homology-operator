@@ -22,6 +22,17 @@ Missing native dependencies explicitly skip native tests. A reference pass does 
 validate native code. `uv build` creates local artifacts; public uploading follows
 the release procedure below. There is no independent typecheck command.
 
+The standalone fixed-boundary query has a focused standard-library test command:
+
+```console
+uv run --locked python -m unittest discover -s tests -p test_filling.py -v
+```
+
+It checks independent all-chain optima for H1 areas/H2 volumes, small F2 matrices,
+infeasibility obstructions, source/basis binding, interrupted results, exact
+arithmetic, wire round trips and untrusted certificate replay. No new dependency
+or native extension is required. `examples/single_scale.py` also runs a filling query.
+
 ## Native and oracle checks
 
 Build/install the matching wheel using the [native guide](guide/native.md).

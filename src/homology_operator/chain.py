@@ -6,7 +6,7 @@ from math import isfinite
 from types import MappingProxyType
 from collections.abc import Mapping, Set
 
-from .algebra import Matrix, CyclicAction, CompactAction
+from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 
 
 class InvalidInput(ValueError):
@@ -101,6 +101,47 @@ def action_from_data(data):
             raise InvalidInput("unsupported cyclic action handle")
         return CyclicAction(data["m"], data["complement"])
     return matrix_from_data(data)
+
+
+def _filling_request(window, z, filling_window):
+    """Bind a fixed boundary to explicitly sourced upper-degree costs."""
+    if not isinstance(window, ChainWindow) or not isinstance(
+        filling_window, ChainWindow
+    ):
+        raise InvalidInput("minimum filling requires two validated ChainWindows")
+    if (
+        filling_window.k != window.k + 1
+        or filling_window.A != window.D
+        or filling_window.basis_previous != window.basis_current
+        or filling_window.basis_current != window.basis_next
+    ):
+        raise InvalidInput(
+            "filling window must match D and its ordered bases at degree k+1"
+        )
+    z = validate_vector(z, window.n)
+    if any(window.A.apply(z)):
+        raise InvalidInput("fixed-boundary filling requires a cycle")
+    source = filling_window.source_metadata.get("source")
+    if not isinstance(source, str) or not source.strip() or filling_window.unit is None:
+        raise InvalidInput("upper weights require an explicit unit and nonempty source")
+    semantics = filling_window.weight_semantics
+    degrees = {"euclidean_length": 1, "euclidean_area": 2, "euclidean_volume": 3}
+    if semantics in degrees and filling_window.k != degrees[semantics]:
+        raise InvalidInput(
+            "geometric weight dimension does not match the filling degree"
+        )
+    if semantics == "unit" and any(w != 1 for w in filling_window.weights):
+        raise InvalidInput("unit counting requires every upper weight to equal one")
+    from .result import content_id
+
+    return z, content_id(
+        "filling-problem",
+        {
+            "window": window.to_dict(),
+            "boundary": z,
+            "filling_window": filling_window.to_dict(),
+        },
+    )
 
 
 @dataclass(frozen=True)

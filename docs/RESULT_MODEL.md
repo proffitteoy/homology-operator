@@ -36,6 +36,7 @@ value/details 复制为不可变容器；`to_dict()` / `from_dict()` 提供 wire
 | `ResourceExhausted` | None；已尝试但预算终止 |
 | `EmptyDomain` | 空定义域；允许明确约定值，例如空循环域 stretch=0 |
 | `NoClass` | None；显式表达无类，与死亡类的合法零代表不同 |
+| `Infeasible` | None；固定边界不存在填充，附可核验的对偶见证 |
 
 `exact` 是 bool 或 None：精确 F2 的拓扑与坐标读取可为 True；
 浮点质量/距离/stretch 为 False，缺失或未定计算可为 None。
@@ -44,6 +45,15 @@ value/details 复制为不可变容器；`to_dict()` / `from_dict()` 提供 wire
 普通标量查询返回直接值。`op.readout(name, *args)` 返回 QueryResult，
 并在内部历史中保留 query 名称与 arguments；`stretch` / `minimum_class_mass` 使用自己的记录入口。
 native 批查询默认不改变算子历史，需保存时显式加入记录的 query_results。
+
+## 独立填充结果
+
+固定边界填充复用 QueryResult，identity=None；没有投影或算子，不伪造六身份。
+details.problem_id 对两个完整窗口编码（含上维权/单位/来源、带序基）和目标 z 做内容 hash。
+结果不加入算子查询历史，不改变已有 OperatorResult/OperatorFamilyResult schema。
+to_dict/from_dict 保留分数和证据，但仅核对记录结构；读取不可信记录后必须调用
+`validate_minimum_filling(window, z, filling_window, result)`，使用重新计算的结论，
+不信任保存的 verification 布尔值。保存结果时同时保留两个输入窗口与 z。
 
 ## OperatorResult 的实际格式
 
