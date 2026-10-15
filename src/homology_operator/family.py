@@ -1294,6 +1294,157 @@ class OperatorFamily:
             )
         return self._remember("feature_pairing", (reference,), 0, last, result)
 
+    def _birth_cycle_request(self, reference):
+        """Bind a birth-stage fiber to the certified complete interval history."""
+        features, selected = self._feature(reference)
+        if selected is None:
+            return None, QueryResult(
+                features.state,
+                details={
+                    "reason": "feature history unavailable",
+                    "history_details": features.details,
+                },
+            )
+        ref, bar = selected
+        if self.windows[0].k != 1 or self.simplex_source is None:
+            return None, QueryResult(
+                "Unavailable",
+                details={
+                    "reason": "H1 and a certified one-simplex insertion source required",
+                },
+            )
+        birth = ref["birth_stage"]
+        window = self.windows[birth]
+        pairing = self.feature_pairing(ref).value
+        request = {
+            **self.identity,
+            "reference": ref,
+            "pairing": pairing,
+            "stage": birth,
+            "identity": self.stage(birth).identity,
+            "objective": "BirthPairOptimalCycle",
+            "feasible_set": "BirthHistoricalClass",
+            "tie_break_policy": "SmallestOriginalCoordinateBitset",
+            "weight_semantics": window.weight_semantics,
+            "unit": window.unit,
+            "arithmetic": window.arithmetic,
+        }
+        request["problem_id"] = content_id("birth_pair_cycle", request)
+        reason = None
+        if window.arithmetic == "FloatingPoint":
+            reason = "exact integer/rational edge weights required"
+        elif window.weight_semantics == "unit":
+            if any(w != 1 for w in window.weights):
+                raise ValueError("unit edge costs must all equal one")
+        elif window.weight_semantics == "euclidean_length":
+            location = window.locate_chain((1,) * window.n)
+            if location["embedding"] is None:
+                reason = "actual edge lengths require a source embedding"
+            else:
+                for w, edge in zip(window.weights, location["simplices"]):
+                    a, b = edge["coordinates"]
+                    squared = sum(
+                        (Fraction(x) - Fraction(y)) ** 2 for x, y in zip(a, b)
+                    )
+                    if w * w != squared:
+                        raise ValueError(
+                            "edge weight differs from its exact source length"
+                        )
+        else:
+            reason = "only unit costs or actual Euclidean edge lengths supported"
+        return (request, bar, window), reason
+
+    def optimal_1_cycle(self, reference, *, limits=None, cancellation=None):
+        """Exact minimum in a feature's birth-stage historical class.
+
+        This opt-in query returns a standalone QueryResult; it never changes P,
+        transport or the chosen interval decomposition. See the API for the
+        finite replay domain and the distinction from birth-edge-only shortest paths.
+        """
+        from .solver import ResourceLimits, CancellationToken, _Budget, _Exhausted
+        from .validation import validate_optimal_1_cycle
+
+        limits = ResourceLimits() if limits is None else limits
+        if not isinstance(limits, ResourceLimits):
+            raise ValueError("limits must be ResourceLimits")
+        if cancellation is not None and not isinstance(cancellation, CancellationToken):
+            raise ValueError("cancellation must be CancellationToken")
+        budget = _Budget(limits, cancellation=cancellation)
+        bound, reason = self._birth_cycle_request(reference)
+        if bound is None:
+            return reason
+        request, bar, window = bound
+        details = {**request, "certificate_level": None}
+
+        def finish(state, value=None, exact=None):
+            details["resource_usage"] = budget.usage()
+            result = QueryResult(state, value, request["identity"], exact, details)
+            checks = validate_optimal_1_cycle(self, reference, result)
+            return QueryResult(
+                state,
+                value,
+                request["identity"],
+                exact,
+                {**details, "verification": checks},
+            )
+
+        if reason is not None or limits.packed_word_limit is not None:
+            details["reason"] = reason or "packed-word budgets are unsupported"
+            return finish("Unavailable")
+        best = None
+        try:
+            budget.step(0)
+            budget.entries(window.n * (window.p + window.n + 1))
+            boundaries = window.D.image_basis()
+            budget.step(0)
+            if len(boundaries) > 16:
+                details["reason"] = "exact replay supports boundary rank at most 16"
+                return finish("Unavailable")
+            seed = _pack(bar["vectors"][0]["representative"])
+            packed = tuple(map(_pack, boundaries))
+            for coefficients in range(1 << len(packed)):
+                budget.step()
+                bits = seed
+                for i, vector in enumerate(packed):
+                    if coefficients >> i & 1:
+                        bits ^= vector
+                mass = sum(w for i, w in enumerate(window.weights) if bits >> i & 1)
+                key = (mass, bits)
+                if best is None or key < best:
+                    best = key
+            budget.step(0)
+            chain = _unpack(best[1], window.n)
+            details.update(
+                certificate_level="ExactOptimal",
+                certificate={
+                    "kind": "CompleteBirthClassEnumeration",
+                    "candidate_count": 1 << len(boundaries),
+                },
+                lower_bound=best[0],
+                upper_bound=best[0],
+            )
+            source = {
+                e["label"]: e["vertices"] for e in self.simplex_source["simplices"]
+            }
+            support = tuple(i for i, bit in enumerate(chain) if bit)
+            return finish(
+                "Computed",
+                {
+                    "chain": chain,
+                    "support": support,
+                    "mass": best[0],
+                    "edges": tuple(source[window.basis_current[i]] for i in support),
+                    "location": window.locate_chain(chain),
+                },
+                True,
+            )
+        except _Exhausted as error:
+            details["reason"] = str(error)
+            if best is not None:
+                details["candidate"] = _unpack(best[1], window.n)
+                details["certificate_level"] = "Feasible"
+            return finish("ResourceExhausted")
+
 
 def _compact_windows(family):
     """All boundaries are restrictions of the last stage in original labels."""

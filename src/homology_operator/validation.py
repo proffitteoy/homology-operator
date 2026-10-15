@@ -7,7 +7,7 @@ from math import isfinite
 
 from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 from .chain import ChainWindow, matrix_from_data, _filling_request
-from .result import QueryResult, content_id, make_identity
+from .result import QueryResult, content_id, make_identity, canonical_json
 
 
 class ValidationError(ValueError):
@@ -205,6 +205,153 @@ def validate_minimum_filling(window, z, filling_window, result):
     return {
         "feasibility_verified": True,
         "optimality_verified": True,
+        "replayed_candidates": count,
+    }
+
+
+def validate_optimal_1_cycle(family, reference, result):
+    """Replay a birth-class optimum from raw boundaries, independently of search.
+
+    Birth membership plus the complete interval-module certificate identifies
+    the whole history. Boundaries introduced after birth are never used to
+    excuse a wrong birth class. This replay has its own (unbudgeted) cost.
+    """
+    bound, reason = family._birth_cycle_request(reference)
+    if not isinstance(result, QueryResult):
+        raise ValidationError(("birth_cycle_result_type",))
+    if bound is None:
+        if result != reason:
+            raise ValidationError(("birth_cycle_domain",))
+        return {"optimality_verified": False, "feasibility_verified": False}
+    request, bar, window = bound
+    if result.identity != request["identity"] or canonical_json(
+        {key: result.details.get(key) for key in request}
+    ) != canonical_json(request):
+        raise ValidationError(("birth_cycle_request_binding",))
+    details = result.details
+    # Recheck the complete history rather than trusting endpoint labels or flags.
+    family._certify_feature_history(family._barcode_basis.value)
+    seed = bar["vectors"][0]["representative"]
+    edge = window.basis_current.index(request["pairing"]["birth_label"])
+
+    def feasible(chain):
+        chain = validate_vector(chain, window.n)
+        residual = tuple(a ^ b for a, b in zip(chain, seed))
+        if (
+            not chain[edge]
+            or any(sum(a * b for a, b in zip(row, chain)) % 2 for row in window.A.rows)
+            or not _batch_membership(window.D, (residual,))[0]
+        ):
+            raise ValidationError(("birth_cycle_cycle_edge_or_historical_class",))
+        return chain
+
+    if result.state in {"Unavailable", "ResourceExhausted"}:
+        candidate = details.get("candidate")
+        if (
+            result.value is not None
+            or result.exact is not None
+            or details.get("certificate_level")
+            != ("Feasible" if candidate is not None else None)
+            or any(
+                key in details for key in ("certificate", "lower_bound", "upper_bound")
+            )
+            or (candidate is not None and result.state != "ResourceExhausted")
+        ):
+            raise ValidationError(("unfinished_birth_cycle_certificate",))
+        if candidate is not None:
+            feasible(candidate)
+        return {
+            "feasibility_verified": candidate is not None,
+            "optimality_verified": False,
+        }
+    if (
+        reason is not None
+        or result.state != "Computed"
+        or result.exact is not True
+        or details.get("certificate_level") != "ExactOptimal"
+    ):
+        raise ValidationError(("birth_cycle_certificate_level",))
+    value = result.value
+    if not isinstance(value, Mapping) or set(value) != {
+        "chain",
+        "support",
+        "mass",
+        "edges",
+        "location",
+    }:
+        raise ValidationError(("birth_cycle_value",))
+    chain = feasible(value["chain"])
+    mass = sum(w * bit for w, bit in zip(window.weights, chain))
+    support = tuple(i for i, bit in enumerate(chain) if bit)
+    source = {e["label"]: e["vertices"] for e in family.simplex_source["simplices"]}
+    if (
+        value["support"] != support
+        or any(type(i) is not int for i in value["support"])
+        or canonical_json(value["edges"])
+        != canonical_json(tuple(source[window.basis_current[i]] for i in support))
+        or canonical_json(value["location"])
+        != canonical_json(window.locate_chain(chain))
+        or any(
+            isinstance(x, bool) or not isinstance(x, (int, Fraction)) or x != mass
+            for x in (
+                value["mass"],
+                details.get("lower_bound"),
+                details.get("upper_bound"),
+            )
+        )
+    ):
+        raise ValidationError(("birth_cycle_mass_support_location",))
+    # Validator-owned image elimination; ignore Matrix/solver decomposition caches.
+    pivots = {}
+    for column in window.D.transpose().rows:
+        bits = sum(bit << i for i, bit in enumerate(column))
+        while bits:
+            pivot = bits.bit_length() - 1
+            if pivot not in pivots:
+                pivots[pivot] = bits
+                break
+            bits ^= pivots[pivot]
+    if len(pivots) > 16:
+        raise ValidationError(("birth_cycle_replay_domain",))
+    count = 1 << len(pivots)
+    proof = details.get("certificate", {})
+    if (
+        not isinstance(proof, Mapping)
+        or proof.get("kind") != "CompleteBirthClassEnumeration"
+        or type(proof.get("candidate_count")) is not int
+        or proof["candidate_count"] != count
+    ):
+        raise ValidationError(("birth_cycle_coverage",))
+    packed = sum(bit << i for i, bit in enumerate(chain))
+    for coefficients in product((0, 1), repeat=len(pivots)):
+        other = packed
+        for bit, vector in zip(coefficients, pivots.values()):
+            if bit:
+                other ^= vector
+        key = (sum(w for i, w in enumerate(window.weights) if other >> i & 1), other)
+        if key < (mass, packed):
+            raise ValidationError(("birth_cycle_optimum_or_tie",))
+    # Explicitly verify the candidate at every historical stage and its death.
+    birth = request["stage"]
+    for vector in bar["vectors"]:
+        stage = vector["stage"]
+        image = family.inclusion(birth, stage).apply(chain)
+        residual = tuple(a ^ b for a, b in zip(image, vector["representative"]))
+        if not _batch_membership(family.windows[stage].D, (residual,))[0]:
+            raise ValidationError(("birth_cycle_history",))
+    death = bar["death_stage"]
+    if (
+        death is not None
+        and not _batch_membership(
+            family.windows[death].D, (family.inclusion(birth, death).apply(chain),)
+        )[0]
+    ):
+        raise ValidationError(("birth_cycle_death",))
+    return {
+        "feasibility_verified": True,
+        "optimality_verified": True,
+        "birth_edge_verified": True,
+        "full_history_verified": True,
         "replayed_candidates": count,
     }
 

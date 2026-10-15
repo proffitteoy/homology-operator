@@ -2,6 +2,17 @@
 
 [中文](../RESULT_MODEL.md)
 
+Birth-pair cycle queries use standalone `QueryResult` records with the birth
+operator's six identities, full family/feature/pairing binding and a content-based
+problem ID. Their `BirthHistoricalClass` objective is separate from same-P selected
+mass, arbitrary fixed-class minima and birth-edge-only cycles. Computed means
+independently replayed ExactOptimal with equal bounds over the declared finite
+fiber; interrupted candidates have only Feasible evidence. F2 supports and source
+locations can have multiple components. JSON decoding is structural; call
+`validate_optimal_1_cycle(family, reference, result)` for semantic verification.
+The family snapshot schema is unchanged and does not retain these standalone
+optimization records. See [API and limits](INTERFACE.md#birth-pair-optimal-1-cycle).
+
 `QueryResult` contains `state`, `value`, `identity`, `exact`, and `details`.
 
 | State | Meaning |

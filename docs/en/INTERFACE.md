@@ -217,6 +217,56 @@ occurrence index for repeated endpoints. See [feature references and simplex
 sources](guide/filtration.md#feature-references-and-simplex-sources) for input format,
 numbering, certificate and resource boundaries.
 
+## Birth-pair optimal 1-cycle
+
+`family.optimal_1_cycle(reference, *, limits=None, cancellation=None)` minimizes
+edge mass **at the reference's birth stage**, in its certified historical class.
+It supports H1, the complete one-simplex insertion source used by
+`feature_pairing`, and exact integer/rational costs: `weight_semantics="unit"`
+requires every cost to be 1; `"euclidean_length"` requires a source embedding
+and verifies each squared edge length against its lifted coordinates. The
+embedding's length unit must match the weights. General irrational lengths
+stored as floating point are currently `Unavailable` for this exact query.
+Both finite and terminally surviving features are supported, with either stage
+convention and repeated scales. Stage indices, the simplex order, and the full
+history remain authoritative.
+
+This is the restricted `BirthPairOptimalCycle` objective with feasible set
+`BirthHistoricalClass`: all cycles in `z_birth + im(D_birth)`, including the birth
+edge. It anchors an existing feature, unlike `FixedClassMinimum` with an arbitrary
+caller cycle/stage. It also differs from minimizing **all** birth-edge-containing
+cycles: that larger set can select another historical class. See the
+[proof and HomCloud comparison](guide/filtration.md#birth-pair-cycle-contract).
+
+The existing `QueryResult` carries the birth operator's six identities. Its
+Computed value contains the F2 `chain`, original-coordinate `support`, `mass`,
+an unordered support collection `edges` in simplex-source vertex IDs, and
+`location` from `window.locate_chain(chain)`. Mapped inputs include original point
+IDs/coordinates and support components; unmapped inputs retain support only.
+These are F2 support edges, possibly disconnected, without a polygon/traversal
+claim. Details bind the feature/history, source, pairing, stage, weight/unit,
+objective, original-coordinate tie policy, and `problem_id`.
+
+The exact reference enumerates the boundary image, with rank at most 16 (at most
+65,536 distinct chains). Equal masses choose the smallest original-coordinate
+bitset `sum(chain[i]*2**i)`. Computed includes equal lower/upper bounds,
+`ExactOptimal`, and independent full-coverage replay. `ResourceExhausted` has no
+value or optimal bound; it may retain a verified feasible `details.candidate`.
+Unsupported degree/source/cost/replay domain or packed-word requests return
+`Unavailable`. Feature-history failures preserve their missing state. Malformed
+or foreign references, inconsistent unit costs or measured lengths raise ValueError.
+Valid references always have a feasible chain; this query has no empty-domain or
+infeasible fallback.
+
+`ResourceLimits`/`CancellationToken` apply at search checkpoints. Input binding,
+full-history construction, independent replay and location have additional costs;
+these limits are neither hard preemption nor RSS bounds. The result is standalone
+and does not enter family snapshots. After a QueryResult JSON round trip, call
+`validate_optimal_1_cycle(family, reference, result)` (public package import) to
+replay its semantics. Decoding alone is not certification. The complete runnable
+example is [examples/filtration.py](../../examples/filtration.py); no new runtime
+dependency or native solver is required.
+
 ## Optional Rust extension
 
 The locked build uses Rust 1.98.1, PyO3 0.29.3, and maturin 1.15.0. Native CI

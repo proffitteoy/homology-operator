@@ -239,6 +239,18 @@ tracking 只接受源循环，按索引嵌入计算目标投影的作用；死�
 `endpoint_mass_bound` 使用终点 stretch、源选定质量与 `max(w_j/w_i)`，不乘中间 stretch。
 浮点仅给数值观察，`bound_verified=None`。完整实例见 [examples/filtration.py](../examples/filtration.py)。
 
+## 出生配对最短 H1 环
+
+`family.optimal_1_cycle(reference, *, limits=None, cancellation=None)` 在特征出生阶段
+完整搜索其已认证历史类，返回最短 F2 支撑、质量、出生算子的六身份和来源定位。
+要求逐单形来源、H1，以及单位成本或经来源坐标核验的精确有理边长；边界秩最多 16。
+该 `BirthHistoricalClass` 可行域区别于任意循环/阶段的固定类查询，也区别于只要求包含出生边的最短路。
+资源中断保留显式状态和可选可行候选，不认证最优；不支持域返回 Unavailable。
+结果是独立 QueryResult，JSON 解码后用公开的 `validate_optimal_1_cycle` 重放证书，
+不写入 family 快照。完整支持域、历史相容性论证和 HomCloud 对照边界见
+[英文 API](en/INTERFACE.md#birth-pair-optimal-1-cycle) 与
+[过滤指南](en/guide/filtration.md#birth-pair-cycle-contract)。
+
 ## 可选 Rust 扩展
 
 实际构建组合：Rust 1.98.1、PyO3 0.29.3、maturin 1.15.0，Cargo.lock 锁定依赖。
