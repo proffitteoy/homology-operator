@@ -21,13 +21,20 @@ Let `L=I+P` and `m_w(x)=sum(w_i*x_i)` in the original coordinates.
 | `shared_support(z,y)` / `union_support(z,y)` | Two cycles; intersection / union indices |
 | `readout(name, *args)` | Corresponding query domain; recorded `QueryResult` |
 | `stretch(limits=None)` | `QueryResult` for the current projection's worst cycle mass ratio |
-| `minimum_class_mass(z)` | Cycle; currently `Unavailable` |
+| `minimum_class_mass(z, limits=None)` | Cycle; budgeted exact minimum with original representative and boundary witness |
 | `to_result()` | Immutable `OperatorResult` snapshot |
 
 Class queries reject noncycles. No implicit conversion turns a raw chain into a
 homology class. `selected_mass` is not the true minimum mass of a class.
 Feasibility, exact evaluation of the current stretch, and minimum possible
 stretch over projections are separate facts.
+
+For exact integer/rational weights, `minimum_class_mass(z)` independently searches
+`z+im(D)`. On completion, `value` is the minimum and details contain the original
+`representative` and `boundary_witness` with `Db=representative+z`.
+Resource exhaustion retains a candidate and certified interval in details with
+no computed scalar; floating weights return `Unavailable`.
+See [budgets and certificates](../INTERFACE.md#single-scale-queries).
 
 
 ## An exact operator on the six-edge complex
@@ -77,6 +84,9 @@ assert op.selected_mass(y) == 9
 assert op.class_distance(z, y) == 9
 assert op.shared_support(z, y) == (0, 2)
 assert op.stretch().value == Fraction(9, 8)
+combined = tuple(a ^ b for a, b in zip(z, y))
+assert [op.minimum_class_mass(c).value for c in (z, y, combined)] == [8, 8, 9]
+assert [op.selected_mass(c) for c in (z, y, combined)] == [8, 9, 9]
 
 assert op.class_representative(z) == (1, 0, 1, 0, 1, 0)
 assert op.class_representative(y) == (1, 0, 1, 1, 0, 1)
@@ -108,7 +118,8 @@ Here $`z`$ is triangle $`013`$ and $`y`$ is triangle $`023`$. Their individually
 representatives both cost eight. The selected representative for $`y`$ adds the
 boundary of $`012`$ and costs nine. This lets the combined output cost nine rather
 than twelve. Shared edges $`01,03`$ have total mass four; the union has mass thirteen.
-All these readouts come from the same stored $`P`$, whose kernel realizes $`H_1`$.
+The projection readouts come from the same stored $`P`$, whose kernel realizes
+$`H_1`$. The separate class-minimum queries leave that action unchanged.
 
 The unit-weight variant has identical boundaries and Betti number, but a different
 optimal stretch, $`4/3`$. These geometric values describe the chosen coordinate

@@ -1,5 +1,12 @@
 # Solver contract
 
+The fixed-class `minimum_class_mass` query is separate from projection solving.
+Its exact boundary-coset enumeration and homology witness are specified in the
+[API](INTERFACE.md#single-scale-queries). Its `ExactOptimal` certifies one class,
+not optimal stretch or a linear section. `ExhaustiveExactSolver` continues to
+enumerate sections and cycle ratios without a shortest-class table as input or
+intermediate data. Rank-two solver minima remain its own bounded certificate.
+
 The objective, section equivalence, and universal bounds are proved in [operator theory](MATHEMATICS.md).
 
 [中文](../SOLVER_CONTRACT.md) · [API](INTERFACE.md)

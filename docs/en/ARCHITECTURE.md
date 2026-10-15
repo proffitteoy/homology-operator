@@ -53,7 +53,9 @@ True minimum class mass and the current/optimal projection objectives are differ
 \Gamma_*=\min_P\Gamma_w(P).
 ```
 
-`minimum_class_mass` is currently unavailable. Feasibility, exact current Γ, and
+`minimum_class_mass` independently searches one boundary coset under exact weights
+and resource limits; its representatives are not combined into a linear P.
+Feasibility, exact current Γ, and
 global optimality are separate facts. Empty cycle space has declared stretch 0
 with EmptyDomain; a nonempty cycle space with zero Betti has a legitimate computed
 0. This is distinct from a separately defined section-accounting convention.

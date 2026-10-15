@@ -1,6 +1,6 @@
 """Joint readouts of one independently validated single-scale projection."""
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from fractions import Fraction
 from math import fsum, isfinite
@@ -9,9 +9,13 @@ from types import MappingProxyType
 from . import __version__
 from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 from .chain import ChainWindow
-from .result import OperatorResult, QueryResult, _freeze, make_identity
+from .result import OperatorResult, QueryResult, _freeze, content_id, make_identity
 from .solver import ProjectionSolution, ResourceLimits, _Budget, _Exhausted
-from .validation import _validated_certificate, validate_solution
+from .validation import (
+    _validated_certificate,
+    validate_minimum_class_query,
+    validate_solution,
+)
 
 THEORY_REVISION = "6143729669902ee875b211b58085e954c76cdf88"
 
@@ -163,11 +167,119 @@ class HomologyOperator:
     def union_support(self, z, y):
         return tuple(sorted(set(self.support(z)) | set(self.support(y))))
 
-    def minimum_class_mass(self, z):
-        self._cycle(z)
-        result = QueryResult(
-            "Unavailable", identity=self.identity, details={"method": "not implemented"}
-        )
+    def minimum_class_mass(self, z, limits=None):
+        """Minimize one exact-weight cycle coset, independently of P's section.
+
+        Enumerate each element of im(D) once, using Gray-code updates of stable
+        independent original columns. Ties use lexicographic chain coordinates.
+        An interrupted candidate is an upper bound, never a computed minimum.
+        """
+        z = self._cycle(z)
+        limits = ResourceLimits() if limits is None else limits
+        if not isinstance(limits, ResourceLimits):
+            raise ValueError("minimum_class_mass limits must be ResourceLimits")
+        budget = _Budget(limits)
+        details = {
+            "method": "BoundaryCosetEnumeration",
+            "input_cycle": z,
+            "request_limits": asdict(limits),
+            "arithmetic_policy": self.window.arithmetic,
+            "tie_break_policy": "LexicographicChain",
+        }
+        if (
+            self.window.arithmetic == "FloatingPoint"
+            or limits.packed_word_limit is not None
+        ):
+            details["reason"] = (
+                "exact weights required"
+                if self.window.arithmetic == "FloatingPoint"
+                else "unsupported resource limits: packed_word_limit"
+            )
+            result = QueryResult("Unavailable", identity=self.identity, details=details)
+        else:
+            n, p = self.window.n, self.window.p
+            best, best_chain, best_boundary = self._mass(z), z, (0,) * p
+            total, proof, reason = None, None, None
+            try:
+                # Conservative logical entry bound for reduction, independent
+                # checking, basis columns, candidate and original-basis witness.
+                budget.entries(
+                    2 * n * p + 2 * n * min(n, p) + 8 * (n + p) + 2 * self.window.m
+                )
+                budget.step(0)
+                pivots = self.window.D._reduction[1]
+                basis = self.window.D.image_basis()
+                total = 1 << len(basis)
+                current, boundary = z, [0] * p
+                for index in range(total):
+                    budget.step()
+                    if index:
+                        changed = (index & -index).bit_length() - 1
+                        current = tuple(a ^ b for a, b in zip(current, basis[changed]))
+                        boundary[pivots[changed]] ^= 1
+                    mass = self._mass(current)
+                    if (mass, current) < (best, best_chain):
+                        best, best_chain, best_boundary = mass, current, tuple(boundary)
+                    if best == 0:
+                        proof = "NonnegativeMass"
+                        break
+                if proof is None:
+                    proof = "CompleteBoundaryEnumeration"
+                budget.step(0)
+            except _Exhausted as error:
+                reason, proof = str(error), None
+            details.update(
+                {
+                    "candidate_mass": best,
+                    "representative": best_chain,
+                    "boundary_witness": best_boundary,
+                    "lower_bound": best if proof else 0,
+                    "upper_bound": best,
+                    "optimality_gap": 0 if proof else best,
+                    "certificate_level": "ExactOptimal"
+                    if proof
+                    else "CertifiedInterval",
+                    "optimality_proof": proof,
+                    "total_boundaries": total,
+                    "enumerated_boundaries": budget.states,
+                    "resource_usage": budget.usage(),
+                }
+            )
+            if reason is not None:
+                details["reason"] = reason
+            result = QueryResult(
+                "Computed" if proof else "ResourceExhausted",
+                best if proof else None,
+                self.identity,
+                True if proof else None,
+                details,
+            )
+            # Check actual A/D/P and the original-coordinate boundary witness;
+            # snapshot recovery additionally replays the optimality certificate.
+            validate_minimum_class_query(self.window, self.P, result, replay=False)
+            try:
+                budget.step(0)
+            except _Exhausted as error:
+                proof = None
+                details.update(
+                    {
+                        "reason": str(error),
+                        "optimality_proof": None,
+                        "lower_bound": 0,
+                        "optimality_gap": best,
+                        "certificate_level": "CertifiedInterval",
+                    }
+                )
+            details["resource_usage"] = budget.usage()
+            result = QueryResult(
+                "Computed" if proof else "ResourceExhausted",
+                best if proof else None,
+                self.identity,
+                True if proof else None,
+                details,
+            )
+        key = content_id("minimum_class_mass", (z, asdict(limits)))
+        self._queries[key] = result
         self._queries["minimum_class_mass"] = result
         return result
 
@@ -298,8 +410,6 @@ class HomologyOperator:
             )
         query = QueryResult("Computed", value, self.identity, exact, details)
         # Store arguments too: a snapshot must preserve which chain was queried.
-        from .result import content_id
-
         key = content_id(name, args)
         self._queries[key] = QueryResult(
             query.state,

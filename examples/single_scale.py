@@ -18,7 +18,7 @@ def main():
         ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
     ).stdout.strip()
     # Two homologous coordinates: the deterministic selected mass is 10,
-    # while the other representative has mass 1. No shortest solver is used.
+    # while the independent fixed-class minimum query finds mass 1.
     window = ChainWindow(
         0,
         Matrix.zero(0, 2),
@@ -46,6 +46,10 @@ def main():
     ):
         op.readout(name, *args)
     op.stretch(limits)
+    minimum = op.minimum_class_mass((0, 1), limits)
+    assert minimum.state == "Computed" and minimum.value == 1
+    assert minimum.details["representative"] == (0, 1)
+    assert minimum.details["boundary_witness"] == (0,)
     print(op.to_result().to_json())
     # Independent fixed-boundary query: costs belong to the upper edge basis.
     upper = ChainWindow(
