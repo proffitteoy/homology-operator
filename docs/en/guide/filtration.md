@@ -163,6 +163,57 @@ weighted mode. Research definitions and the original counterexample are fixed in
 This product test uses directly specified simplices and all-chain enumeration;
 research code is not a product dependency or imported validation score.
 
+## Stable-volume definition and guarantee
+
+For a finite pair (b,d), set
+
+```math
+\mathcal A_{\varepsilon,q}=\{\sigma_j:\dim\sigma_j=q,\ j<d,
+  r_j\ge r_b+\varepsilon\}.
+```
+
+Minimize the positive upper cost of
+`c = sigma_d + sum(t_omega * omega)` with free simplices in
+`A_(epsilon,k+1)` and zero boundary rows in `A_(epsilon,k)`.
+There is no condition on the birth coefficient. These are precisely the F2
+constraints of [Obayashi 2023](https://doi.org/10.1007/s41468-023-00119-8),
+Definition 6, p.691. The affine solver solves these rows, enumerates the entire
+kernel fiber, and orders equal masses by the smallest original-coordinate
+bitset. Independent replay rebuilds faces from the simplex source and computes
+its own elimination and kernel; it does not use the search's solve/kernel cache.
+Positive exact costs and complete coverage establish the declared optimum.
+
+There is one additional exact shortcut. If the singleton death chain satisfies
+all threshold rows, every feasible chain still has its death coefficient one.
+Strict positivity gives the lower bound equal to the death simplex cost, and
+the singleton attains it uniquely. Its `PositiveCostDeathAnchor` certificate
+requires no kernel or exponential replay; the independent validator checks raw
+face feasibility and that exact bound. All other inputs retain the exhaustive
+reference and its nullity cap. This argument uses no graph/mesh complexity
+assumption. Hardness of arbitrary binary coset optimization does not establish
+hardness for a geometric graph or Euclidean mesh, nor does this shortcut provide
+a general efficient geometric solver.
+
+The stronger robustness label uses only the certified polygon-fan category of
+[research reference 4349866166962e25d515fa1cec1f0460e7f659a4](https://github.com/proffitteoy/homology-operator-lab/blob/4349866166962e25d515fa1cec1f0460e7f659a4/candidates/minimum-stretch/geometry_queries.py).
+Strict convexity certifies that triangles `(v0,vi,vi+1)` embed a pure contractible
+disk. Their dual incidence, including the outside node, propagates a forced
+death coefficient along zero-constrained edges; remaining components can be
+zero. Positive costs make extra components unfavorable. For unit costs this is
+the tree stable volume of Definition 3, p.682, by Theorem 4.1, p.691. The common
+robust-part interpretation then uses Theorem 3.1, p.683, with the exact
+[API assumptions](../INTERFACE.md#stable-volume). No general-k robustness theorem
+is inferred from exact binary optimization.
+
+In the square fixture, outer edges have value 1, the diagonal value 2 and the
+two triangles values 3 and 4. The outer H1 pair has stable support both triangles
+for `0 < epsilon <= 1`, and only the death triangle for `epsilon > 1`. The
+latter boundary contains the diagonal and is not a birth-stage class. Keeping
+the order fixed and perturbing levels by at most delta gives the checked tree
+sandwich `S(epsilon+2*delta) subset S'(epsilon) subset S(epsilon-2*delta)` when
+epsilon > 2*delta. This permits support jumps at the threshold and does not
+promise a Lipschitz representative or stability across resampling.
+
 ## Historical certificate and cost
 
 Finite H1/H2 references can additionally request

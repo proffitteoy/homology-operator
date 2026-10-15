@@ -108,6 +108,19 @@ replays constraints and optimality; saved verification flags cannot replace it.
 The family's source/pairing and existing historical references continue to use
 schema 3 with their existing independent recovery checks.
 
+Stable-volume results use the same standalone wire model and upper input, with
+`StableVolumeDefinition6`, positive exact epsilon, its declared scale unit,
+`Obayashi2023Definition6-F2-v1`, cutoff, allowed/zero indices and source binding.
+`CompleteStableAffineEnumeration` certifies a complete affine fiber;
+`PositiveCostDeathAnchor` proves the exact anchor-cost lower bound when the
+singleton death chain is feasible. Both have `ExactOptimal` grade. Algebraic
+exactness, exact positive-cost optimization, conditional filtration robustness,
+and resampling stability are separate: the last is always unclaimed.
+`guarantee_level` is absent in meaning (`None`) for unfinished or unsupported
+results. `robust_domain` reports geometric eligibility, not a completed guarantee.
+`validate_stable_volume` rejects changed epsilon/units, costs, geometry, pair,
+constraint set, proof, location and guarantee. Family schema versions do not change.
+
 ## Single-scale wire format
 
 `OperatorResult` uses schema 1 with `status`, `identity`, `input_data`, `projection`,

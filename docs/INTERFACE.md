@@ -479,3 +479,12 @@ reference 构造不会加载扩展，快照恢复仍无需 Rust。
 较小或稠密矩阵直接使用 packed。statistics 新增 sparse_input、sparse_reduced
 和 sparse_to_dense_switches；stored_words 计算 u64 或 usize 槽位，不含行头与容量，
 不是 RSS。该阈值是存储策略，不是所有稀疏输入都会加速的承诺。
+
+## Stable volume
+
+`OperatorFamily.stable_volume(reference, epsilon, filling_window, *, epsilon_unit,
+limits=None, cancellation=None)` 提供有限 H1/H2 配对的 Definition 6 精确查询。
+epsilon 必须为正整数/有理数，单位声明对应过滤尺度，与上维代价单位分别记录。
+两维均使用非严格阈值，没有出生系数非零约束；结果边界可能离开出生阶段。
+最优证书与限定凸扇扰动保证分别记录，一般 H2 与跨数据重采样不继承该保证。
+支持域、前提、失败状态及恢复校验见 [英文契约](en/INTERFACE.md#stable-volume)。
