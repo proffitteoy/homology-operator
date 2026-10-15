@@ -67,6 +67,38 @@ integration is outside this comparison. Without this environment variable, only
 the live source replay is skipped; frozen comparisons and independent enumeration
 still run. No new locked/runtime dependency is required.
 
+## Stable-volume and shared geometry checks
+
+```console
+uv run --locked python -m unittest discover -s tests -p test_stable_volume.py -v
+uv run --locked --group oracle --group oracle-secondary python -m unittest discover -s tests -p test_stable_volume.py -v
+uv run --locked python examples/filtration.py
+```
+
+The standard-library suite checks the frozen T1--T5 corpus with independent set
+enumeration, nonunique minima, histories, epsilon equality, upper and boundary
+constraints, conditional convex geometry, fixed-order perturbation sandwiches,
+units, cancellation/budgets, source/cost/death tampering and standalone recovery.
+The oracle environment additionally runs GUDHI 3.11.0 with F2 and exact integer
+insertion stages; original equal scale levels are preserved separately.
+
+For live HomCloud LP replay, reuse the verified archive download above, extract
+the following source and install the explicitly optional comparison dependency:
+
+```powershell
+tar -xf .task-artifacts/homcloud-5.4.0.tar.gz -C .task-artifacts homcloud-5.4.0/homcloud/optvol.py
+uv pip install --python .venv/Scripts/python.exe pulp==3.3.0
+$env:HOMOLOGY_HOMCLOUD_VOLUME_SOURCE = (Resolve-Path .task-artifacts/homcloud-5.4.0/homcloud/optvol.py).Path
+.venv/Scripts/python.exe -m unittest discover -s tests -p test_stable_volume.py -v
+Remove-Item Env:HOMOLOGY_HOMCLOUD_VOLUME_SOURCE
+```
+
+The test verifies the source SHA256 before executing unchanged upstream Python
+functions and the actual CBC LP solver. PuLP is not a runtime or locked core
+test dependency. Missing the source variable skips only live source replay.
+The [scope ledger](../FIXTURES.md#geometry-query-corpus-t1t5) records the signed
+continuous/binary distinction and the unequal-cutoff negative control.
+
 ## Native and oracle checks
 
 Build/install the matching wheel using the [native guide](guide/native.md).

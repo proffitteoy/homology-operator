@@ -337,13 +337,33 @@ def validate_minimum_filling(window, z, filling_window, result):
     }
 
 
-def validate_optimal_volume(family, reference, filling_window, result):
+def validate_stable_volume(
+    family, reference, epsilon, filling_window, result, *, epsilon_unit
+):
+    """Semantically validate a restored stable-volume record in its original request."""
+    if epsilon is None:
+        raise ValueError("positive epsilon required")
+    return validate_optimal_volume(
+        family,
+        reference,
+        filling_window,
+        result,
+        epsilon=epsilon,
+        epsilon_unit=epsilon_unit,
+    )
+
+
+def validate_optimal_volume(
+    family, reference, filling_window, result, *, epsilon=None, epsilon_unit=None
+):
     """Replay pair constraints, original provenance and the complete affine fiber.
 
     Reconstruct the constraint matrix directly from simplex faces. Neither the
     search kernel, its rank/counters, nor a reported verification is evidence.
     """
-    stage, request_state, request = family._volume_request(reference, filling_window)
+    stage, request_state, request = family._volume_request(
+        reference, filling_window, epsilon, epsilon_unit
+    )
     if not isinstance(result, QueryResult):
         raise ValidationError(("volume_result_type",))
     expected = family._query(result.state, result.value, 0, stage, details=request)
@@ -354,6 +374,14 @@ def validate_optimal_volume(family, reference, filling_window, result):
     ):
         raise ValidationError(("volume_request_binding",))
     details = result.details
+    if epsilon is not None and details.get("guarantee_level") != (
+        "ConditionalCommonRobustPart"
+        if result.state == "Computed" and request["robust_domain"]
+        else "OptimizationOnly"
+        if result.state == "Computed"
+        else None
+    ):
+        raise ValidationError(("stable_volume_guarantee",))
 
     def checked(checks):
         if "verification" in details and details["verification"] != checks:
@@ -384,13 +412,26 @@ def validate_optimal_volume(family, reference, filling_window, result):
     birth, death = reference["birth_stage"], reference["death_stage"]
     anchor = window.basis_next.index(events[death - offset]["label"])
     birth_row = window.basis_current.index(events[birth - offset]["label"])
+    cutoff = None if epsilon is None else family.scales[birth] + epsilon
     allowed = tuple(
-        j for j, label in enumerate(window.basis_next) if birth < order[label] < death
+        j
+        for j, label in enumerate(window.basis_next)
+        if order[label] < death
+        and (
+            birth < order[label]
+            if cutoff is None
+            else family.scales[order[label]] >= cutoff
+        )
     )
     zero_rows = tuple(
         i
         for i, label in enumerate(window.basis_current)
-        if birth < order[label] < death
+        if order[label] < death
+        and (
+            birth < order[label]
+            if cutoff is None
+            else family.scales[order[label]] >= cutoff
+        )
     )
     incidence = tuple(
         tuple(
@@ -408,7 +449,7 @@ def validate_optimal_volume(family, reference, filling_window, result):
         if (
             chain[anchor] != 1
             or any(bit and j not in (*allowed, anchor) for j, bit in enumerate(chain))
-            or image[birth_row] != 1
+            or (epsilon is None and image[birth_row] != 1)
             or any(image[i] for i in zero_rows)
         ):
             raise ValidationError(("volume_pair_constraints",))
@@ -417,7 +458,9 @@ def validate_optimal_volume(family, reference, filling_window, result):
     if result.state in {"Unavailable", "ResourceExhausted"}:
         candidate = details.get("candidate")
         if (
-            result.exact is not None
+            result.value is not None
+            or result.exact is not None
+            or (candidate is not None and result.state != "ResourceExhausted")
             or details.get("certificate_level")
             != ("Feasible" if candidate is not None else None)
             or any(
@@ -461,7 +504,13 @@ def validate_optimal_volume(family, reference, filling_window, result):
         image[window.basis_current.index(label)] for label in birth_window.basis_current
     )
     historical = family.resolve_feature(reference, birth).value["representative"]
-    same = family.stage(birth).P.apply(at_birth) == historical
+    same = (
+        not any(
+            bit and label not in birth_window.basis_current
+            for label, bit in zip(window.basis_current, image)
+        )
+        and family.stage(birth).P.apply(at_birth) == historical
+    )
     if (
         validate_vector(value["boundary"], window.n) != image
         or value["support"] != support
@@ -485,7 +534,10 @@ def validate_optimal_volume(family, reference, filling_window, result):
     ):
         raise ValidationError(("volume_output_or_source",))
     constraint = Matrix.from_rows(
-        (tuple(incidence[i][j] for j in allowed) for i in (birth_row, *zero_rows)),
+        (
+            tuple(incidence[i][j] for j in allowed)
+            for i in (((birth_row,) if epsilon is None else ()) + zero_rows)
+        ),
         ncols=len(allowed),
     )
     kernel = _cycle_basis(constraint)
@@ -495,7 +547,12 @@ def validate_optimal_volume(family, reference, filling_window, result):
     proof = details.get("certificate", {})
     if (
         not isinstance(proof, Mapping)
-        or proof.get("kind") != "CompletePairAffineEnumeration"
+        or proof.get("kind")
+        != (
+            "CompletePairAffineEnumeration"
+            if epsilon is None
+            else "CompleteStableAffineEnumeration"
+        )
         or type(proof.get("candidate_count")) is not int
         or proof["candidate_count"] != count
     ):

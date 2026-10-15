@@ -1300,8 +1300,21 @@ class OperatorFamily:
             )
         return self._remember("feature_pairing", (reference,), 0, last, result)
 
-    def _volume_request(self, reference, filling_window):
+    def _volume_request(
+        self, reference, filling_window, epsilon=None, epsilon_unit=None
+    ):
         """Bind upper costs to a certified pair and its original simplex order."""
+        if epsilon is not None:
+            if (
+                isinstance(epsilon, bool)
+                or not isinstance(epsilon, (int, Fraction))
+                or epsilon <= 0
+            ):
+                raise ValueError("epsilon must be a positive integer or Fraction")
+            if not isinstance(epsilon_unit, str) or not epsilon_unit.strip():
+                raise ValueError(
+                    "epsilon_unit must declare the unit of the filtration scales"
+                )
         if filling_window is not None and not isinstance(filling_window, ChainWindow):
             raise ValueError("upper costs require a ChainWindow")
         features, selected = self._feature(reference)
@@ -1321,6 +1334,32 @@ class OperatorFamily:
                 },
             ),
         }
+        if epsilon is not None:
+            details.update(
+                method="ExhaustiveStableVolume",
+                objective="StableVolumeDefinition6",
+                constraint_version="Obayashi2023Definition6-F2-v1",
+                epsilon=epsilon,
+                epsilon_unit=epsilon_unit,
+                filtration_unit=epsilon_unit,
+                robust_domain=False,
+                guarantee_conditions=(
+                    "same complete strictly convex counterclockwise polygon fan in R2",
+                    "sup filtration-value error strictly below epsilon/2",
+                    "every originally pre-death simplex stays before the death simplex",
+                    "match the same death simplex; its paired birth may change",
+                ),
+                resampling_guarantee=False,
+                theorem="10.1007/s41468-023-00119-8: Definition 6; Theorems 3.1/4.1",
+                research_commit="4349866166962e25d515fa1cec1f0460e7f659a4",
+            )
+            details["problem_id"] = content_id("stable-volume", details)
+            if any(isinstance(s, float) for s in self.scales):
+                return (
+                    stage,
+                    "Unavailable",
+                    {**details, "reason": "exact filtration scales required"},
+                )
         if selected is None:
             return (
                 stage,
@@ -1366,17 +1405,28 @@ class OperatorFamily:
         events = self.simplex_source["simplices"]
         order = {event["label"]: i + offset for i, event in enumerate(events)}
         birth = ref["birth_stage"]
+        cutoff = None if epsilon is None else self.scales[birth] + epsilon
         details.update(
             pairing=self.feature_pairing(reference).value,
             allowed_indices=tuple(
                 j
                 for j, label in enumerate(window.basis_next)
-                if birth < order[label] < stage
+                if order[label] < stage
+                and (
+                    birth < order[label]
+                    if cutoff is None
+                    else self.scales[order[label]] >= cutoff
+                )
             ),
             zero_indices=tuple(
                 i
                 for i, label in enumerate(window.basis_current)
-                if birth < order[label] < stage
+                if order[label] < stage
+                and (
+                    birth < order[label]
+                    if cutoff is None
+                    else self.scales[order[label]] >= cutoff
+                )
             ),
             birth_index=window.basis_current.index(events[birth - offset]["label"]),
             death_index=window.basis_next.index(events[stage - offset]["label"]),
@@ -1384,7 +1434,63 @@ class OperatorFamily:
             unit=filling_window.unit,
             arithmetic=filling_window.arithmetic,
         )
+        if epsilon is not None:
+            details["cutoff"] = cutoff
+            details["robust_domain"] = self._stable_convex_fan(filling_window)
         return stage, None, details
+
+    def _stable_convex_fan(self, filling_window):
+        """Check the exact embedded category of the research robustness theorem."""
+        from itertools import combinations
+
+        source = self.windows[-1].source_metadata.get("source_mapping")
+        if (
+            self.windows[0].k != 1
+            or source is None
+            or any(w != 1 for w in filling_window.weights)
+        ):
+            return False
+        embedding = source["embedding"]
+        if (
+            embedding is None
+            or embedding["dimension"] != 2
+            or any(p is not None for p in embedding["periods"])
+        ):
+            return False
+        events = self.simplex_source["simplices"]
+        vertices = sorted(e["vertices"][0] for e in events if len(e["vertices"]) == 1)
+        if len(vertices) < 3:
+            return False
+        points = []
+        for v in vertices:
+            event = next(e for e in events if e["vertices"] == (v,))
+            cell = source["simplices"][event["label"]]
+            point = source["vertices"][cell["vertices"][0]]["coordinates"]
+            if any(isinstance(x, float) for x in point):
+                return False
+            points.append(tuple(Fraction(x) for x in point))
+        for i, a in enumerate(points):
+            b = points[(i + 1) % len(points)]
+            for j, c in enumerate(points):
+                if j not in (i, (i + 1) % len(points)) and (
+                    (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]) <= 0
+                ):
+                    return False
+        triangles = [
+            (vertices[0], vertices[i], vertices[i + 1])
+            for i in range(1, len(vertices) - 1)
+        ]
+        closure = {
+            face
+            for t in triangles
+            for size in range(1, 4)
+            for face in combinations(t, size)
+        }
+        return {e["vertices"] for e in events} == closure and all(
+            not any(offset)
+            for cell in source["simplices"].values()
+            for offset in cell["offsets"]
+        )
 
     def optimal_volume(
         self, reference, filling_window=None, *, limits=None, cancellation=None
@@ -1394,6 +1500,38 @@ class OperatorFamily:
         This standalone result is verified independently; it is not cached in
         family snapshots. A boundary may differ from the chosen history class.
         """
+        return self._pair_volume(reference, filling_window, limits, cancellation)
+
+    def stable_volume(
+        self,
+        reference,
+        epsilon,
+        filling_window=None,
+        *,
+        epsilon_unit,
+        limits=None,
+        cancellation=None,
+    ):
+        """Bounded exact Definition 6 optimization; robustness is separately scoped.
+
+        epsilon_unit declares the unit of the family scales, independently of
+        upper-chain costs. No birth coefficient or birth-class constraint is imposed.
+        """
+        if epsilon is None:
+            raise ValueError("positive epsilon required")
+        return self._pair_volume(
+            reference, filling_window, limits, cancellation, epsilon, epsilon_unit
+        )
+
+    def _pair_volume(
+        self,
+        reference,
+        filling_window,
+        limits,
+        cancellation,
+        epsilon=None,
+        epsilon_unit=None,
+    ):
         from .solver import ResourceLimits, CancellationToken, _Budget, _Exhausted
         from .validation import validate_optimal_volume, ValidationError
 
@@ -1402,13 +1540,30 @@ class OperatorFamily:
             raise ValueError("limits must be ResourceLimits")
         if cancellation is not None and not isinstance(cancellation, CancellationToken):
             raise ValueError("cancellation must be CancellationToken")
-        stage, state, details = self._volume_request(reference, filling_window)
+        stage, state, details = self._volume_request(
+            reference, filling_window, epsilon, epsilon_unit
+        )
         budget = _Budget(limits, cancellation=cancellation)
 
         def finish(state, value=None, exact=None):
             details["resource_usage"] = budget.usage()
+            if epsilon is not None:
+                details["guarantee_level"] = (
+                    "ConditionalCommonRobustPart"
+                    if state == "Computed" and details["robust_domain"]
+                    else "OptimizationOnly"
+                    if state == "Computed"
+                    else None
+                )
             result = self._query(state, value, 0, stage, exact, details)
-            checks = validate_optimal_volume(self, reference, filling_window, result)
+            checks = validate_optimal_volume(
+                self,
+                reference,
+                filling_window,
+                result,
+                epsilon=epsilon,
+                epsilon_unit=epsilon_unit,
+            )
             return self._query(
                 state, value, 0, stage, exact, {**details, "verification": checks}
             )
@@ -1425,7 +1580,9 @@ class OperatorFamily:
             return finish("Unavailable")
         window = self.windows[stage]
         allowed = details["allowed_indices"]
-        rows = (details["birth_index"], *details["zero_indices"])
+        rows = ((details["birth_index"],) if epsilon is None else ()) + details[
+            "zero_indices"
+        ]
         death = details["death_index"]
         best = None
         try:
@@ -1442,7 +1599,9 @@ class OperatorFamily:
                 ncols=len(allowed),
             )
             rhs = tuple(
-                boundary_rows[i][death] ^ int(i == details["birth_index"]) for i in rows
+                boundary_rows[i][death]
+                ^ int(epsilon is None and i == details["birth_index"])
+                for i in rows
             )
             seed = constraint.solve(rhs)
             if seed is None:
@@ -1483,7 +1642,9 @@ class OperatorFamily:
             details.update(
                 certificate_level="ExactOptimal",
                 certificate={
-                    "kind": "CompletePairAffineEnumeration",
+                    "kind": "CompletePairAffineEnumeration"
+                    if epsilon is None
+                    else "CompleteStableAffineEnumeration",
                     "candidate_count": 1 << len(kernel),
                 },
                 lower_bound=best[0][0],
@@ -1512,9 +1673,11 @@ class OperatorFamily:
                         for j, label in enumerate(window.basis_current)
                         if boundary[j]
                     ),
-                    "same_history_class": self.stage(reference["birth_stage"]).P.apply(
-                        at_birth
+                    "same_history_class": not any(
+                        bit and label not in birth_window.basis_current
+                        for label, bit in zip(window.basis_current, boundary)
                     )
+                    and self.stage(reference["birth_stage"]).P.apply(at_birth)
                     == historical,
                 },
                 True,

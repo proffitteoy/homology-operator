@@ -102,3 +102,48 @@ orders cover H0 through H3. Duplicate algebraic intervals, equal scales, infinit
 deaths, empty homology, source/history/certificate forgery and portable JSON
 recovery have separate regressions. These checks establish bounded correctness
 evidence, not an incremental speed or general performance claim.
+
+## Geometry query corpus T1--T5
+
+[geometry_queries.json](../tests/fixtures/geometry_queries.json) freezes exact
+simplex streams, levels, degree, optional original geometry and a canonical
+sorted compact JSON corpus SHA256. T1 is the six-edge K4/filled-face input
+(the weighted 8/8/9 class minima remain in `reference.json`); T2 is the H1
+square pair with explicit ties and threshold equality; T3 is the H2 tetrahedral
+filling; T4 has duplicate numerical intervals and nonunique class minima; T5
+retains source coordinates and original IDs in an exact embedded square fan.
+These are synthetic, directly specified inputs, not copied molecular data.
+
+The corpus records the fixed research revision and LF-normalized SHA256 for
+`geometry_queries.py` from
+`homology-operator-lab @ 4349866166962e25d515fa1cec1f0460e7f659a4`.
+Production baseline main is `9c2c09f`; the local integration includes pending
+PR #109 head `939a8edfd4adab945cf960f1b3d2bde83d3138e0`. This records an assumed
+combined state, not an actual merge of #109.
+[Independent set enumeration](../tests/oracle/geometry.py) imports no runtime
+module. [Shared tests](../tests/test_stable_volume.py) compare 180 pair/stable
+queries across both stage conventions, basis reversals and multiple epsilons,
+along with class/birth queries, exact boundaries, supports, histories, real
+GUDHI 3.11.0 F2 pairings, failures, tampering and restored records. Distinct legal
+interval bases or tied representatives are compared in their own quotient
+fibers, not forced to match raw-reduction chains.
+
+HomCloud comparison pins the official 5.4.0 archive SHA256
+`41a095599249cbc0092a835d6888eb252a6c4cd7935ac71481cd37e00f9e883b`
+and `homcloud/optvol.py` SHA256
+`99c7fbb305a5e34bc0356ef188fa828e35183ad00a001a01c79a87e025f9fcd3`.
+The unchanged upstream Python optimizer runs with PuLP 3.3.0/CBC, using signed
+continuous real LP variables. In the two-triangle unit-cost disk the shared-edge
+equation is x1=x2 (or no equation), with death x2=1, so the optimum is integral
+and the matched allowed sets have the same binary optimum. Epsilons 1/2 and
+3/2 agree. Epsilon 1 retains a deliberate mismatch: HomCloud `bisect_right`
+skips the equal-threshold row; Definition 6 retains it. This is source-function
+LP replay, not compiled/public Pair integration or general integer equivalence.
+
+[topostrata](https://github.com/proffitteoy/topostrata/tree/2adb8667432cb3e64fbe6c1aaa98f546f1564a03)
+was checked at `2adb8667432cb3e64fbe6c1aaa98f546f1564a03`: README lines 232--240
+and `src/topostrata/inverse_analysis.py` lines 375--380 describe HomCloud Z/2
+float32 versus saved GUDHI Z/11 float64; atom IDs appear in its source mappings.
+The inspected root has no LICENSE and no explicit data redistribution grant.
+Its VASP trajectory is not imported here and is not an equal-objective oracle.
+T5 uses synthetic coordinates to test the same kind of inverse location contract.

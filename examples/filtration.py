@@ -13,6 +13,7 @@ from homology_operator import (
     ProjectionProblem,
     ResourceLimits,
     validate_optimal_1_cycle,
+    validate_stable_volume,
 )
 
 
@@ -127,6 +128,27 @@ def main():
     cycle = cycle_family.optimal_1_cycle(feature)
     assert cycle.state == "Computed" and cycle.value["mass"] == 3
     assert validate_optimal_1_cycle(cycle_family, feature, cycle)["optimality_verified"]
+    death = cycle_family.windows[feature["death_stage"]]
+    upper = ChainWindow(
+        2,
+        death.D,
+        Matrix.zero(death.p, 0),
+        death.basis_current,
+        death.basis_next,
+        (),
+        (1,) * death.p,
+        weight_semantics="unit",
+        unit="simplex_count",
+        source_metadata={"source": "explicit triangle counts in this example"},
+    )
+    stable = cycle_family.stable_volume(
+        feature, 1, upper, epsilon_unit="insertion_index"
+    )
+    assert stable.state == "Computed" and stable.value["mass"] == 1
+    assert stable.details["guarantee_level"] == "OptimizationOnly"
+    assert validate_stable_volume(
+        cycle_family, feature, 1, upper, stable, epsilon_unit="insertion_index"
+    )["optimality_verified"]
     print(
         json.dumps(
             {
@@ -134,6 +156,7 @@ def main():
                 "simplex_family_result": simplex_family.to_result().to_dict(),
                 "endpoint_mass_control": controls,
                 "optimal_1_cycle": cycle.to_dict(),
+                "stable_volume": stable.to_dict(),
             },
             sort_keys=True,
             separators=(",", ":"),

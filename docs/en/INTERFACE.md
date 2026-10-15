@@ -376,6 +376,54 @@ replay its semantics. Decoding alone is not certification. The complete runnable
 example is [examples/filtration.py](../../examples/filtration.py); no new runtime
 dependency or native solver is required.
 
+## Stable volume
+
+`family.stable_volume(reference, epsilon, filling_window, *, epsilon_unit,
+limits=None, cancellation=None)` minimizes the upper-chain mass in Obayashi
+2023 Definition 6 over F2. The input is a certified finite H1/H2 pair and the
+same explicitly sourced death-stage upper cost window used by `optimal_volume`.
+`epsilon` must be a positive `int` or `Fraction`; family scales and upper costs
+must be exact. `epsilon_unit` declares the unit of the family scales. It is a
+caller declaration, recorded independently of the upper cost unit; the family
+has no separate scale-unit field to validate it against.
+
+For birth b and death d, both the free (k+1)-simplices and the zero-constrained
+k-simplices have event index j < d and scale at least `scale[b] + epsilon`.
+The death coefficient is one. There is **no birth-coefficient constraint**.
+Equality at the threshold is included. Epsilon may exceed the lifetime; the
+death anchor remains, even if all free variables and zero constraints disappear.
+The output boundary can leave the birth window; `same_history_class` is then
+false. This query differs from minimum class mass, fixed-boundary filling,
+ordinary pair volume, and removal of short barcode intervals.
+
+The bounded reference enumerates the complete affine fiber when its nullity is
+at most 16. Other domains return `Unavailable`; infinite pairs return
+`EmptyDomain`/`NotApplicable`. State/time/logical-entry exhaustion and cooperative
+cancellation return `ResourceExhausted`, possibly with a verified feasible
+candidate but without an optimum or robustness claim. Packed-word requests and
+floating scales/costs are unsupported. History/source preparation and independent
+certificate replay are outside the search budget and have their own costs.
+
+Results reuse `QueryResult` and include filling, boundary, original-coordinate
+supports and simplex vertices, source locations, exact mass, epsilon and units,
+pair/source/history identities, constraint version, algorithm, resource usage,
+and a separately checked `ExactOptimal` certificate. Save the upper input and
+standalone result separately. Parse JSON with `QueryResult.from_dict`, then call
+`validate_stable_volume(family, reference, epsilon, filling_window, result,
+epsilon_unit=...)` to validate semantics. Parsing alone does not certify a result.
+
+`guarantee_level="OptimizationOnly"` certifies only this finite objective. The
+stronger `ConditionalCommonRobustPart` label requires an independently checked
+complete strictly convex CCW polygon fan in R2, exact coordinates, no periodic
+offsets, and unit upper costs. The result records the theorem assumptions:
+same embedded fan, sup scale error strictly below epsilon/2, every originally
+pre-death simplex remaining before the same death simplex; the paired birth
+may change. This reproduces Obayashi's Theorems 3.1/4.1 in that restricted
+category. It gives no guarantee for general H2 embeddings or resampled data.
+Abstract complexes and non-fan geometry may still receive an exact optimum,
+with `OptimizationOnly`. See the [definition and proof](guide/filtration.md#stable-volume-definition-and-guarantee)
+and [frozen controls](../FIXTURES.md#geometry-query-corpus-t1t5).
+
 ## Optional Rust extension
 
 The locked build uses Rust 1.98.1, PyO3 0.29.3, and maturin 1.15.0. Native CI
