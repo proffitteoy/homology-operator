@@ -183,6 +183,17 @@ bitset. Independent replay rebuilds faces from the simplex source and computes
 its own elimination and kernel; it does not use the search's solve/kernel cache.
 Positive exact costs and complete coverage establish the declared optimum.
 
+There is one additional exact shortcut. If the singleton death chain satisfies
+all threshold rows, every feasible chain still has its death coefficient one.
+Strict positivity gives the lower bound equal to the death simplex cost, and
+the singleton attains it uniquely. Its `PositiveCostDeathAnchor` certificate
+requires no kernel or exponential replay; the independent validator checks raw
+face feasibility and that exact bound. All other inputs retain the exhaustive
+reference and its nullity cap. This argument uses no graph/mesh complexity
+assumption. Hardness of arbitrary binary coset optimization does not establish
+hardness for a geometric graph or Euclidean mesh, nor does this shortcut provide
+a general efficient geometric solver.
+
 The stronger robustness label uses only the certified polygon-fan category of
 [research reference 4349866166962e25d515fa1cec1f0460e7f659a4](https://github.com/proffitteoy/homology-operator-lab/blob/4349866166962e25d515fa1cec1f0460e7f659a4/candidates/minimum-stretch/geometry_queries.py).
 Strict convexity certifies that triangles `(v0,vi,vi+1)` embed a pure contractible

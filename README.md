@@ -144,6 +144,11 @@ minimizes explicitly supplied upper-chain costs under the birth/death constraint
 and returns the filling, boundary and original geometry with an exact certificate
 in its bounded reference domain. Infinite intervals have no finite death volume.
 
+[`stable_volume`](docs/en/INTERFACE.md#stable-volume) adds the exact positive
+epsilon threshold of Definition 6. Exact optimality and the conditional
+convex-fan perturbation guarantee are reported separately. See the
+[T1--T5 controls](docs/FIXTURES.md#geometry-query-corpus-t1-to-t5).
+
 ## Mathematics
 
 ### Definition and construction

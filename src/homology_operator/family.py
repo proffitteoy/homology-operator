@@ -1336,7 +1336,7 @@ class OperatorFamily:
         }
         if epsilon is not None:
             details.update(
-                method="ExhaustiveStableVolume",
+                method="ExactStableVolume",
                 objective="StableVolumeDefinition6",
                 constraint_version="Obayashi2023Definition6-F2-v1",
                 epsilon=epsilon,
@@ -1594,40 +1594,54 @@ class OperatorFamily:
                 + window.p
             )
             boundary_rows = window.D.rows
-            constraint = Matrix.from_rows(
-                (tuple(boundary_rows[i][j] for j in allowed) for i in rows),
-                ncols=len(allowed),
-            )
-            rhs = tuple(
-                boundary_rows[i][death]
-                ^ int(epsilon is None and i == details["birth_index"])
-                for i in rows
-            )
-            seed = constraint.solve(rhs)
-            if seed is None:
-                raise ValidationError(("certified_pair_has_no_volume",))
-            kernel = constraint.kernel_basis()
-            budget.step(0)
-            if len(kernel) > 16:
-                details["reason"] = (
-                    "exact replay requires constraint nullity at most 16"
-                )
-                return finish("Unavailable")
-            for coefficients in product((0, 1), repeat=len(kernel)):
+            if epsilon is not None and not any(boundary_rows[i][death] for i in rows):
+                # Every feasible chain contains death. Strictly positive costs
+                # give its cost as a lower bound, attained by this feasible anchor.
                 budget.step()
-                free = list(seed)
-                for bit, vector in zip(coefficients, kernel):
-                    if bit:
-                        free = [a ^ b for a, b in zip(free, vector)]
-                chain = [0] * window.p
-                chain[death] = 1
-                for j, bit in zip(allowed, free):
-                    chain[j] = bit
-                chain = tuple(chain)
-                mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
-                key = (mass, _pack(chain))
-                if best is None or key < best[0]:
-                    best = key, chain
+                chain = tuple(int(j == death) for j in range(window.p))
+                best = (filling_window.weights[death], 1 << death), chain
+                certificate = {"kind": "PositiveCostDeathAnchor", "candidate_count": 1}
+            else:
+                constraint = Matrix.from_rows(
+                    (tuple(boundary_rows[i][j] for j in allowed) for i in rows),
+                    ncols=len(allowed),
+                )
+                rhs = tuple(
+                    boundary_rows[i][death]
+                    ^ int(epsilon is None and i == details["birth_index"])
+                    for i in rows
+                )
+                seed = constraint.solve(rhs)
+                if seed is None:
+                    raise ValidationError(("certified_pair_has_no_volume",))
+                kernel = constraint.kernel_basis()
+                budget.step(0)
+                if len(kernel) > 16:
+                    details["reason"] = (
+                        "exact replay requires constraint nullity at most 16"
+                    )
+                    return finish("Unavailable")
+                for coefficients in product((0, 1), repeat=len(kernel)):
+                    budget.step()
+                    free = list(seed)
+                    for bit, vector in zip(coefficients, kernel):
+                        if bit:
+                            free = [a ^ b for a, b in zip(free, vector)]
+                    chain = [0] * window.p
+                    chain[death] = 1
+                    for j, bit in zip(allowed, free):
+                        chain[j] = bit
+                    chain = tuple(chain)
+                    mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
+                    key = (mass, _pack(chain))
+                    if best is None or key < best[0]:
+                        best = key, chain
+                certificate = {
+                    "kind": "CompletePairAffineEnumeration"
+                    if epsilon is None
+                    else "CompleteStableAffineEnumeration",
+                    "candidate_count": 1 << len(kernel),
+                }
             budget.step(0)
             chain = best[1]
             boundary = window.D.apply(chain)
@@ -1641,12 +1655,7 @@ class OperatorFamily:
             ).value["representative"]
             details.update(
                 certificate_level="ExactOptimal",
-                certificate={
-                    "kind": "CompletePairAffineEnumeration"
-                    if epsilon is None
-                    else "CompleteStableAffineEnumeration",
-                    "candidate_count": 1 << len(kernel),
-                },
+                certificate=certificate,
                 lower_bound=best[0][0],
                 upper_bound=best[0][0],
             )

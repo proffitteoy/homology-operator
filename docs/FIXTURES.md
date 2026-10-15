@@ -103,7 +103,7 @@ deaths, empty homology, source/history/certificate forgery and portable JSON
 recovery have separate regressions. These checks establish bounded correctness
 evidence, not an incremental speed or general performance claim.
 
-## Geometry query corpus T1--T5
+## Geometry query corpus T1 to T5
 
 [geometry_queries.json](../tests/fixtures/geometry_queries.json) freezes exact
 simplex streams, levels, degree, optional original geometry and a canonical

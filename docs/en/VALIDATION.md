@@ -96,7 +96,7 @@ Remove-Item Env:HOMOLOGY_HOMCLOUD_VOLUME_SOURCE
 The test verifies the source SHA256 before executing unchanged upstream Python
 functions and the actual CBC LP solver. PuLP is not a runtime or locked core
 test dependency. Missing the source variable skips only live source replay.
-The [scope ledger](../FIXTURES.md#geometry-query-corpus-t1t5) records the signed
+The [scope ledger](../FIXTURES.md#geometry-query-corpus-t1-to-t5) records the signed
 continuous/binary distinction and the unequal-cutoff negative control.
 
 ## Native and oracle checks

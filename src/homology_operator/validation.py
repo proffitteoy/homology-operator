@@ -533,6 +533,30 @@ def validate_optimal_volume(
         or any(window.A._reference().apply(image))
     ):
         raise ValidationError(("volume_output_or_source",))
+    proof = details.get("certificate", {})
+    if (
+        epsilon is not None
+        and isinstance(proof, Mapping)
+        and proof.get("kind") == "PositiveCostDeathAnchor"
+    ):
+        if (
+            proof != {"kind": "PositiveCostDeathAnchor", "candidate_count": 1}
+            or type(proof.get("candidate_count")) is not int
+            or chain != tuple(int(j == anchor) for j in range(window.p))
+            or mass != filling_window.weights[anchor]
+        ):
+            raise ValidationError(("stable_anchor_lower_bound",))
+        # Feasibility above was rebuilt from raw faces. Every feasible chain
+        # has this anchor and all other costs are strictly positive.
+        return checked(
+            {
+                "feasibility_verified": True,
+                "optimality_verified": True,
+                "replayed_candidates": 1,
+                "simplex_constraints_verified": True,
+                "source_binding_verified": True,
+            }
+        )
     constraint = Matrix.from_rows(
         (
             tuple(incidence[i][j] for j in allowed)

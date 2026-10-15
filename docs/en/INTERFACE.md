@@ -396,8 +396,13 @@ The output boundary can leave the birth window; `same_history_class` is then
 false. This query differs from minimum class mass, fixed-boundary filling,
 ordinary pair volume, and removal of short barcode intervals.
 
-The bounded reference enumerates the complete affine fiber when its nullity is
-at most 16. Other domains return `Unavailable`; infinite pairs return
+When the death simplex alone satisfies every threshold row, strictly positive
+upper costs certify it as the unique global optimum: every feasible chain must
+contain that simplex and any extra simplex increases mass. The
+`PositiveCostDeathAnchor` certificate is checked from raw faces and exact costs
+without kernel enumeration, including when the full fiber has large nullity.
+Otherwise the bounded reference enumerates the complete affine fiber when its
+nullity is at most 16. Other domains return `Unavailable`; infinite pairs return
 `EmptyDomain`/`NotApplicable`. State/time/logical-entry exhaustion and cooperative
 cancellation return `ResourceExhausted`, possibly with a verified feasible
 candidate but without an optimum or robustness claim. Packed-word requests and
@@ -422,7 +427,7 @@ may change. This reproduces Obayashi's Theorems 3.1/4.1 in that restricted
 category. It gives no guarantee for general H2 embeddings or resampled data.
 Abstract complexes and non-fan geometry may still receive an exact optimum,
 with `OptimizationOnly`. See the [definition and proof](guide/filtration.md#stable-volume-definition-and-guarantee)
-and [frozen controls](../FIXTURES.md#geometry-query-corpus-t1t5).
+and [frozen controls](../FIXTURES.md#geometry-query-corpus-t1-to-t5).
 
 ## Optional Rust extension
 

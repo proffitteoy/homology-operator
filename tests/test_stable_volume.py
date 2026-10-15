@@ -562,6 +562,97 @@ class StableVolumeTests(unittest.TestCase):
             )
             self.assertEqual(same, row["comparison"] == "same_feasible_set")
 
+    def test_positive_cost_anchor_certificate_skips_search_but_rechecks_feasibility(
+        self,
+    ):
+        family, ref, upper = self.square()
+        family.feature_pairing(ref)
+        with (
+            patch.object(Matrix, "solve", side_effect=AssertionError("unneeded solve")),
+            patch.object(
+                Matrix,
+                "kernel_basis",
+                side_effect=AssertionError("unneeded enumeration"),
+            ),
+        ):
+            result = family.stable_volume(ref, 2, upper, epsilon_unit="level")
+        self.assertEqual(
+            result.details["certificate"]["kind"], "PositiveCostDeathAnchor"
+        )
+        self.assertEqual(result.details["resource_usage"]["states"], 1)
+        self.assertEqual(result.details["verification"]["replayed_candidates"], 1)
+        # Eighteen triangles leave seventeen unconstrained optional variables:
+        # the affine reference cap is exceeded, but the anchor proof is finite.
+        triangles = [(0, i, i + 1) for i in range(1, 19)]
+        cells = sorted(
+            {
+                s
+                for t in triangles
+                for size in range(1, 4)
+                for s in combinations(t, size)
+            },
+            key=lambda s: (len(s), s),
+        )
+        large = build_case(
+            {
+                "degree": 1,
+                "simplices": cells,
+                "levels": [
+                    0 if len(s) == 1 else 1 if len(s) == 2 else 3 for s in cells
+                ],
+            }
+        )
+        large_ref = max(large.features().value, key=lambda r: r["death_stage"])
+        large_upper = upper_costs(large, large_ref)
+        self.assertEqual(
+            large.optimal_volume(large_ref, large_upper).state, "Unavailable"
+        )
+        large_result = large.stable_volume(
+            large_ref, 2, large_upper, epsilon_unit="level"
+        )
+        self.assertEqual(large_result.value["mass"], 1)
+        self.assertEqual(
+            large_result.details["certificate"]["kind"], "PositiveCostDeathAnchor"
+        )
+        constrained = family.stable_volume(ref, 1, upper, epsilon_unit="level")
+        with self.assertRaises(ValidationError):
+            validate_stable_volume(
+                family,
+                ref,
+                1,
+                upper,
+                replace(
+                    constrained,
+                    details={
+                        **constrained.details,
+                        "certificate": {
+                            "kind": "PositiveCostDeathAnchor",
+                            "candidate_count": 1,
+                        },
+                    },
+                ),
+                epsilon_unit="level",
+            )
+        for count in (True, 0, 2):
+            with self.assertRaises(ValidationError):
+                validate_stable_volume(
+                    family,
+                    ref,
+                    2,
+                    upper,
+                    replace(
+                        result,
+                        details={
+                            **result.details,
+                            "certificate": {
+                                "kind": "PositiveCostDeathAnchor",
+                                "candidate_count": count,
+                            },
+                        },
+                    ),
+                    epsilon_unit="level",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
