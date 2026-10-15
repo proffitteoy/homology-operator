@@ -164,6 +164,73 @@ independent verification have separate costs. There is no native filling solver
 or hard RSS/preemption guarantee. See [certification](SOLVER_CONTRACT.md#fixed-boundary-filling-certificates)
 and [result binding](RESULT_MODEL.md#standalone-filling-results).
 
+## Finite-pair optimal volume
+
+`family.optimal_volume(reference, filling_window=None, *, limits=None,
+cancellation=None)` minimizes the upper-chain mass for a certified finite H1 or
+H2 pair. It requires a face-first `simplex_source` and an exact feature reference
+from this family's `features()`. Equal scales retain their event order, including
+the explicit `AfterInsertion`/`EmptyInitial` stage convention.
+
+For birth/death event stages b,d, require death coefficient 1, permit other upper
+simplices only at stages strictly between b and d, set boundary coefficients at
+k-simplices strictly between b and d to zero, and require birth coefficient 1.
+All vectors use the original ordered bases of `family.windows[d]`. The objective
+is upper mass, not boundary mass. This is the F2 support-count version of
+[Obayashi 2018, section 4, Definitions 2/3](https://doi.org/10.1137/17M1159439)
+for unit weights; arbitrary positive rational costs are an explicit extension.
+The approved definition and compatibility argument are pinned in
+[D-GQ1/T-GQ1](https://github.com/proffitteoy/homology-operator-lab/blob/d1c76bc7ed276a7a65b7aab97c4fbfcdad2530da/docs/proof/PROOF.md#D-GQ1).
+
+`filling_window` is the same degree-k+1 cost input as for
+[fixed-boundary filling](#fixed-boundary-minimum-filling), aligned to the death
+window's D and ordered bases. It must declare positive costs, a unit, and
+`source_metadata["source"]`. If either degree has a source mapping, both must
+agree on dataset, original vertex IDs/coordinates, embedding, periods, stage,
+scale/order, and shared simplex records. An abstract source needs no embedding.
+
+```python
+# family is a supported simplex family; reference has finite death.
+from homology_operator import ChainWindow, Matrix, validate_optimal_volume
+
+death = family.windows[reference["death_stage"]]
+upper = ChainWindow(death.k + 1, death.D, Matrix.zero(death.p, 0),
+                    death.basis_current, death.basis_next, (), (1,) * death.p,
+                    unit="simplices", source_metadata={"source": "unit counting"})
+result = family.optimal_volume(reference, upper)
+if result.state == "Computed":
+    assert validate_optimal_volume(family, reference, upper, result)["optimality_verified"]
+    assert death.D.apply(result.value["chain"]) == result.value["boundary"]
+```
+
+This example assumes an unmapped family; mapped inputs supply the matching upper
+mapping as well. Computed values contain `chain`, `boundary`, `support`, `mass`,
+`filling_simplices`, `boundary_simplices`, and both `filling_location` and
+`boundary_location`. Locations include original IDs and lifted coordinates when
+supplied, and explicitly missing coordinates otherwise. The Boolean
+`same_history_class` independently checks the resulting boundary against the
+preselected historical generator in the birth-stage quotient. Pair constraints
+permit a different historical class; this flag is informative, not an added
+optimization constraint. Neither this query nor its output changes P or PH.
+
+An infinite interval returns `EmptyDomain`, `value=None`, `exact=None`, and
+`details.applicability="NotApplicable"`, because it has no finite death anchor.
+Other degrees, missing simplex provenance, floating costs, explicit packed-word
+requests, or constraint nullity above 16 return `Unavailable`. Malformed/foreign
+references and mismatched upper inputs raise `ValueError`. Cooperative budgets
+and cancellation return `ResourceExhausted`; any `details.candidate` is feasible
+only, with no optimal bound. States count evaluated feasible fillings. Search
+and independent replay support at most 65,536 candidates; ties minimize packed
+original upper coordinates. Input/history certification, source binding and
+independent verification are outside the search time/entry budget. No native
+solver, general scalability or hard RSS limit is claimed.
+
+The result is standalone: save the family, reference and upper input alongside
+`QueryResult.to_dict()`. On untrusted recovery call `validate_optimal_volume`;
+JSON decoding alone does not verify semantics. See
+[certification](SOLVER_CONTRACT.md#finite-pair-volume-certificates) and
+[binding](RESULT_MODEL.md#finite-pair-volume-results).
+
 ## Finite filtrations
 
 `OperatorFamily(scales, windows, operators, weight_policy="Inherited",

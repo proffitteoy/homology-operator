@@ -124,6 +124,13 @@ solver 返回 Unavailable 时尝试同名 reference solver，保留支持域/认
 ResourceExhausted 也可能保留合法候选；这时算子可为 Ready，但最优认证不能由停止状态推断。
 solver 各自的结构、枚举/重放上限、并列与中断语义见 [solver 契约](SOLVER_CONTRACT.md)。
 
+Finite H1/H2 pairs additionally support
+[`OperatorFamily.optimal_volume`](en/INTERFACE.md#finite-pair-optimal-volume):
+explicit death-stage upper costs, birth/death/intermediate constraints, original
+filling/boundary geometry and independently replayed exact certificates. Infinite
+pairs return `EmptyDomain` with `applicability="NotApplicable"`. This is separate
+from fixed-boundary filling and does not change the family's P or PH.
+
 ## 单尺度查询
 
 | 方法 | 输入域 | 返回值 / 定义 |
