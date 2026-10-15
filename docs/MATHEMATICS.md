@@ -415,7 +415,7 @@ m_j(T_{ij}x)\le\Gamma_{w_j}(P_j)m_i(x).
 | 当前 $`\Gamma`$ | `stretch()` 在预算内完整枚举；耗尽单独表达 |
 | 最优 $`\Gamma_*`$ | 支持域内的精确 solver 与独立最优证书 |
 | 持久同调模与 barcode | `OperatorFamily` 的核传输与 rank invariant |
-| 真正最短类质量 $`\mu_w`$ | 数学分析中定义；公共查询当前不可用 |
+| 真正最短类质量 $`\mu_w`$ | `minimum_class_mass` 在整数/有理权和预算内精确枚举边界陪集，返回原链代表与边界见证 |
 
 精确整数和有理权支持精确几何；浮点权下二元代数仍精确，但几何与最优值的精确性另行表达。
 Rust 的 packed、Factorized 与 HC 表示实现同一作用；具体支持域见 [native 指南](guide/native.md)。

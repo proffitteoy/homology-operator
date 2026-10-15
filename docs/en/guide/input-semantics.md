@@ -38,6 +38,14 @@ solution is `()`.
 The caller declares `weight_semantics` and `unit`. Positive costs do not imply
 that weights are areas or volumes. Original coordinates determine geometry.
 
+General point-cloud and Rips builders remain external. Exact `optimal_1_cycle`
+accepts unit costs or rational Euclidean edge lengths verified against source
+coordinates; irrational distances stored as floats are outside its exact domain.
+Source mapping alone does not certify every supplied length, area or volume.
+Bounded exact searches and the conditional stable-volume robustness guarantee
+have their own [query domains](../INTERFACE.md); they do not certify a general
+pipeline from raw point clouds to physical geometric measurements.
+
 ## Source mapping and location
 
 `source_metadata["source_mapping"]` optionally declares the version 1 protocol
