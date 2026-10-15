@@ -33,8 +33,8 @@ assert restored.to_dict() == record.to_dict()
 ```
 
 Reading JSON revalidates inputs, projection, identity, certificates, and saved
-queries. `OperatorResult.from_json` returns a record; it does not expose a
-`to_operator()` method. Family records provide `to_family()` using the saved P.
+queries. `OperatorResult.from_json` returns a record; `to_operator()` restores
+the saved P. Family records provide `to_family()` using the saved P.
 Snapshots preserve unqueried states and do not compute every query on export.
 See the [result contract](RESULT_MODEL.md).
 
@@ -50,6 +50,33 @@ mixed identities, modified queries, and unsupported/tampered certificates.
 Backend claims remain in solver evidence; public validation flags come from the
 independent verifier. A feasible interrupted candidate may produce a Ready
 operator while its solver status remains ResourceExhausted.
+
+## Source mapping identity
+
+The optional [source protocol](guide/input-semantics.md#source-mapping-and-location)
+is validated against actual boundary incidence before hashing. A mapped
+`ChainWindow.identity()` additionally exposes `source_mapping_id`, hashing the
+complete mapping, algebraic `chain_window_hash`, `basis_id`, weight semantics and
+weight unit. Its `input_id` binds the algebraic window and this mapping ID. Thus
+changing coordinates, original IDs, source hash, metric, periods, lifts, units,
+stage order/index or scale changes the input identity and dependent projection
+and operator identities. The six-field operator/query identity remains unchanged
+in shape. Family identities include all mapped stage input identities.
+
+`locate_chain` and `locate_support` return a `location_id` hash of their complete
+location payload. A `track_location` query also binds the filtration and endpoint
+operator identities in its details. Snapshot recovery revalidates mappings and
+identities and replays recorded location queries from the saved P; replacing a
+mapping or a saved drawing payload while retaining old identities is rejected.
+The original dataset hash is caller supplied: applications must compare it with
+their actual source bytes and retain the expected input/filtration identity.
+Content hashes provide integrity against those retained identities, not external
+attestation or protection against an author replacing every hash and input.
+
+Unmapped legacy windows retain their existing IDs and schema-1/2 wire formats.
+Their arbitrary descriptive metadata is not authenticated as geometric source
+data and cannot supply location coordinates. No new wire version or runtime
+dependency is needed for the optional metadata protocol.
 
 ## Action representations
 

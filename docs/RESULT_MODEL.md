@@ -5,6 +5,10 @@
 拓扑、代表和几何来自同一个 P；不要把不同投影的输出拼成一个联合结果。
 调用入口见 [API](INTERFACE.md)，认证细节见 [solver 契约](SOLVER_CONTRACT.md)。
 
+可选来源映射的身份和恢复规则见 [Source mapping identity](en/RESULT_MODEL.md#source-mapping-identity)：
+`source_mapping_id` 通过 `input_id` 绑定六身份和过滤身份；恢复重验映射与定位结果。
+旧的无映射窗口保持原身份与格式，描述性 metadata 不能作为已校验的坐标来源。
+
 ## 六身份
 
 `QueryResult.identity` 和合法 `OperatorResult.identity` 包含且只包含：

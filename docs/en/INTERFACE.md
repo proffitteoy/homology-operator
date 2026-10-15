@@ -44,6 +44,10 @@ matrices start with fresh process-local caches.
 
 The caller declares `weight_semantics` and `unit`. Positive costs do not imply
 that weights are areas or volumes. Original coordinates determine geometry.
+The optional [source mapping protocol](guide/input-semantics.md#source-mapping-and-location)
+binds simplex vertices, original point IDs/coordinates, units, stages and periodic
+lifts to input and filtration identities. `window.locate_chain(x, degree=0)`
+locates a raw chain at degree offset -1/0/1, without treating it as a class.
 
 ## Solving and validation
 
@@ -100,6 +104,7 @@ Let `L=I+P` and `m_w(x)=sum(w_i*x_i)` in the original coordinates.
 | `selected_mass(z)` | Cycle; `m_w(Pz)` |
 | `class_distance(z,y)` | Two cycles; `m_w(P(z+y))` |
 | `support(z)` | Cycle; original coordinate indices of `Pz` |
+| `locate_support(z, source_mapping_id=None)` | Cycle; source-bound location of `Pz`, or support only without a mapping |
 | `shared_support(z,y)` / `union_support(z,y)` | Two cycles; intersection / union indices |
 | `readout(name, *args)` | Corresponding query domain; recorded `QueryResult` |
 | `stretch(limits=None)` | `QueryResult` for the current projection's worst cycle mass ratio |

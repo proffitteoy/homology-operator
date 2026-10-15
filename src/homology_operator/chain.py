@@ -6,7 +6,7 @@ from math import isfinite
 from types import MappingProxyType
 from collections.abc import Mapping, Set
 
-from .algebra import Matrix, CyclicAction, CompactAction
+from .algebra import Matrix, CyclicAction, CompactAction, validate_vector
 
 
 class InvalidInput(ValueError):
@@ -36,6 +36,197 @@ def _thaw_metadata(value):
     if isinstance(value, tuple):
         return [_thaw_metadata(item) for item in value]
     return value
+
+
+def _validate_source_mapping(window):
+    """Validate the optional v1 simplicial source protocol against actual A/D."""
+    mapping = window.source_metadata.get("source_mapping")
+    if "source_mapping" not in window.source_metadata:
+        return
+    fields = {
+        "version",
+        "source_hash",
+        "stage_order",
+        "stage",
+        "scale",
+        "vertices",
+        "simplices",
+        "embedding",
+    }
+    if not isinstance(mapping, Mapping) or set(mapping) != fields:
+        raise InvalidInput("source_mapping has missing or unknown fields")
+    if type(mapping["version"]) is not int or mapping["version"] != 1:
+        raise InvalidInput("unsupported source mapping version")
+    digest = mapping["source_hash"]
+    if (
+        not isinstance(digest, str)
+        or len(digest) != 64
+        or any(c not in "0123456789abcdef" for c in digest)
+    ):
+        raise InvalidInput("source_hash must be a lowercase SHA-256 digest")
+    order, stage = mapping["stage_order"], mapping["stage"]
+    if (
+        not isinstance(order, tuple)
+        or not order
+        or any(not isinstance(x, str) or not x for x in order)
+        or len(set(order)) != len(order)
+        or type(stage) is not int
+        or not 0 <= stage < len(order)
+    ):
+        raise InvalidInput("source mapping requires a total stage order and index")
+    if type(mapping["scale"]) not in (int, float):
+        raise InvalidInput("source mapping scale must be a finite JSON number")
+    vertices, simplices, embedding = (
+        mapping["vertices"],
+        mapping["simplices"],
+        mapping["embedding"],
+    )
+    if not isinstance(vertices, Mapping) or not isinstance(simplices, Mapping):
+        raise InvalidInput("vertices and simplices must be mappings")
+    dimension, periods = 0, ()
+    if embedding is not None:
+        if not isinstance(embedding, Mapping) or set(embedding) != {
+            "dimension",
+            "unit",
+            "metric",
+            "periods",
+        }:
+            raise InvalidInput("invalid embedding fields")
+        dimension, periods = embedding["dimension"], embedding["periods"]
+        if (
+            type(dimension) is not int
+            or dimension <= 0
+            or not isinstance(embedding["unit"], str)
+            or not embedding["unit"]
+            or embedding["metric"] != "euclidean"
+            or not isinstance(periods, tuple)
+            or len(periods) != dimension
+            or any(
+                p is not None and (type(p) not in (int, float) or p <= 0)
+                for p in periods
+            )
+        ):
+            raise InvalidInput(
+                "embedding needs a unit and positive axis periods or null"
+            )
+        power = {"euclidean_length": 1, "euclidean_area": 2, "euclidean_volume": 3}.get(
+            window.weight_semantics
+        )
+        if power is not None and (
+            window.k != power
+            or window.unit
+            != (embedding["unit"] if power == 1 else f"{embedding['unit']}^{power}")
+        ):
+            raise InvalidInput("Euclidean weight degree/unit disagrees with embedding")
+    original_ids = set()
+    for vertex, record in vertices.items():
+        if (
+            not vertex
+            or not isinstance(record, Mapping)
+            or set(record) != {"original_id", "coordinates"}
+        ):
+            raise InvalidInput("vertices need original_id and coordinates")
+        original = record["original_id"]
+        if (
+            type(original) not in (str, int)
+            or original == ""
+            or original in original_ids
+        ):
+            raise InvalidInput("original IDs must be unique strings or integers")
+        original_ids.add(original)
+        coordinates = record["coordinates"]
+        if embedding is None:
+            if coordinates is not None:
+                raise InvalidInput("coordinates require a declared embedding")
+        elif (
+            not isinstance(coordinates, tuple)
+            or len(coordinates) != dimension
+            or any(type(c) not in (int, float) for c in coordinates)
+            or any(
+                p is not None and not 0 <= c < p for c, p in zip(coordinates, periods)
+            )
+        ):
+            raise InvalidInput(
+                "coordinates must be finite and in the periodic base cell"
+            )
+    bases = (window.basis_previous, window.basis_current, window.basis_next)
+    if window.k == 0 and window.m:
+        raise InvalidInput("source mapping uses unaugmented H0 with empty C_-1")
+    labels = sum(bases, ())
+    if len(set(labels)) != len(labels) or set(simplices) != set(labels):
+        raise InvalidInput("source simplices must cover three globally distinct bases")
+    for degree, basis in zip((window.k - 1, window.k, window.k + 1), bases):
+        seen = set()
+        for label in basis:
+            record = simplices[label]
+            if not isinstance(record, Mapping) or set(record) != {
+                "vertices",
+                "offsets",
+            }:
+                raise InvalidInput("simplices need vertices and offsets")
+            ids, offsets = record["vertices"], record["offsets"]
+            if (
+                not isinstance(ids, tuple)
+                or len(ids) != degree + 1
+                or any(not isinstance(v, str) or v not in vertices for v in ids)
+                or len(set(ids)) != len(ids)
+                or frozenset(ids) in seen
+            ):
+                raise InvalidInput("invalid or duplicate simplex vertex set")
+            seen.add(frozenset(ids))
+            if embedding is None:
+                if offsets is not None:
+                    raise InvalidInput("offsets require an embedding")
+            elif (
+                not isinstance(offsets, tuple)
+                or len(offsets) != len(ids)
+                or any(
+                    not isinstance(row, tuple)
+                    or len(row) != dimension
+                    or any(
+                        type(x) is not int or (p is None and x != 0)
+                        for x, p in zip(row, periods)
+                    )
+                    for row in offsets
+                )
+                or offsets[0] != (0,) * dimension
+            ):
+                raise InvalidInput(
+                    "simplex offsets need integer lifts, first vertex zero"
+                )
+    for matrix, lower, upper in (
+        (window.A, bases[0], bases[1]),
+        (window.D, bases[1], bases[2]),
+    ):
+        if not lower and window.k == 0 and matrix is window.A:
+            continue  # The unaugmented boundary of a vertex is zero.
+        positions = {
+            frozenset(simplices[x]["vertices"]): i for i, x in enumerate(lower)
+        }
+        expected_bits = [0] * matrix.nrows
+        for column, label in enumerate(upper):
+            record = simplices[label]
+            ids = record["vertices"]
+            facets = [frozenset(ids[:i] + ids[i + 1 :]) for i in range(len(ids))]
+            if any(face not in positions for face in facets):
+                raise InvalidInput("source simplex is missing a boundary face")
+            expected = {positions[face] for face in facets}
+            for row in expected:
+                expected_bits[row] |= 1 << column
+            if embedding is not None:
+                lifts = dict(zip(ids, record["offsets"]))
+                for row in expected:
+                    face = simplices[lower[row]]
+                    anchor = lifts[face["vertices"][0]]
+                    if any(
+                        tuple(a - b for a, b in zip(lifts[v], anchor)) != offset
+                        for v, offset in zip(face["vertices"], face["offsets"])
+                    ):
+                        raise InvalidInput(
+                            "periodic face lifts disagree across simplices"
+                        )
+        if tuple(expected_bits) != matrix._bits:
+            raise InvalidInput("source simplices disagree with boundary matrices")
 
 
 def matrix_data(matrix):
@@ -205,6 +396,7 @@ class ChainWindow:
         object.__setattr__(
             self, "source_metadata", _freeze_metadata(self.source_metadata)
         )
+        _validate_source_mapping(self)
 
     @property
     def m(self):
@@ -223,6 +415,106 @@ class ChainWindow:
         from .result import input_identity
 
         return input_identity(self)
+
+    def locate_chain(self, chain, degree=0, source_mapping_id=None):
+        """Locate a raw chain at degree offset -1/0/1, without class semantics."""
+        if type(degree) is not int or degree not in (-1, 0, 1):
+            raise InvalidInput("location degree offset must be -1, 0 or 1")
+        basis = (self.basis_previous, self.basis_current, self.basis_next)[degree + 1]
+        chain = validate_vector(chain, len(basis))
+        identity = self.identity()
+        mapping_id = identity.get("source_mapping_id")
+        if source_mapping_id is not None and source_mapping_id != mapping_id:
+            raise InvalidInput("source mapping identity mismatch")
+        support = tuple(i for i, bit in enumerate(chain) if bit)
+        mapping = self.source_metadata.get("source_mapping")
+        objects = []
+        for index in support:
+            label = basis[index]
+            item = {
+                "index": index,
+                "label": label,
+                "vertices": None,
+                "original_ids": None,
+                "coordinates": None,
+                "offsets": None,
+            }
+            if mapping is not None:
+                simplex = mapping["simplices"][label]
+                ids, offsets = simplex["vertices"], simplex["offsets"]
+                records = [mapping["vertices"][v] for v in ids]
+                coordinates = None
+                if mapping["embedding"] is not None:
+                    periods = mapping["embedding"]["periods"]
+                    try:
+                        coordinates = tuple(
+                            tuple(
+                                c if p is None else c + shift * p
+                                for c, shift, p in zip(v["coordinates"], lift, periods)
+                            )
+                            for v, lift in zip(records, offsets)
+                        )
+                    except OverflowError as error:
+                        raise InvalidInput(
+                            "NumericalFailure: lifted coordinates overflow"
+                        ) from error
+                    if any(
+                        isinstance(c, float) and not isfinite(c)
+                        for row in coordinates
+                        for c in row
+                    ):
+                        raise InvalidInput(
+                            "NumericalFailure: lifted coordinates overflow"
+                        )
+                item.update(
+                    vertices=ids,
+                    original_ids=tuple(v["original_id"] for v in records),
+                    coordinates=coordinates,
+                    offsets=offsets,
+                )
+            objects.append(item)
+        components = None
+        if mapping is not None:
+            remaining = set(support)
+            vertex_sets = {x["index"]: set(x["vertices"]) for x in objects}
+            by_vertex = {}
+            for index, vertices in vertex_sets.items():
+                for vertex in vertices:
+                    by_vertex.setdefault(vertex, set()).add(index)
+            components = []
+            while remaining:
+                pending = [min(remaining)]
+                component = []
+                remaining.remove(pending[0])
+                while pending:
+                    index = pending.pop()
+                    component.append(index)
+                    for vertex in vertex_sets[index]:
+                        adjacent = by_vertex.pop(vertex, set()) & remaining
+                        remaining -= adjacent
+                        pending.extend(sorted(adjacent))
+                components.append(tuple(sorted(component)))
+        value = {
+            "input_id": identity["input_id"],
+            "basis_id": identity["basis_id"],
+            "source_mapping_id": mapping_id,
+            "degree": self.k + degree,
+            "support": support,
+            "simplices": objects,
+            "components": components,
+            "source_hash": None if mapping is None else mapping["source_hash"],
+            "stage": None if mapping is None else mapping["stage"],
+            "scale": None if mapping is None else mapping["scale"],
+            "stage_order": None if mapping is None else mapping["stage_order"],
+            "embedding": None if mapping is None else mapping["embedding"],
+            "weight_semantics": self.weight_semantics,
+            "weight_unit": self.unit,
+            "weight_degree": self.k,
+        }
+        from .result import content_id
+
+        value["location_id"] = content_id("location", value)
+        return _freeze_metadata(value)
 
     def to_dict(self):
         weights = []

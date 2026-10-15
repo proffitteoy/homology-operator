@@ -151,6 +151,12 @@ class HomologyOperator:
     def support(self, z):
         return tuple(i for i, bit in enumerate(self.class_representative(z)) if bit)
 
+    def locate_support(self, z, source_mapping_id=None):
+        """Locate the same-P representative; H0 remains a set of points."""
+        return self.window.locate_chain(
+            self.class_representative(z), source_mapping_id=source_mapping_id
+        )
+
     def shared_support(self, z, y):
         return tuple(sorted(set(self.support(z)) & set(self.support(y))))
 
@@ -272,6 +278,7 @@ class HomologyOperator:
             "selected_mass",
             "class_distance",
             "support",
+            "locate_support",
             "shared_support",
             "union_support",
         }:
@@ -281,8 +288,11 @@ class HomologyOperator:
             name in {"selected_mass", "class_distance"}
             and self.window.arithmetic == "FloatingPoint"
         )
+        if name == "locate_support":
+            # Coordinates are declared data, not a metric certificate.
+            exact = None
         details = {"arithmetic_policy": self.window.arithmetic}
-        if not exact:
+        if exact is False:
             details.update(
                 {"rounding_policy": "binary64 fsum; nearest-even", "tolerance": None}
             )

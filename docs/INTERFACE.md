@@ -4,6 +4,12 @@
 数学职责见 [架构](ARCHITECTURE.md)，状态/schema 见 [结果模型](RESULT_MODEL.md)。
 已合并与开发中功能的边界见 [文档索引](README.md)。
 
+可选的 [source mapping 协议](en/guide/input-semantics.md#source-mapping-and-location)
+规定单形、原始点 ID/坐标、单位、阶段与周期平移，并绑定输入和过滤身份。
+`window.locate_chain(x, degree=0)` 定位原始链（次数偏移 -1/0/1）；
+`op.locate_support(z)` 定位同 P 代表，`family.track_location(x,i,j)` 定位传输后的代表。
+未提供来源映射时只返回支持集，不推测坐标。
+
 ## 导入与矩阵
 
 公共 reference 类型从 `homology_operator` 导入；可选原生工具从 `homology_operator.native` 导入。
