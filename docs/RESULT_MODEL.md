@@ -120,7 +120,17 @@ Feasible 不认证最小 stretch；ExactOptimal 必须有受支持且重放成�
 \mu_w([z])=\min\{m_w(x):Ax=0,\ [x]=[z]\}
 ```
 
-是不同的优化问题；当前 minimum_class_mass 返回 Unavailable。
+是不同的优化问题；`minimum_class_mass(z, limits=None)` 在精确权和预算内独立枚举边界陪集。
+完成时 value 为最短质量；details 保存 input_cycle、representative、原下一次数基的
+boundary_witness、candidate_mass、该类 lower_bound/upper_bound、optimality_gap、
+certificate_level、optimality_proof、边界计数、request_limits 和 resource_usage。
+`ExactOptimal` 只认证该固定类，不改变投影 solver 的证书。浮点权返回 Unavailable。
+中断时 value/exact 为 null，合法候选与认证区间留在 details；合法零为 Computed。
+
+历史按循环/预算的内容键保存，并在 minimum_class_mass 下保留最近结果。
+恢复针对实际 A/D/P 独立校验 `Ay=0`、`Py=Pz`、`Db=y+z`，并独立构造边界像空间，
+重放完整枚举和字典序并列最优声明；零质量证书使用正权下界。
+恢复不运行投影 solver，但证书重放有独立枚举成本。旧 NotComputed/未实现记录保持可读。
 selected_mass 不得命名或序列化为真实最短值。
 
 当前投影的 stretch 与最优投影目标分别为

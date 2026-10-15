@@ -103,13 +103,54 @@ Let `L=I+P` and `m_w(x)=sum(w_i*x_i)` in the original coordinates.
 | `shared_support(z,y)` / `union_support(z,y)` | Two cycles; intersection / union indices |
 | `readout(name, *args)` | Corresponding query domain; recorded `QueryResult` |
 | `stretch(limits=None)` | `QueryResult` for the current projection's worst cycle mass ratio |
-| `minimum_class_mass(z)` | Cycle; currently `Unavailable` |
+| `minimum_class_mass(z, limits=None)` | Cycle; budgeted exact minimum mass, representative and boundary witness in a `QueryResult` |
 | `to_result()` | Immutable `OperatorResult` snapshot |
 
 Class queries reject noncycles. No implicit conversion turns a raw chain into a
 homology class. `selected_mass` is not the true minimum mass of a class.
 Feasibility, exact evaluation of the current stretch, and minimum possible
 stretch over projections are separate facts.
+
+The new `minimum_class_mass` implementation requires this source revision. It
+enumerates the distinct elements of `im(D)` for the requested
+cycle's coset, rather than all cycles or all linear sections. Independent boundary
+columns give a bijection from binary coefficient vectors onto `im(D)`; Gray-code
+updates visit each exactly once. Thus a complete search proves minimality, with
+`2**rank(D)` candidate evaluations and linear coordinate work per candidate, in
+addition to boundary reduction. Positive weights give the lower bound zero.
+Integer/rational
+weights are supported; floating weights and explicit `packed_word_limit` requests
+return `Unavailable`. `limits` is a `ResourceLimits` with the existing defaults:
+100,000 states, 10 seconds, and 1,000,000 logical matrix entries. Each evaluated
+boundary counts as one state. Logical storage is conservatively bounded by
+`2*n*p + 2*n*min(n,p) + 8*(n+p) + 2*m` entries; this is not a process RSS limit.
+Wall time is cooperative, including final witness checking, without single-step
+preemption. Input cycle validation precedes the query budget.
+
+On completion, `value` is the true minimum, `exact=True`, and `details` contains
+`representative=y`, `boundary_witness=b` in the original next-degree basis, and
+`input_cycle=z`, with `Ay=0`, `Py=Pz`, and `Db=y+z`. Equal masses choose the
+lexicographically smallest binary coordinate tuple. Complete enumeration or a
+candidate of mass zero certifies `ExactOptimal` **for this class query**.
+`lower_bound`, `upper_bound`, and `optimality_gap` then certify that class minimum.
+This does not change P, the selected representative, or the solver certificate.
+
+An interrupted query has `state="ResourceExhausted"`, `value=None`, and
+`exact=None`. Its details retain a valid candidate, exact `candidate_mass`, the
+universal lower bound 0, candidate upper bound, gap, `CertifiedInterval`, request
+limits, reason, and resource usage. Even a zero candidate after a deadline does
+not become a completed query. The zero class, including empty homology, otherwise
+has the legitimate `Computed` minimum 0. A snapshot retains each class/limits
+request and the latest result under `minimum_class_mass`.
+
+```python
+# Continue with the two-vertex window from the quick start.
+minimum = op.minimum_class_mass((1, 0))
+assert minimum.state == "Computed" and minimum.value == 1
+assert minimum.details["representative"] == (0, 1)
+assert minimum.details["boundary_witness"] == (1,)
+assert op.selected_mass((1, 0)) == 10
+```
 
 ## Finite filtrations
 

@@ -237,8 +237,9 @@ largest output/input ratio occurs at a minimum-mass input. Boundary inputs give
 zero. Taking the maximum over classes proves the identity, including the role
 of all linear combinations in the objective.
 
-$`\mu_w`$ is an analysis quantity here; the public `minimum_class_mass()` query
-currently returns `Unavailable`. Solvers and `stretch()` can enumerate cycle
+$`\mu_w`$ is computed by `minimum_class_mass(z, limits=None)` for exact weights
+when the boundary-coset search completes within its budget. It optimizes one class
+independently and does not construct a linear section. Solvers and `stretch()` enumerate cycle
 ratios directly without this query. If $`Z=0`$, stretch is declared zero with
 `EmptyDomain`; if $`Z\ne0`$ but $`H=0`$, cycle projection is zero and stretch is a
 legitimate `Computed` zero.
@@ -448,7 +449,7 @@ chain coordinates, weight meanings, tie rules, and projection identity.
 | Current $`\Gamma`$ | Complete `stretch()` enumeration within a budget; exhaustion is distinct |
 | Optimal $`\Gamma_*`$ | Exact solvers in their supported domains with independent certificates |
 | Persistence module and barcode | `OperatorFamily` kernel transport and rank invariant |
-| True minimum class mass $`\mu_w`$ | Defined for analysis; the public query is currently unavailable |
+| True minimum class mass $`\mu_w`$ | Budgeted exact boundary-coset enumeration, original representative and boundary witness |
 
 Integer and rational weights support exact geometry. Binary algebra stays exact
 with floating weights, while geometric and optimality precision are reported

@@ -90,8 +90,8 @@ class StretchTests(unittest.TestCase):
         self.assertEqual(overflow.state, "Unavailable")
         self.assertEqual(overflow.details["reason"], "NumericalFailure")
 
-    def test_shortest_query_is_explicitly_unavailable(self):
-        op = operator()
+    def test_floating_shortest_query_is_explicitly_unavailable(self):
+        op = operator(weights=(10.0, 1.0), arithmetic="FloatingPoint")
         self.assertEqual(op.minimum_class_mass((1, 0)).state, "Unavailable")
         self.assertEqual(
             op.to_result().query_results["minimum_class_mass"].state, "Unavailable"

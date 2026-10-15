@@ -66,7 +66,8 @@ Python 包位于 `src/homology_operator/`，采用上述现有文件。
 d_P([z],[y])=m_w(P(z+y)),\qquad m_w(x)=\sum_i w_i x_i.
 ```
 
-`selected_mass` 不等于真实最短类质量。`minimum_class_mass` 当前返回 Unavailable。
+`selected_mass` 不等于真实最短类质量。`minimum_class_mass` 在精确权和预算内独立枚举单个边界陪集，
+返回最短质量与原链/边界见证；逐类最短代表不拼成线性 P，详见 [API](INTERFACE.md)。
 当前投影 Γ 的精确计算、最优 Γ 的 bounds、全局最优证书分别表达。
 精确 F2 拓扑不意味着浮点几何或浮点 objective 精确。
 

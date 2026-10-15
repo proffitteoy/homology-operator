@@ -74,6 +74,134 @@ def _batch_membership(matrix, vectors):
     return tuple(output)
 
 
+def validate_minimum_class_query(window, projection, query, *, replay=True):
+    """Check a fixed-class witness and replay a complete enumeration if claimed.
+
+    The replay builds its own image basis from every original D column, without
+    using solver minima, production pivot caches, or the query's reported rank.
+    """
+    from .solver import ResourceLimits
+
+    details = query.details
+    try:
+        z = validate_vector(details["input_cycle"], window.n)
+        limits = ResourceLimits(**details["request_limits"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("invalid minimum-class request") from error
+    if (
+        details.get("method") != "BoundaryCosetEnumeration"
+        or details.get("arithmetic_policy") != window.arithmetic
+        or details.get("tie_break_policy") != "LexicographicChain"
+        or any(window.A.apply(z))
+    ):
+        raise ValueError("invalid minimum-class request")
+    unsupported = (
+        "exact weights required"
+        if window.arithmetic == "FloatingPoint"
+        else "unsupported resource limits: packed_word_limit"
+        if limits.packed_word_limit is not None
+        else None
+    )
+    if unsupported:
+        if (
+            query.state != "Unavailable"
+            or query.exact is not None
+            or details.get("reason") != unsupported
+            or any(key in details for key in ("representative", "certificate_level"))
+        ):
+            raise ValueError("unsupported minimum-class request claims a result")
+        return
+    if query.state not in {"Computed", "ResourceExhausted"}:
+        raise ValueError("invalid minimum-class state")
+    y = validate_vector(details.get("representative", ()), window.n)
+    witness = validate_vector(details.get("boundary_witness", ()), window.p)
+    if (
+        any(window.A.apply(y))
+        or projection.apply(y) != projection.apply(z)
+        or window.D.apply(witness) != tuple(a ^ b for a, b in zip(z, y))
+    ):
+        raise ValueError("invalid minimum-class homology witness")
+    mass = sum(w for w, bit in zip(window.weights, y) if bit)
+    computed = query.state == "Computed"
+    for name, expected in (
+        ("candidate_mass", mass),
+        ("upper_bound", mass),
+        ("lower_bound", mass if computed else 0),
+        ("optimality_gap", 0 if computed else mass),
+    ):
+        value = details.get(name)
+        if type(value) not in (int, Fraction) or value != expected:
+            raise ValueError("invalid minimum-class mass or bounds")
+    if (
+        details.get("certificate_level")
+        != ("ExactOptimal" if computed else "CertifiedInterval")
+        or query.exact is not (True if computed else None)
+        or (
+            computed
+            and (type(query.value) not in (int, Fraction) or query.value != mass)
+        )
+    ):
+        raise ValueError("invalid minimum-class certification")
+    states = details.get("enumerated_boundaries")
+    usage = details.get("resource_usage", {})
+    if (
+        type(states) is not int
+        or not 0 <= states <= limits.state_limit
+        or not isinstance(usage, Mapping)
+        or usage.get("states") != states
+        or usage.get("limits") != details["request_limits"]
+    ):
+        raise ValueError("invalid minimum-class resource usage")
+    proof = details.get("optimality_proof")
+    if not computed:
+        if proof is not None or details.get("reason") not in {
+            "state_limit",
+            "wall_time_limit",
+            "matrix_entry_limit",
+        }:
+            raise ValueError("interrupted minimum-class query claims optimality")
+        return
+    if states == 0:
+        raise ValueError("minimum-class certificate has no evaluated candidates")
+    if proof == "NonnegativeMass":
+        if mass != 0:
+            raise ValueError("invalid minimum-class nonnegative lower bound")
+        return
+    if proof != "CompleteBoundaryEnumeration":
+        raise ValueError("missing minimum-class optimality proof")
+    # Independent column elimination, retaining only a basis of the image.
+    pivots = {}
+    for column in range(window.p):
+        bits = sum(((row >> column) & 1) << i for i, row in enumerate(window.D._bits))
+        while bits:
+            pivot = bits.bit_length() - 1
+            if pivot not in pivots:
+                pivots[pivot] = bits
+                break
+            bits ^= pivots[pivot]
+    total = 1 << len(pivots)
+    if (
+        type(details.get("total_boundaries")) is not int
+        or details["total_boundaries"] != total
+        or states != total
+    ):
+        raise ValueError("incomplete minimum-class enumeration certificate")
+    if replay:
+        best = None
+        z_bits = sum(bit << i for i, bit in enumerate(z))
+        for coefficients in product((0, 1), repeat=len(pivots)):
+            bits = z_bits
+            for bit, column in zip(coefficients, pivots.values()):
+                if bit:
+                    bits ^= column
+            chain = tuple((bits >> i) & 1 for i in range(window.n))
+            cost = sum(w for w, bit in zip(window.weights, chain) if bit)
+            if best is None or (cost, chain) < best:
+                best = cost, chain
+        if best != (mass, y):
+            raise ValueError("minimum-class optimum or tie-break replay failed")
+
+
 def validate_projection(
     window: ChainWindow, P: Matrix | CyclicAction | CompactAction
 ) -> dict:

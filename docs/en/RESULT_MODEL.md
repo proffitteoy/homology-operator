@@ -16,6 +16,23 @@
 `exact` describes the query arithmetic, not global optimality. Nonempty cycle
 space with Betti zero has a legitimate computed stretch of 0.
 
+`minimum_class_mass(z, limits=None)` keeps the scalar class minimum in `value`
+only when `Computed`. Details retain `input_cycle`, `representative`, the original
+next-degree `boundary_witness`, `candidate_mass`, class `lower_bound`/`upper_bound`,
+`optimality_gap`, `certificate_level`, `optimality_proof`, boundary counts, request
+limits, and resource usage. `ExactOptimal` refers only to that fixed class;
+the projection solver's certificate is unchanged. Floating weights are unsupported.
+On interruption `value/exact` are null, while a valid candidate and its certified
+interval remain in details. Valid minimum zero is `Computed`, including empty
+homology. The search does not alter the projection or its selected masses.
+
+History stores a content key for each cycle/limits request and a latest-result
+alias `minimum_class_mass`. Recovery checks `Ay=0`, `Py=Pz`, and `Db=y+z` against
+the actual stored A/D/P, then independently builds the boundary image and replays
+any complete-enumeration optimum and lexicographic tie claim. The mass-zero proof
+uses positive weights. Recovery has a separate enumeration cost and never runs a
+projection solver. Earlier NotComputed/unimplemented records remain readable.
+
 Results carry six identifiers: `input_id`, `basis_id`, `weight_id`,
 `projection_id`, `operator_id`, and `solver_run_id`. Independent runs cannot mix
 query records even when they produce the same content projection. Different
@@ -33,8 +50,8 @@ assert restored.to_dict() == record.to_dict()
 ```
 
 Reading JSON revalidates inputs, projection, identity, certificates, and saved
-queries. `OperatorResult.from_json` returns a record; it does not expose a
-`to_operator()` method. Family records provide `to_family()` using the saved P.
+queries. `OperatorResult.from_json` returns a record; its `to_operator()` restores
+the saved P without solving again. Family records provide `to_family()`.
 Snapshots preserve unqueried states and do not compute every query on export.
 See the [result contract](RESULT_MODEL.md).
 

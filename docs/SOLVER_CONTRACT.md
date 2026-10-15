@@ -1,5 +1,10 @@
 # Solver 契约
 
+固定类的 `minimum_class_mass` 查询与投影求解分开，见 [API](INTERFACE.md#单尺度查询)。
+查询的 ExactOptimal 只认证该类最短质量，不认证最小 stretch 或线性截面。
+ExhaustiveExactSolver 继续枚举截面和循环比值，不使用最短类表作为输入或中间量；
+秩二 solver 的 minima 仍只属于其限定证书。
+
 [English](en/SOLVER_CONTRACT.md) · [API](INTERFACE.md) · [目标的定义与证明](MATHEMATICS.md)
 
 ## 职责与合法性

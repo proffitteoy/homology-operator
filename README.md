@@ -38,8 +38,11 @@ chain windows for joint persistence and geometric tracking. Inputs, projections,
 solver records, and results can be saved and independently checked.
 
 The public input is a chain window. General point-cloud, Rips, and complex builders
-must be supplied by the caller. True minimum class mass is currently unavailable;
-`selected_mass` measures the representative selected by the current projection.
+must be supplied by the caller. In this source checkout,
+`minimum_class_mass(z, limits=None)` searches a
+single class with integer/rational weights, returning its mass, representative,
+and boundary witness within a budget. `selected_mass` measures the representative
+selected by the current projection. See the [query contract](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/INTERFACE.md#single-scale-queries).
 
 ## Installation
 
