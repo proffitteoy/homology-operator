@@ -1,0 +1,103 @@
+{
+  "source": {
+    "repository": "proffitteoy/homology-operator-lab",
+    "revision": "f4d0de6a8f1cd0285e4dda0a48d951b60dad3282",
+    "sha256": {
+      "candidates/minimum-stretch/verify.py": "5f8b1ccd3778424ccbaec58715fa99202a00fad9bc34659106c27d0a98c31901",
+      "candidates/minimum-stretch/dynamic.py": "e676f321e0138968665a5cd479fbf320fe6c819017d4ff8834e0ed6044a7830d",
+      "candidates/minimum-stretch/incremental.py": "3465a2baa8ef3189bb795e102c3df0b5afdeda7f33ca853e6fb7434e6853eea0"
+    }
+  },
+  "payload": {
+    "simplices": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        1,
+        2
+      ],
+      [
+        3
+      ]
+    ],
+    "incremental_pairs": [
+      {
+        "degree": 0,
+        "birth": 1,
+        "death": null,
+        "birth_simplex": [
+          0
+        ],
+        "death_simplex": null
+      },
+      {
+        "degree": 0,
+        "birth": 2,
+        "death": 4,
+        "birth_simplex": [
+          1
+        ],
+        "death_simplex": [
+          0,
+          1
+        ]
+      },
+      {
+        "degree": 0,
+        "birth": 3,
+        "death": 5,
+        "birth_simplex": [
+          2
+        ],
+        "death_simplex": [
+          0,
+          2
+        ]
+      },
+      {
+        "degree": 0,
+        "birth": 8,
+        "death": null,
+        "birth_simplex": [
+          3
+        ],
+        "death_simplex": null
+      },
+      {
+        "degree": 1,
+        "birth": 6,
+        "death": 7,
+        "birth_simplex": [
+          1,
+          2
+        ],
+        "death_simplex": [
+          0,
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "payload_sha256": "b354201931625677a499bbf3222816d7e47b3156cb2e632a96e45ccd3ed33e12"
+}

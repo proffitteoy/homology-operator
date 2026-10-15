@@ -80,6 +80,12 @@ outputs. Death yields a valid zero chain, mass, and support. Failed stages remai
 missing rather than becoming empty spaces. The historical proof is retained in
 the [filtration guide](guide/filtration.md).
 
+`features()` names those same histories and checks a complete interval-module
+isomorphism. Optional face-first simplex sources rebuild A/D and certify birth
+and death relations against the whole historical basis. No independent PH
+reduction supplies production pairings. The certificate, proof argument and
+support domain are in the [historical certificate](guide/filtration.md#historical-certificate-and-cost).
+
 ## Existing modules
 
 | Module | Responsibility |

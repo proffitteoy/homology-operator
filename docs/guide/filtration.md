@@ -27,3 +27,13 @@ cache_limit 限制各 LRU 缓存条目，不是字节/RSS 上限。
 
 完整签名与返回值见[API](../INTERFACE.md#过滤与传输)，相邻读取与历史基不变量见
 [数学与架构](../ARCHITECTURE.md)。
+
+## 稳定特征引用与单形来源
+
+`features()` 复用完整历史区间基，提供绑定族身份、次数、端点、重复项和生成元历史的引用；
+`resolve_feature(reference, stage)` 返回目标阶段的原链代表、核坐标、原链基和六身份。
+非活跃阶段返回 `NoClass`；跨过滤、跨运行或被替换的引用被拒绝。
+可选 `simplex_source` 保留逐单形全序并重建每阶段 A/D；`feature_pairing(reference)`
+以完整历史基和传输认证出生、死亡单形，没有来源时明确 `Unavailable`。
+新查询与来源使用 schema 3，旧 schema 1/2 保持可读；带来源或引用时禁止降级丢失信息。
+输入格式、两种阶段编号、证明和资源边界见[英文说明](../en/guide/filtration.md#feature-references-and-simplex-sources)。

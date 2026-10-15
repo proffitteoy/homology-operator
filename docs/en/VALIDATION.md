@@ -87,6 +87,16 @@ isolated dual wheels. Oracle CI forces GUDHI comparisons. Documentation CI build
 both languages strictly and deploys main. Local and remote results belong to their
 exact source identities. Temporary outputs and wheels stay in ignored directories.
 
+Feature reference/source changes can be checked independently with
+`python -m unittest discover -s tests -p test_family.py -v` and
+`python -m unittest discover -s tests -p test_backend_integration.py -v` in the
+locked environment. The former includes independent coset/rank/PH comparisons,
+both stage conventions, raw source and full-history rejection, fixed research
+pairs, and schema 3 round trips. The latter checks references across the existing
+portable/compact/native action families, including restoration without native.
+Run `python examples/filtration.py` to exercise both algebra-only and simplex
+provenance paths. No additional runtime or test dependency is required.
+
 ## Public releases
 
 The `homology-operator` distribution provides an OS-independent wheel and source

@@ -8,6 +8,13 @@
 迁移测试窗口的源码路径、原始 hash 与本地补充见 [Fixture 来源](docs/FIXTURES.md)。
 研究源码与验证成绩不构成本包的运行时依赖或当前验收成绩。
 
+Feature provenance follows the face-first source/history validation ideas in
+`dynamic.py` and `incremental.py` at research commit
+`f4d0de6a8f1cd0285e4dda0a48d951b60dad3282`. The migrated unit-weight pair fixture
+records source paths and byte hashes in [fixture provenance](docs/FIXTURES.md).
+Production references and pairings use this library's existing interval histories;
+the research implementation is not imported or used to populate runtime results.
+
 ## 分别安装的依赖
 
 | 范围 | 依赖及用途 |

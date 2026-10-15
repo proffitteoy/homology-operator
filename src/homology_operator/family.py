@@ -4,6 +4,7 @@ from collections.abc import Mapping, Set
 from collections import OrderedDict, Counter
 from dataclasses import dataclass, field
 from fractions import Fraction
+from itertools import combinations
 from math import isfinite
 import json
 from sys import getsizeof
@@ -124,6 +125,7 @@ class OperatorFamily:
     terminal_extension: str = "Constant"
     cache_limit: int = 64
     kernel_cache_byte_limit: int = 16 * 1024 * 1024
+    simplex_source: Mapping | None = None
     _transports: dict = field(
         init=False, default_factory=OrderedDict, repr=False, compare=False
     )
@@ -144,6 +146,7 @@ class OperatorFamily:
         init=False, default_factory=dict, repr=False, compare=False
     )
     _barcode_basis: object = field(init=False, default=None, repr=False, compare=False)
+    _features: object = field(init=False, default=None, repr=False, compare=False)
     _schema_version: int = field(init=False, default=2, repr=False, compare=False)
 
     _tracking: dict = field(init=False, default_factory=dict, repr=False, compare=False)
@@ -267,6 +270,10 @@ class OperatorFamily:
         object.__setattr__(self, "scales", scales)
         object.__setattr__(self, "windows", windows)
         object.__setattr__(self, "operators", operators)
+        source = self._validate_simplex_source()
+        object.__setattr__(self, "simplex_source", source)
+        if source is not None:
+            object.__setattr__(self, "_schema_version", 3)
         filtration_id = content_id(
             "filtration",
             {
@@ -275,6 +282,7 @@ class OperatorFamily:
                 "weight_policy": self.weight_policy,
                 "duplicate_policy": self.duplicate_policy,
                 "terminal_extension": self.terminal_extension,
+                **({"simplex_source": source} if source is not None else {}),
             },
         )
         identity = {
@@ -308,6 +316,75 @@ class OperatorFamily:
         if type(index) is not int or not 0 <= index < len(self.windows):
             raise ValueError("stage index is outside the finite filtration")
         return index
+
+    def _validate_simplex_source(self):
+        """Rebuild every window from a face-first stream, without PH reduction."""
+        source = self.simplex_source
+        if source is None:
+            return None
+        if not isinstance(source, Mapping) or set(source) != {
+            "stage_convention",
+            "simplices",
+        }:
+            raise ValueError("simplex source requires a convention and ordered events")
+        convention = source["stage_convention"]
+        if convention not in ("AfterInsertion", "EmptyInitial"):
+            raise ValueError("unknown simplex stage convention")
+        events = _ordered(source["simplices"], "simplices")
+        offset = int(convention == "EmptyInitial")
+        if len(self.windows) != len(events) + offset:
+            raise ValueError("each nonempty stage must insert exactly one simplex")
+        seen, labels, normalized = set(), set(), []
+        for event in events:
+            if not isinstance(event, Mapping) or set(event) != {"vertices", "label"}:
+                raise ValueError("a simplex event requires vertices and a basis label")
+            simplex = _ordered(event["vertices"], "simplex vertices")
+            label = event["label"]
+            if (
+                not simplex
+                or any(type(v) is not int or v < 0 for v in simplex)
+                or tuple(sorted(set(simplex))) != simplex
+                or simplex in seen
+            ):
+                raise ValueError("simplices must be distinct canonical vertex tuples")
+            if not isinstance(label, str) or not label or label in labels:
+                raise ValueError("simplex basis labels must be nonempty and unique")
+            if len(simplex) > 1 and any(
+                face not in seen for face in combinations(simplex, len(simplex) - 1)
+            ):
+                raise ValueError("every face must precede its coface")
+            seen.add(simplex)
+            labels.add(label)
+            normalized.append({"vertices": simplex, "label": label})
+        for stage, window in enumerate(self.windows):
+            prefix = normalized[: stage + 1 - offset]
+            by_label = {event["label"]: event["vertices"] for event in prefix}
+            bases = (window.basis_previous, window.basis_current, window.basis_next)
+            for degree, basis in zip(range(window.k - 1, window.k + 2), bases):
+                expected = {
+                    e["label"] for e in prefix if len(e["vertices"]) == degree + 1
+                }
+                if set(basis) != expected:
+                    raise ValueError("simplex stream and stage basis disagree")
+            for boundary, rows, columns in (
+                (window.A, bases[0], bases[1]),
+                (window.D, bases[1], bases[2]),
+            ):
+                rebuilt_columns = []
+                for label in columns:
+                    simplex = by_label[label]
+                    faces = (
+                        set(combinations(simplex, len(simplex) - 1))
+                        if len(simplex) > 1
+                        else set()
+                    )
+                    rebuilt_columns.append(
+                        tuple(int(by_label[r] in faces) for r in rows)
+                    )
+                rebuilt = Matrix.from_columns(rebuilt_columns, len(rows))
+                if boundary != rebuilt:
+                    raise ValueError("boundary differs from the actual simplex faces")
+        return _freeze({"stage_convention": convention, "simplices": normalized})
 
     def _interval(self, i, j):
         self._index(i)
@@ -630,8 +707,12 @@ class OperatorFamily:
         """Immutable snapshot; serialization revalidates persisted derived readouts."""
         barcode = self.barcode()
         version = self._schema_version if schema_version is None else schema_version
-        if type(version) is not int or version not in (1, 2):
+        if type(version) is not int or version not in (1, 2, 3):
             raise ValueError("unsupported family result schema")
+        if version < 3 and (
+            self.simplex_source is not None or self._features is not None
+        ):
+            raise ValueError("feature references and simplex sources require schema 3")
         stage_results = [
             (op.to_result() if isinstance(op, HomologyOperator) else op).to_dict()
             for op in self.operators
@@ -673,13 +754,19 @@ class OperatorFamily:
                 "theory_revision": THEORY_REVISION,
             },
         }
-        if version == 2:
+        if version >= 2:
             data["windows"] = _compact_windows(self)
             for i, record in enumerate(stage_results):
                 del record["input_data"]
                 record["input_ref"] = i
             data["barcode_basis_readout"] = (
                 self._barcode_basis
+                or self._query("NotComputed", None, 0, len(self.windows) - 1)
+            ).to_dict()
+        if version == 3:
+            data["simplex_source"] = _encode(self.simplex_source)
+            data["features_readout"] = (
+                self._features
                 or self._query("NotComputed", None, 0, len(self.windows) - 1)
             ).to_dict()
         return OperatorFamilyResult(data)
@@ -953,6 +1040,217 @@ class OperatorFamily:
         object.__setattr__(self, "_barcode_basis", result)
         return result
 
+    def _certify_feature_history(self, bars):
+        """Check a complete interval-module isomorphism against raw boundaries."""
+        vectors_checked = 0
+        for stage, window in enumerate(self.windows):
+            active = [v for bar in bars for v in bar["vectors"] if v["stage"] == stage]
+            h = Matrix.from_columns((v["representative"] for v in active), window.n)
+            joined = Matrix.from_columns(
+                (*window.D.transpose().rows, *h.transpose().rows), window.n
+            )
+            beta = window.n - window.A.rank() - window.D.rank()
+            if len(active) != beta or joined.rank() != window.D.rank() + beta:
+                raise ValueError("feature history is not a full homology basis")
+            kernel = Matrix.from_columns(self._kernel(stage)[0], window.n)
+            for vector in active:
+                z = vector["representative"]
+                if (
+                    any(window.A.apply(z))
+                    or self.stage(stage).P.apply(z) != z
+                    or vector["identity"] != self.stage(stage).identity
+                    or kernel.apply(vector["coordinates"]) != z
+                ):
+                    raise ValueError("feature vector is not from its stage operator")
+                vectors_checked += 1
+        for bar in bars:
+            birth, death = bar["birth_stage"], bar["death_stage"]
+            expected = tuple(
+                range(birth, len(self.windows) if death is None else death)
+            )
+            if tuple(v["stage"] for v in bar["vectors"]) != expected:
+                raise ValueError("feature has incomplete historical support")
+            for left, right in zip(bar["vectors"], bar["vectors"][1:]):
+                target = right["stage"]
+                image = self.stage(target).P.apply(
+                    self.inclusion(target - 1, target).apply(left["representative"])
+                )
+                if image != right["representative"]:
+                    raise ValueError("feature history does not commute with transport")
+            if death is not None:
+                image = self.inclusion(death - 1, death).apply(
+                    bar["vectors"][-1]["representative"]
+                )
+                if self.windows[death].D.solve(image) is None:
+                    raise ValueError(
+                        "feature history does not die in the boundary space"
+                    )
+            if self.simplex_source is not None:
+                offset = int(self.simplex_source["stage_convention"] == "EmptyInitial")
+                event = self.simplex_source["simplices"][birth - offset]
+                label = event["label"]
+                if (
+                    len(event["vertices"]) != self.windows[0].k + 1
+                    or not bar["vectors"][0]["representative"][
+                        self.windows[birth].basis_current.index(label)
+                    ]
+                ):
+                    raise ValueError(
+                        "historical generator does not use its birth simplex"
+                    )
+                if death is not None:
+                    event = self.simplex_source["simplices"][death - offset]
+                    target = self.windows[death]
+                    if len(event["vertices"]) != target.k + 2:
+                        raise ValueError("death event has the wrong degree")
+                    boundary = target.D.transpose().rows[
+                        target.basis_next.index(event["label"])
+                    ]
+                    residual = tuple(a ^ b for a, b in zip(image, boundary))
+                    old_boundaries = (
+                        self.inclusion(death - 1, death) @ self.windows[death - 1].D
+                    )
+                    if old_boundaries.solve(residual) is None:
+                        raise ValueError(
+                            "death simplex does not kill this historical generator"
+                        )
+        return {
+            "method": "FullHistoricalBasisV1",
+            "stages_checked": len(self.windows),
+            "vectors_checked": vectors_checked,
+            "raw_boundary_bases": True,
+            "adjacent_transport": True,
+            "birth_death_simplex_relations": self.simplex_source is not None,
+            "resource_policy": "unlimited; full history and rank checks are charged",
+        }
+
+    def features(self):
+        """Stable references to the existing, deterministically chosen histories."""
+        object.__setattr__(self, "_schema_version", 3)
+        if self._features is not None:
+            return self._features
+        history = self._barcode_basis or self.barcode_basis()
+        if history.state != "Computed":
+            result = history
+        else:
+            certificate = self._certify_feature_history(history.value)
+            counts, references = Counter(), []
+            for bar in history.value:
+                endpoints = (bar["birth_stage"], bar["death_stage"])
+                occurrence = counts[endpoints]
+                counts[endpoints] += 1
+                reference = {
+                    **self.identity,
+                    "degree": self.windows[0].k,
+                    **self._bar(*endpoints),
+                    "occurrence": occurrence,
+                    "generator_policy": "AdjacentBirthPrefixV1",
+                    "birth_basis": self.windows[endpoints[0]].basis_current,
+                    "history_id": content_id("history", bar["vectors"]),
+                }
+                reference["feature_id"] = content_id("feature", reference)
+                references.append(reference)
+            result = self._query(
+                "Computed",
+                references,
+                0,
+                len(self.windows) - 1,
+                True,
+                {"certificate": certificate},
+            )
+        object.__setattr__(self, "_features", result)
+        return result
+
+    def _feature(self, reference):
+        if not isinstance(reference, Mapping):
+            raise ValueError("a feature reference must be a mapping")
+        features = self.features()
+        if features.state != "Computed":
+            return features, None
+        for index, expected in enumerate(features.value):
+            if canonical_json(reference) == canonical_json(expected):
+                return features, (expected, self._barcode_basis.value[index])
+        raise ValueError(
+            "feature reference is replaced, malformed, or belongs to another family"
+        )
+
+    def resolve_feature(self, reference, stage):
+        """Resolve an exact reference at one stage; inactive intervals are NoClass."""
+        self._index(stage)
+        features, selected = self._feature(reference)
+        if selected is None:
+            result = self._query(
+                features.state, None, 0, stage, details=features.details
+            )
+        else:
+            ref, bar = selected
+            vector = next((v for v in bar["vectors"] if v["stage"] == stage), None)
+            result = self._query(
+                "Computed" if vector is not None else "NoClass",
+                None
+                if vector is None
+                else {
+                    **vector,
+                    "reference": ref,
+                    "basis_current": self.windows[stage].basis_current,
+                },
+                0,
+                stage,
+                True if vector is not None else None,
+                {
+                    "reference": ref,
+                    "certificate": features.details["certificate"],
+                    "inactive_reason": None
+                    if vector is not None
+                    else ("NotBorn" if stage < bar["birth_stage"] else "Dead"),
+                },
+            )
+        return self._remember("resolve_feature", (reference,), 0, stage, result)
+
+    def feature_pairing(self, reference):
+        """Certify simplex provenance of a history; algebra-only inputs are unavailable."""
+        features, selected = self._feature(reference)
+        last = len(self.windows) - 1
+        if selected is None:
+            result = self._query(
+                features.state, None, 0, last, details=features.details
+            )
+        elif self.simplex_source is None:
+            result = self._query(
+                "Unavailable",
+                None,
+                0,
+                last,
+                details={"reason": "no simplex source was supplied"},
+            )
+        else:
+            ref, bar = selected
+            source = self.simplex_source
+            offset = int(source["stage_convention"] == "EmptyInitial")
+            birth = source["simplices"][bar["birth_stage"] - offset]
+            death = (
+                None
+                if bar["death_stage"] is None
+                else source["simplices"][bar["death_stage"] - offset]
+            )
+            result = self._query(
+                "Computed",
+                {
+                    "reference": ref,
+                    "birth_simplex": birth["vertices"],
+                    "death_simplex": None if death is None else death["vertices"],
+                    "birth_label": birth["label"],
+                    "death_label": None if death is None else death["label"],
+                    "stage_convention": source["stage_convention"],
+                    "source_id": content_id("simplex_source", source),
+                },
+                0,
+                last,
+                True,
+                {"certificate": features.details["certificate"]},
+            )
+        return self._remember("feature_pairing", (reference,), 0, last, result)
+
 
 def _compact_windows(family):
     """All boundaries are restrictions of the last stage in original labels."""
@@ -1030,7 +1328,7 @@ def _restore_family(data):
     if len(data["stage_results"]) != len(windows):
         raise ValueError("family stages and inputs have different lengths")
     for i, record in enumerate(data["stage_results"]):
-        if data["schema_version"] == 2:
+        if data["schema_version"] >= 2:
             if type(record.get("input_ref")) is not int or record["input_ref"] != i:
                 raise ValueError("invalid stage input reference")
             record = {key: value for key, value in record.items() if key != "input_ref"}
@@ -1052,6 +1350,7 @@ def _restore_family(data):
         data["weight_policy"],
         data["duplicate_policy"],
         data["terminal_extension"],
+        simplex_source=_decode(data.get("simplex_source")),
     )
     object.__setattr__(family, "_schema_version", data["schema_version"])
     return family, records
@@ -1083,14 +1382,17 @@ class OperatorFamilyResult:
             "tracking_readout",
             "provenance",
         }
-        if type(version) is int and version == 2:
+        if type(version) is int and version >= 2:
             fields.add("barcode_basis_readout")
+        if type(version) is int and version == 3:
+            fields.update(("simplex_source", "features_readout"))
         if not isinstance(self.data, Mapping) or set(self.data) != fields:
             raise ValueError("invalid operator family result fields")
         data = _thaw_metadata(self.data)
         if type(data["schema_version"]) is not int or data["schema_version"] not in (
             1,
             2,
+            3,
         ):
             raise ValueError("unsupported family result schema")
         try:
@@ -1138,7 +1440,7 @@ class OperatorFamilyResult:
             family.barcode().to_dict()
         ):
             raise ValueError("persisted barcode differs from current transport ranks")
-        if version == 2:
+        if version >= 2:
             basis = QueryResult.from_dict(data["barcode_basis_readout"])
             expected = (
                 family._query("NotComputed", None, 0, len(family.windows) - 1)
@@ -1149,6 +1451,17 @@ class OperatorFamilyResult:
                 raise ValueError(
                     "persisted barcode basis differs from current transports"
                 )
+        if version == 3:
+            features = QueryResult.from_dict(data["features_readout"])
+            if features.state != "NotComputed" and basis.state == "NotComputed":
+                raise ValueError("persisted features require their historical basis")
+            expected = (
+                family._query("NotComputed", None, 0, len(family.windows) - 1)
+                if features.state == "NotComputed"
+                else family.features()
+            )
+            if canonical_json(features.to_dict()) != canonical_json(expected.to_dict()):
+                raise ValueError("persisted features differ from the complete history")
         if not isinstance(data["tracking_readout"], Mapping):
             raise ValueError("tracking readouts must be a mapping")
         for key, wire in data["tracking_readout"].items():
@@ -1160,6 +1473,8 @@ class OperatorFamilyResult:
                 "track_support",
                 "track_shared_support",
                 "track_union_support",
+                "resolve_feature",
+                "feature_pairing",
             }:
                 raise ValueError("unknown persisted tracking query")
             arguments = query.details.get("arguments")
@@ -1169,7 +1484,26 @@ class OperatorFamilyResult:
             ):
                 raise ValueError("invalid tracking query key or arguments")
             try:
-                expected = getattr(family, name)(*arguments, i, j)
+                if name in {"resolve_feature", "feature_pairing"} and (
+                    version != 3 or features.state == "NotComputed"
+                ):
+                    raise ValueError(
+                        "feature queries require persisted feature references"
+                    )
+                if name == "resolve_feature":
+                    if version != 3 or i != 0:
+                        raise ValueError(
+                            "feature queries require schema 3 and source stage zero"
+                        )
+                    expected = family.resolve_feature(*arguments, j)
+                elif name == "feature_pairing":
+                    if version != 3 or (i, j) != (0, len(family.windows) - 1):
+                        raise ValueError(
+                            "pairing query has invalid schema or endpoints"
+                        )
+                    expected = family.feature_pairing(*arguments)
+                else:
+                    expected = getattr(family, name)(*arguments, i, j)
             except TypeError as error:
                 raise ValueError("invalid tracking arguments") from error
             if canonical_json(wire) != canonical_json(expected.to_dict()):
@@ -1208,10 +1542,14 @@ class OperatorFamilyResult:
                 (tuple(map(int, key.split(":"))), QueryResult.from_dict(wire))
                 for key, wire in data[name].items()
             )
-        if data["schema_version"] == 2:
+        if data["schema_version"] >= 2:
             basis = QueryResult.from_dict(data["barcode_basis_readout"])
             if basis.state != "NotComputed":
                 object.__setattr__(family, "_barcode_basis", basis)
+        if data["schema_version"] == 3:
+            features = QueryResult.from_dict(data["features_readout"])
+            if features.state != "NotComputed":
+                object.__setattr__(family, "_features", features)
         return family
 
     @classmethod
