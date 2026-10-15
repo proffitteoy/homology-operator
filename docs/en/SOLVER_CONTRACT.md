@@ -1,5 +1,12 @@
 # Solver contract
 
+The fixed-class `minimum_class_mass` query is separate from projection solving.
+Its exact boundary-coset enumeration and homology witness are specified in the
+[API](INTERFACE.md#single-scale-queries). Its `ExactOptimal` certifies one class,
+not optimal stretch or a linear section. `ExhaustiveExactSolver` continues to
+enumerate sections and cycle ratios without a shortest-class table as input or
+intermediate data. Rank-two solver minima remain its own bounded certificate.
+
 The objective, section equivalence, and universal bounds are proved in [operator theory](MATHEMATICS.md).
 
 [中文](../SOLVER_CONTRACT.md) · [API](INTERFACE.md)
@@ -119,6 +126,41 @@ chain without enumeration. Infeasibility is certified by a vector y with
 interrupted results carry no optimum. Search budgets do not preempt independent
 verification, source binding, or JSON processing. No LP relaxation is certified
 as an exact filling optimum, and no persistence pairing claim is made.
+
+## Finite-pair volume certificates
+
+`OperatorFamily.optimal_volume` uses the certified product feature history and
+actual simplex insertion order. It never obtains pairs from an independent PH
+reduction. With fixed death coefficient 1, let F contain only upper simplices
+strictly between birth b and death d; let Q contain the birth row and intermediate
+k-simplex rows. The remaining coefficients satisfy the exact affine equations
+`D[Q,F] x = e_b + D[Q,d]`. A seed plus the full kernel enumerates every allowed
+filling. Positive upper mass is minimized, with original-coordinate packed ties.
+`ExactOptimal` requires complete enumeration and independent replay; no bound is
+inferred from feasibility, a linear solve, or an LP optimum.
+
+The verifier reconstructs all incidence coefficients from original simplex face
+sets, checks the death anchor, forbidden upper coordinates, birth/intermediate
+boundary coefficients, actual D c, cycle condition, mass and source locations.
+Its own elimination rebuilds the full constraint kernel and replays the entire
+affine space, including ties. A maximum nullity of 16 bounds both search and
+replay. An interrupted candidate is checked only for feasibility.
+
+The pair domain allows the boundary to vary on earlier simplices and excludes
+upper simplices at/before birth; fixed-boundary filling does neither. For example,
+an early filled triangle 012 followed by edges 23,03 and death face 023 admits
+pair filling 023, while filling the fixed outer loop 01+12+23+03 requires both
+faces. Minimizing upper mass also differs from minimizing boundary mass.
+The returned boundary realizes the finite pair, but need not equal the birth
+class of the chosen historical basis; `same_history_class` checks that extra
+property explicitly with the birth-stage P. See the pinned
+[approved definition and argument](INTERFACE.md#finite-pair-optimal-volume).
+
+HomCloud 5.4.0's default optimal-volume implementation uses a real oriented l1 LP;
+its documented integer switch is ignored, and its birth constraint differs.
+It supplies no strict F2 optimum comparison without independently matching the
+feasible set, integrality and certification level. This implementation makes no
+HomCloud numerical parity or real-LP optimality claim.
 
 ## Optional native selection
 

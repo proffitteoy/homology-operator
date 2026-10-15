@@ -38,8 +38,11 @@ chain windows for joint persistence and geometric tracking. Inputs, projections,
 solver records, and results can be saved and independently checked.
 
 The public input is a chain window. General point-cloud, Rips, and complex builders
-must be supplied by the caller. True minimum class mass is currently unavailable;
-`selected_mass` measures the representative selected by the current projection.
+must be supplied by the caller. In this source checkout,
+`minimum_class_mass(z, limits=None)` searches a
+single class with integer/rational weights, returning its mass, representative,
+and boundary witness within a budget. `selected_mass` measures the representative
+selected by the current projection. See the [query contract](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/INTERFACE.md#single-scale-queries).
 
 ## Installation
 
@@ -135,6 +138,11 @@ schema 1 remains readable. See the [English guide](https://github.com/proffitteo
 `features()` gives stable interval-generator references; `resolve_feature()` reads
 their full-history representatives at a chosen stage. Optional face-first simplex
 sources certify birth/death provenance and use schema 3. See the [filtration guide](docs/en/guide/filtration.md#feature-references-and-simplex-sources).
+
+For finite H1/H2 pairs, [`optimal_volume`](docs/en/INTERFACE.md#finite-pair-optimal-volume)
+minimizes explicitly supplied upper-chain costs under the birth/death constraints
+and returns the filling, boundary and original geometry with an exact certificate
+in its bounded reference domain. Infinite intervals have no finite death volume.
 
 ## Mathematics
 

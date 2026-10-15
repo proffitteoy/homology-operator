@@ -13,6 +13,7 @@ The existing [/en/](https://proffitteoy.github.io/homology-operator/en/) URLs re
 | Run a complete joint topology and geometry example | [Exact six-edge operator](en/guide/single-scale.md#an-exact-operator-on-the-six-edge-complex) |
 | Construct inputs and query a single scale or filtration | [Python API](en/INTERFACE.md) |
 | Minimize an upper-chain filling of a fixed cycle | [Fixed-boundary filling](en/INTERFACE.md#fixed-boundary-minimum-filling): explicit upper costs and exact certificates |
+| Minimize the filling volume of a finite H1/H2 pair | [Pair optimal volume](en/INTERFACE.md#finite-pair-optimal-volume): certified event constraints and original geometry |
 | Minimize a certified H1 feature at birth | [Birth-pair cycle](en/INTERFACE.md#birth-pair-optimal-1-cycle): historical class, exact costs, support and source location |
 | Build Rust, use packed algebra and batch queries | [Native guide](en/guide/native.md) |
 | Interpret states, identities, and snapshots | [Result model](en/RESULT_MODEL.md) |

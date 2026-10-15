@@ -7,7 +7,7 @@
 从 `ChainWindow` 建立 `ProjectionProblem`，通过 `solve_projection` 得到解。
 确认 `solution.projection` 存在，再构造 `HomologyOperator`。最小代码见[快速上手](../getting-started/quickstart.md)。
 
-所有查询来自同一个 P；`L=I+P`，`betti()` 返回 `dim ker(L)`。
+投影读数来自同一个 P；`L=I+P`，`betti()` 返回 `dim ker(L)`。
 
 | 查询 | 定义 |
 | --- | --- |
@@ -23,7 +23,10 @@
 ## 质量与认证
 
 同类代表可以有不同质量；selected_mass 仅报告当前 P 的选择。
-真实最短类质量 `minimum_class_mass` 当前为 Unavailable。
+`minimum_class_mass(z, limits=None)` 在整数/有理权和预算内独立枚举 `z+im(D)`；
+完成时 value 为最短质量，details 返回原链 representative 与满足 `Db=representative+z`
+的 boundary_witness。中断保留候选和认证区间，浮点权返回 Unavailable。
+逐类最短代表不拼成 P；预算与完整证书见 [API](../INTERFACE.md#单尺度查询)。
 `stretch()` 计算当前 P 在非零循环上的最大质量比；合法性、当前 objective、全局最优性分开验证。
 空循环域为 EmptyDomain 与约定值 0；非空循环域但 Betti=0 为 Computed 的合法 0。
 
@@ -79,6 +82,9 @@ assert op.selected_mass(y) == 9
 assert op.class_distance(z, y) == 9
 assert op.shared_support(z, y) == (0, 2)
 assert op.stretch().value == Fraction(9, 8)
+combined = tuple(a ^ b for a, b in zip(z, y))
+assert [op.minimum_class_mass(c).value for c in (z, y, combined)] == [8, 8, 9]
+assert [op.selected_mass(c) for c in (z, y, combined)] == [8, 9, 9]
 
 assert op.class_representative(z) == (1, 0, 1, 0, 1, 0)
 assert op.class_representative(y) == (1, 0, 1, 1, 0, 1)

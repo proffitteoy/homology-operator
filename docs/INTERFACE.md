@@ -124,6 +124,13 @@ solver 返回 Unavailable 时尝试同名 reference solver，保留支持域/认
 ResourceExhausted 也可能保留合法候选；这时算子可为 Ready，但最优认证不能由停止状态推断。
 solver 各自的结构、枚举/重放上限、并列与中断语义见 [solver 契约](SOLVER_CONTRACT.md)。
 
+Finite H1/H2 pairs additionally support
+[`OperatorFamily.optimal_volume`](en/INTERFACE.md#finite-pair-optimal-volume):
+explicit death-stage upper costs, birth/death/intermediate constraints, original
+filling/boundary geometry and independently replayed exact certificates. Infinite
+pairs return `EmptyDomain` with `applicability="NotApplicable"`. This is separate
+from fixed-boundary filling and does not change the family's P or PH.
+
 ## 单尺度查询
 
 | 方法 | 输入域 | 返回值 / 定义 |
@@ -141,7 +148,7 @@ solver 各自的结构、枚举/重放上限、并列与中断语义见 [solver 
 | `shared_support(z,y)`、`union_support(z,y)` | 两个循环 | tuple，投影支撑的交 / 并 |
 | `readout(name, *args)` | 上述方法的输入域 | 带身份的 QueryResult，并记录查询参数/值 |
 | `stretch(limits=None)` | 无 | QueryResult，当前 Γ_w(P) 及计算状态；独立于全局最优认证 |
-| `minimum_class_mass(z)` | 循环 | 当前为 Unavailable 的 QueryResult |
+| `minimum_class_mass(z, limits=None)` | 循环 | 预算内精确最短类质量、原链代表和边界见证的 QueryResult |
 | `certificate()`、`metadata()` | 无 | 独立验证记录 / 身份与 provenance、权重元数据 |
 | `to_result()` | 无 | OperatorResult 快照 |
 
@@ -150,6 +157,24 @@ stretch 和最短质量采用自己的 QueryResult 入口。类查询遇到非�
 当前没有 `retraction_mode`；不能把原始 `project` 的非循环结果当作同调类。
 
 `selected_mass` 是选定代表质量，不能填充真实最短类质量。
+新增查询实现需要使用当前源码。`minimum_class_mass` 独立枚举 `z+im(D)` 的不同元素，不枚举全部循环或全部截面，
+也不改变 P。整数/有理权受支持；浮点权和显式 `packed_word_limit` 返回 `Unavailable`。
+`limits` 沿用 `ResourceLimits`，默认 100000 状态、10 秒、1000000 逻辑矩阵条目；
+每个实际计算的边界计一个状态。逻辑存储保守上界为
+`2*n*p + 2*n*min(n,p) + 8*(n+p) + 2*m`，不是 RSS 限制。
+循环输入校验在预算之前；墙钟采用协作检查，包含最后的见证校验，不保证单步抢占。
+
+完成时 `value` 为真实最短质量、`exact=True`；`details` 中的 `representative=y`、
+`boundary_witness=b` 和 `input_cycle=z` 保留原基坐标，满足 `Ay=0`、`Py=Pz`、`Db=y+z`。
+质量并列时选择原链二元坐标元组的字典序最小者。完整边界枚举或质量零的非负下界
+可认证该类查询的 `ExactOptimal`；不改变 solver 的全局截面证书。
+`lower_bound`、`upper_bound` 和 `optimality_gap` 均指该类最短质量。
+
+中断时 `ResourceExhausted` 的 `value/exact` 为 None，details 保留合法候选、精确
+`candidate_mass`、下界 0、候选上界、gap、`CertifiedInterval`、预算和用量。
+超时后的候选即使为零也不改报完成。正常完成的零类、空同调最短值为合法的 `Computed` 0。
+快照按类/预算保留请求，并在 `minimum_class_mass` 下保留最近一次结果。
+
 共享支撑满足精确权下的恒等式
 `m_w(Pz)+m_w(Py)=m_w(P(z+y))+2m_w(supp(Pz)∩supp(Py))`。
 完整核向量表或类表可能有指数规模，API 不免费枚举全表。

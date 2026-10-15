@@ -74,6 +74,134 @@ def _batch_membership(matrix, vectors):
     return tuple(output)
 
 
+def validate_minimum_class_query(window, projection, query, *, replay=True):
+    """Check a fixed-class witness and replay a complete enumeration if claimed.
+
+    The replay builds its own image basis from every original D column, without
+    using solver minima, production pivot caches, or the query's reported rank.
+    """
+    from .solver import ResourceLimits
+
+    details = query.details
+    try:
+        z = validate_vector(details["input_cycle"], window.n)
+        limits = ResourceLimits(**details["request_limits"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("invalid minimum-class request") from error
+    if (
+        details.get("method") != "BoundaryCosetEnumeration"
+        or details.get("arithmetic_policy") != window.arithmetic
+        or details.get("tie_break_policy") != "LexicographicChain"
+        or any(window.A.apply(z))
+    ):
+        raise ValueError("invalid minimum-class request")
+    unsupported = (
+        "exact weights required"
+        if window.arithmetic == "FloatingPoint"
+        else "unsupported resource limits: packed_word_limit"
+        if limits.packed_word_limit is not None
+        else None
+    )
+    if unsupported:
+        if (
+            query.state != "Unavailable"
+            or query.exact is not None
+            or details.get("reason") != unsupported
+            or any(key in details for key in ("representative", "certificate_level"))
+        ):
+            raise ValueError("unsupported minimum-class request claims a result")
+        return
+    if query.state not in {"Computed", "ResourceExhausted"}:
+        raise ValueError("invalid minimum-class state")
+    y = validate_vector(details.get("representative", ()), window.n)
+    witness = validate_vector(details.get("boundary_witness", ()), window.p)
+    if (
+        any(window.A.apply(y))
+        or projection.apply(y) != projection.apply(z)
+        or window.D.apply(witness) != tuple(a ^ b for a, b in zip(z, y))
+    ):
+        raise ValueError("invalid minimum-class homology witness")
+    mass = sum(w for w, bit in zip(window.weights, y) if bit)
+    computed = query.state == "Computed"
+    for name, expected in (
+        ("candidate_mass", mass),
+        ("upper_bound", mass),
+        ("lower_bound", mass if computed else 0),
+        ("optimality_gap", 0 if computed else mass),
+    ):
+        value = details.get(name)
+        if type(value) not in (int, Fraction) or value != expected:
+            raise ValueError("invalid minimum-class mass or bounds")
+    if (
+        details.get("certificate_level")
+        != ("ExactOptimal" if computed else "CertifiedInterval")
+        or query.exact is not (True if computed else None)
+        or (
+            computed
+            and (type(query.value) not in (int, Fraction) or query.value != mass)
+        )
+    ):
+        raise ValueError("invalid minimum-class certification")
+    states = details.get("enumerated_boundaries")
+    usage = details.get("resource_usage", {})
+    if (
+        type(states) is not int
+        or not 0 <= states <= limits.state_limit
+        or not isinstance(usage, Mapping)
+        or usage.get("states") != states
+        or usage.get("limits") != details["request_limits"]
+    ):
+        raise ValueError("invalid minimum-class resource usage")
+    proof = details.get("optimality_proof")
+    if not computed:
+        if proof is not None or details.get("reason") not in {
+            "state_limit",
+            "wall_time_limit",
+            "matrix_entry_limit",
+        }:
+            raise ValueError("interrupted minimum-class query claims optimality")
+        return
+    if states == 0:
+        raise ValueError("minimum-class certificate has no evaluated candidates")
+    if proof == "NonnegativeMass":
+        if mass != 0:
+            raise ValueError("invalid minimum-class nonnegative lower bound")
+        return
+    if proof != "CompleteBoundaryEnumeration":
+        raise ValueError("missing minimum-class optimality proof")
+    # Independent column elimination, retaining only a basis of the image.
+    pivots = {}
+    for column in range(window.p):
+        bits = sum(((row >> column) & 1) << i for i, row in enumerate(window.D._bits))
+        while bits:
+            pivot = bits.bit_length() - 1
+            if pivot not in pivots:
+                pivots[pivot] = bits
+                break
+            bits ^= pivots[pivot]
+    total = 1 << len(pivots)
+    if (
+        type(details.get("total_boundaries")) is not int
+        or details["total_boundaries"] != total
+        or states != total
+    ):
+        raise ValueError("incomplete minimum-class enumeration certificate")
+    if replay:
+        best = None
+        z_bits = sum(bit << i for i, bit in enumerate(z))
+        for coefficients in product((0, 1), repeat=len(pivots)):
+            bits = z_bits
+            for bit, column in zip(coefficients, pivots.values()):
+                if bit:
+                    bits ^= column
+            chain = tuple((bits >> i) & 1 for i in range(window.n))
+            cost = sum(w for w, bit in zip(window.weights, chain) if bit)
+            if best is None or (cost, chain) < best:
+                best = cost, chain
+        if best != (mass, y):
+            raise ValueError("minimum-class optimum or tie-break replay failed")
+
+
 def validate_minimum_filling(window, z, filling_window, result):
     """Recheck fixed-boundary evidence without solver elimination or counters.
 
@@ -207,6 +335,193 @@ def validate_minimum_filling(window, z, filling_window, result):
         "optimality_verified": True,
         "replayed_candidates": count,
     }
+
+
+def validate_optimal_volume(family, reference, filling_window, result):
+    """Replay pair constraints, original provenance and the complete affine fiber.
+
+    Reconstruct the constraint matrix directly from simplex faces. Neither the
+    search kernel, its rank/counters, nor a reported verification is evidence.
+    """
+    stage, request_state, request = family._volume_request(reference, filling_window)
+    if not isinstance(result, QueryResult):
+        raise ValidationError(("volume_result_type",))
+    expected = family._query(result.state, result.value, 0, stage, details=request)
+    if result.identity != expected.identity or any(
+        result.details.get(key) != value
+        for key, value in expected.details.items()
+        if key != "certificate_level"
+    ):
+        raise ValidationError(("volume_request_binding",))
+    details = result.details
+
+    def checked(checks):
+        if "verification" in details and details["verification"] != checks:
+            raise ValidationError(("volume_verification",))
+        return checks
+
+    window = family.windows[stage]
+    if request_state is not None:
+        if (
+            result.state != request_state
+            or result.exact is not None
+            or details.get("certificate_level") is not None
+            or any(
+                key in details
+                for key in ("certificate", "candidate", "lower_bound", "upper_bound")
+            )
+            or result.value is not None
+        ):
+            raise ValidationError(("volume_applicability",))
+        return checked({"optimality_verified": False, "feasibility_verified": False})
+
+    # Faces and event positions, independent of the solver's restricted D.
+    source = family.simplex_source
+    offset = int(source["stage_convention"] == "EmptyInitial")
+    events = source["simplices"]
+    order = {event["label"]: i + offset for i, event in enumerate(events)}
+    simplices = {event["label"]: event["vertices"] for event in events}
+    birth, death = reference["birth_stage"], reference["death_stage"]
+    anchor = window.basis_next.index(events[death - offset]["label"])
+    birth_row = window.basis_current.index(events[birth - offset]["label"])
+    allowed = tuple(
+        j for j, label in enumerate(window.basis_next) if birth < order[label] < death
+    )
+    zero_rows = tuple(
+        i
+        for i, label in enumerate(window.basis_current)
+        if birth < order[label] < death
+    )
+    incidence = tuple(
+        tuple(
+            int(set(simplices[row]) < set(simplices[col])) for col in window.basis_next
+        )
+        for row in window.basis_current
+    )
+
+    def boundary(chain):
+        return tuple(sum(a * b for a, b in zip(row, chain)) % 2 for row in incidence)
+
+    def feasible(chain):
+        chain = validate_vector(chain, window.p)
+        image = boundary(chain)
+        if (
+            chain[anchor] != 1
+            or any(bit and j not in (*allowed, anchor) for j, bit in enumerate(chain))
+            or image[birth_row] != 1
+            or any(image[i] for i in zero_rows)
+        ):
+            raise ValidationError(("volume_pair_constraints",))
+        return chain, image
+
+    if result.state in {"Unavailable", "ResourceExhausted"}:
+        candidate = details.get("candidate")
+        if (
+            result.exact is not None
+            or details.get("certificate_level")
+            != ("Feasible" if candidate is not None else None)
+            or any(
+                key in details for key in ("certificate", "lower_bound", "upper_bound")
+            )
+        ):
+            raise ValidationError(("unfinished_volume_certificate",))
+        if candidate is not None:
+            feasible(candidate)
+        return checked(
+            {
+                "optimality_verified": False,
+                "feasibility_verified": candidate is not None,
+            }
+        )
+    if (
+        result.state != "Computed"
+        or result.exact is not True
+        or filling_window.arithmetic == "FloatingPoint"
+        or details.get("certificate_level") != "ExactOptimal"
+    ):
+        raise ValidationError(("volume_certificate_level",))
+    value = result.value
+    if not isinstance(value, Mapping) or set(value) != {
+        "chain",
+        "boundary",
+        "support",
+        "mass",
+        "filling_location",
+        "boundary_location",
+        "filling_simplices",
+        "boundary_simplices",
+        "same_history_class",
+    }:
+        raise ValidationError(("volume_value",))
+    chain, image = feasible(value["chain"])
+    mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
+    support = tuple(i for i, bit in enumerate(chain) if bit)
+    birth_window = family.windows[birth]
+    at_birth = tuple(
+        image[window.basis_current.index(label)] for label in birth_window.basis_current
+    )
+    historical = family.resolve_feature(reference, birth).value["representative"]
+    same = family.stage(birth).P.apply(at_birth) == historical
+    if (
+        validate_vector(value["boundary"], window.n) != image
+        or value["support"] != support
+        or any(type(i) is not int for i in value["support"])
+        or isinstance(value["mass"], bool)
+        or not isinstance(value["mass"], (int, Fraction))
+        or value["mass"] != mass
+        or details.get("lower_bound") != mass
+        or details.get("upper_bound") != mass
+        or value["filling_location"] != filling_window.locate_chain(chain)
+        or value["boundary_location"] != window.locate_chain(image)
+        or value["filling_simplices"]
+        != tuple(simplices[window.basis_next[j]] for j in support)
+        or value["boundary_simplices"]
+        != tuple(
+            simplices[label] for label, bit in zip(window.basis_current, image) if bit
+        )
+        or type(value["same_history_class"]) is not bool
+        or value["same_history_class"] != same
+        or any(window.A._reference().apply(image))
+    ):
+        raise ValidationError(("volume_output_or_source",))
+    constraint = Matrix.from_rows(
+        (tuple(incidence[i][j] for j in allowed) for i in (birth_row, *zero_rows)),
+        ncols=len(allowed),
+    )
+    kernel = _cycle_basis(constraint)
+    if len(kernel) > 16:
+        raise ValidationError(("volume_replay_domain",))
+    count = 1 << len(kernel)
+    proof = details.get("certificate", {})
+    if (
+        not isinstance(proof, Mapping)
+        or proof.get("kind") != "CompletePairAffineEnumeration"
+        or type(proof.get("candidate_count")) is not int
+        or proof["candidate_count"] != count
+    ):
+        raise ValidationError(("volume_coverage",))
+    key = (mass, sum(bit << i for i, bit in enumerate(chain)))
+    for coefficients in product((0, 1), repeat=len(kernel)):
+        other = list(chain)
+        for bit, vector in zip(coefficients, kernel):
+            if bit:
+                for j, v in zip(allowed, vector):
+                    other[j] ^= v
+        other_key = (
+            sum(w * bit for w, bit in zip(filling_window.weights, other)),
+            sum(bit << i for i, bit in enumerate(other)),
+        )
+        if other_key < key:
+            raise ValidationError(("volume_optimum_or_tie",))
+    return checked(
+        {
+            "feasibility_verified": True,
+            "optimality_verified": True,
+            "replayed_candidates": count,
+            "simplex_constraints_verified": True,
+            "source_binding_verified": True,
+        }
+    )
 
 
 def validate_optimal_1_cycle(family, reference, result):

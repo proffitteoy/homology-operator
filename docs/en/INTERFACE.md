@@ -108,13 +108,55 @@ Let `L=I+P` and `m_w(x)=sum(w_i*x_i)` in the original coordinates.
 | `shared_support(z,y)` / `union_support(z,y)` | Two cycles; intersection / union indices |
 | `readout(name, *args)` | Corresponding query domain; recorded `QueryResult` |
 | `stretch(limits=None)` | `QueryResult` for the current projection's worst cycle mass ratio |
-| `minimum_class_mass(z)` | Cycle; currently `Unavailable` |
+| `minimum_class_mass(z, limits=None)` | Cycle; budgeted exact minimum mass, representative and boundary witness in a `QueryResult` |
 | `to_result()` | Immutable `OperatorResult` snapshot |
 
 Class queries reject noncycles. No implicit conversion turns a raw chain into a
 homology class. `selected_mass` is not the true minimum mass of a class.
 Feasibility, exact evaluation of the current stretch, and minimum possible
 stretch over projections are separate facts.
+
+The new `minimum_class_mass` implementation requires this source revision. It
+enumerates the distinct elements of `im(D)` for the requested
+cycle's coset, rather than all cycles or all linear sections. Independent boundary
+columns give a bijection from binary coefficient vectors onto `im(D)`; Gray-code
+updates visit each exactly once. Thus a complete search proves minimality, with
+`2**rank(D)` candidate evaluations and linear coordinate work per candidate, in
+addition to boundary reduction. Positive weights give the lower bound zero.
+Integer/rational
+weights are supported; floating weights and explicit `packed_word_limit` requests
+return `Unavailable`. `limits` is a `ResourceLimits` with the existing defaults:
+100,000 states, 10 seconds, and 1,000,000 logical matrix entries. Each evaluated
+boundary counts as one state. Logical storage is conservatively bounded by
+`2*n*p + 2*n*min(n,p) + 8*(n+p) + 2*m` entries; this is not a process RSS limit.
+Wall time is cooperative, including final witness checking, without single-step
+preemption. Input cycle validation precedes the query budget.
+
+On completion, `value` is the true minimum, `exact=True`, and `details` contains
+`representative=y`, `boundary_witness=b` in the original next-degree basis, and
+`input_cycle=z`, with `Ay=0`, `Py=Pz`, and `Db=y+z`. Equal masses choose the
+lexicographically smallest binary coordinate tuple. Complete enumeration or a
+candidate of mass zero certifies `ExactOptimal` **for this class query**.
+`lower_bound`, `upper_bound`, and `optimality_gap` then certify that class minimum.
+This does not change P, the selected representative, or the solver certificate.
+
+An interrupted query has `state="ResourceExhausted"`, `value=None`, and
+`exact=None`. Its details retain a valid candidate, exact `candidate_mass`, the
+universal lower bound 0, candidate upper bound, gap, `CertifiedInterval`, request
+limits, reason, and resource usage. Even a zero candidate after a deadline does
+not become a completed query. The zero class, including empty homology, otherwise
+has the legitimate `Computed` minimum 0. A snapshot retains each class/limits
+request and the latest result under `minimum_class_mass`.
+
+```python
+# Continue with the two-vertex window from the quick start.
+minimum = op.minimum_class_mass((1, 0))
+assert minimum.state == "Computed" and minimum.value == 1
+assert minimum.details["representative"] == (0, 1)
+assert minimum.details["boundary_witness"] == (1,)
+assert op.selected_mass((1, 0)) == 10
+```
+
 
 ## Fixed-boundary minimum filling
 
@@ -163,6 +205,73 @@ logical-entry guards are cooperative. Input validation/hashing and mandatory
 independent verification have separate costs. There is no native filling solver
 or hard RSS/preemption guarantee. See [certification](SOLVER_CONTRACT.md#fixed-boundary-filling-certificates)
 and [result binding](RESULT_MODEL.md#standalone-filling-results).
+
+## Finite-pair optimal volume
+
+`family.optimal_volume(reference, filling_window=None, *, limits=None,
+cancellation=None)` minimizes the upper-chain mass for a certified finite H1 or
+H2 pair. It requires a face-first `simplex_source` and an exact feature reference
+from this family's `features()`. Equal scales retain their event order, including
+the explicit `AfterInsertion`/`EmptyInitial` stage convention.
+
+For birth/death event stages b,d, require death coefficient 1, permit other upper
+simplices only at stages strictly between b and d, set boundary coefficients at
+k-simplices strictly between b and d to zero, and require birth coefficient 1.
+All vectors use the original ordered bases of `family.windows[d]`. The objective
+is upper mass, not boundary mass. This is the F2 support-count version of
+[Obayashi 2018, section 4, Definitions 2/3](https://doi.org/10.1137/17M1159439)
+for unit weights; arbitrary positive rational costs are an explicit extension.
+The approved definition and compatibility argument are pinned in
+[D-GQ1/T-GQ1](https://github.com/proffitteoy/homology-operator-lab/blob/d1c76bc7ed276a7a65b7aab97c4fbfcdad2530da/docs/proof/PROOF.md#D-GQ1).
+
+`filling_window` is the same degree-k+1 cost input as for
+[fixed-boundary filling](#fixed-boundary-minimum-filling), aligned to the death
+window's D and ordered bases. It must declare positive costs, a unit, and
+`source_metadata["source"]`. If either degree has a source mapping, both must
+agree on dataset, original vertex IDs/coordinates, embedding, periods, stage,
+scale/order, and shared simplex records. An abstract source needs no embedding.
+
+```python
+# family is a supported simplex family; reference has finite death.
+from homology_operator import ChainWindow, Matrix, validate_optimal_volume
+
+death = family.windows[reference["death_stage"]]
+upper = ChainWindow(death.k + 1, death.D, Matrix.zero(death.p, 0),
+                    death.basis_current, death.basis_next, (), (1,) * death.p,
+                    unit="simplices", source_metadata={"source": "unit counting"})
+result = family.optimal_volume(reference, upper)
+if result.state == "Computed":
+    assert validate_optimal_volume(family, reference, upper, result)["optimality_verified"]
+    assert death.D.apply(result.value["chain"]) == result.value["boundary"]
+```
+
+This example assumes an unmapped family; mapped inputs supply the matching upper
+mapping as well. Computed values contain `chain`, `boundary`, `support`, `mass`,
+`filling_simplices`, `boundary_simplices`, and both `filling_location` and
+`boundary_location`. Locations include original IDs and lifted coordinates when
+supplied, and explicitly missing coordinates otherwise. The Boolean
+`same_history_class` independently checks the resulting boundary against the
+preselected historical generator in the birth-stage quotient. Pair constraints
+permit a different historical class; this flag is informative, not an added
+optimization constraint. Neither this query nor its output changes P or PH.
+
+An infinite interval returns `EmptyDomain`, `value=None`, `exact=None`, and
+`details.applicability="NotApplicable"`, because it has no finite death anchor.
+Other degrees, missing simplex provenance, floating costs, explicit packed-word
+requests, or constraint nullity above 16 return `Unavailable`. Malformed/foreign
+references and mismatched upper inputs raise `ValueError`. Cooperative budgets
+and cancellation return `ResourceExhausted`; any `details.candidate` is feasible
+only, with no optimal bound. States count evaluated feasible fillings. Search
+and independent replay support at most 65,536 candidates; ties minimize packed
+original upper coordinates. Input/history certification, source binding and
+independent verification are outside the search time/entry budget. No native
+solver, general scalability or hard RSS limit is claimed.
+
+The result is standalone: save the family, reference and upper input alongside
+`QueryResult.to_dict()`. On untrusted recovery call `validate_optimal_volume`;
+JSON decoding alone does not verify semantics. See
+[certification](SOLVER_CONTRACT.md#finite-pair-volume-certificates) and
+[binding](RESULT_MODEL.md#finite-pair-volume-results).
 
 ## Finite filtrations
 

@@ -28,6 +28,23 @@ optimization records. See [API and limits](INTERFACE.md#birth-pair-optimal-1-cyc
 `exact` describes the query arithmetic, not global optimality. Nonempty cycle
 space with Betti zero has a legitimate computed stretch of 0.
 
+`minimum_class_mass(z, limits=None)` keeps the scalar class minimum in `value`
+only when `Computed`. Details retain `input_cycle`, `representative`, the original
+next-degree `boundary_witness`, `candidate_mass`, class `lower_bound`/`upper_bound`,
+`optimality_gap`, `certificate_level`, `optimality_proof`, boundary counts, request
+limits, and resource usage. `ExactOptimal` refers only to that fixed class;
+the projection solver's certificate is unchanged. Floating weights are unsupported.
+On interruption `value/exact` are null, while a valid candidate and its certified
+interval remain in details. Valid minimum zero is `Computed`, including empty
+homology. The search does not alter the projection or its selected masses.
+
+History stores a content key for each cycle/limits request and a latest-result
+alias `minimum_class_mass`. Recovery checks `Ay=0`, `Py=Pz`, and `Db=y+z` against
+the actual stored A/D/P, then independently builds the boundary image and replays
+any complete-enumeration optimum and lexicographic tie claim. The mass-zero proof
+uses positive weights. Recovery has a separate enumeration cost and never runs a
+projection solver. Earlier NotComputed/unimplemented records remain readable.
+
 Results carry six identifiers: `input_id`, `basis_id`, `weight_id`,
 `projection_id`, `operator_id`, and `solver_run_id`. Independent runs cannot mix
 query records even when they produce the same content projection. Different
@@ -45,8 +62,8 @@ assert restored.to_dict() == record.to_dict()
 ```
 
 Reading JSON revalidates inputs, projection, identity, certificates, and saved
-queries. `OperatorResult.from_json` returns a record; `to_operator()` restores
-the saved P. Family records provide `to_family()` using the saved P.
+queries. `OperatorResult.from_json` returns a record; its `to_operator()` restores
+the saved P without solving again. Family records provide `to_family()`.
 Snapshots preserve unqueried states and do not compute every query on export.
 See the [result contract](RESULT_MODEL.md).
 
@@ -64,6 +81,32 @@ only checks record structure. On untrusted recovery call
 `validate_minimum_filling(window, z, filling_window, result)`; returned checks,
 rather than saved verification flags, establish acceptance. Retain both inputs
 and z alongside the record. Existing operator/family schemas remain unchanged.
+
+## Finite-pair volume results
+
+`OperatorFamily.optimal_volume` returns a standalone `QueryResult`. Its six IDs
+are those of the death-stage operator (the final stage for an infinite or missing
+history); they identify the family context, not an optimized projection.
+`details` also binds the family/filtration, full feature reference, actual simplex
+pairing, permitted indices, upper weight semantics/unit and a `problem_id` hashing
+the family identity, reference and complete upper-window encoding. Changing upper
+costs or any provenance requires a new problem binding. The locations bind both
+degrees' original source mappings; externally supplied coordinates and dataset
+hashes still require caller verification against actual data.
+
+`Computed`/`ExactOptimal` carries complete affine enumeration evidence, equal
+optimal bounds and fresh independent checks. An infinite pair has `EmptyDomain`
+with `applicability="NotApplicable"`, no value and no optimality claim.
+`ResourceExhausted` may retain a feasible candidate; `Unavailable` supplies no
+optimum. No new QueryResult state or family wire schema is introduced.
+
+The volume result itself is not cached or exported inside family snapshots.
+Save it with the family, reference and upper cost window. `QueryResult.from_dict`
+checks only structure; call `validate_optimal_volume(family, reference,
+filling_window, result)` after recovery. It checks actual inputs and independently
+replays constraints and optimality; saved verification flags cannot replace it.
+The family's source/pairing and existing historical references continue to use
+schema 3 with their existing independent recovery checks.
 
 ## Single-scale wire format
 

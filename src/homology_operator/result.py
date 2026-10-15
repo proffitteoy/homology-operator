@@ -516,6 +516,28 @@ class OperatorResult:
         )
         object.__setattr__(operator, "_provenance", self.provenance)
         for name, query in self.query_results.items():
+            if name == "minimum_class_mass" or name.startswith("minimum_class_mass:"):
+                # Keep legacy NotComputed/unimplemented records readable. New
+                # records bind the class and budget and independently replay
+                # optimum claims without re-solving for a projection.
+                legacy = (
+                    query.state == "NotComputed"
+                    and not query.details
+                    or query.state == "Unavailable"
+                    and dict(query.details) == {"method": "not implemented"}
+                )
+                if not legacy:
+                    from .validation import validate_minimum_class_query
+
+                    validate_minimum_class_query(
+                        self.input_data, self.projection, query
+                    )
+                    if name != "minimum_class_mass" and name != content_id(
+                        "minimum_class_mass",
+                        (query.details["input_cycle"], query.details["request_limits"]),
+                    ):
+                        raise ValueError("invalid persisted minimum-class request key")
+                continue
             if query.state != "Computed":
                 continue
             method = query.details.get("query")
