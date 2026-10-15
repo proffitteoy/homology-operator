@@ -1,0 +1,174 @@
+{
+  "source": {
+    "package": "homcloud",
+    "version": "5.4.0",
+    "url": "https://files.pythonhosted.org/packages/2c/14/0e520f2019bbea4e027adb464cd19055323bd892c220b03190685e32d058/homcloud-5.4.0.tar.gz",
+    "sdist_sha256": "41a095599249cbc0092a835d6888eb252a6c4cd7935ac71481cd37e00f9e883b",
+    "path": "homcloud/optimal_one_cycle.py",
+    "sha256": "9e31c87b684f11a3f7c2070c753b5457815eb193147a9f5d2c5674dc73a2c01a",
+    "entry": "search",
+    "execution": "unchanged pure Python functions; extension entry not executed; unit edge costs"
+  },
+  "cases": [
+    {
+      "id": "triangle",
+      "simplices": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "birth": 5,
+      "relation": "EqualFeasibleSet",
+      "homcloud_edge_events": [
+        4,
+        3,
+        5
+      ],
+      "homcloud_mass": 3
+    },
+    {
+      "id": "filled_face",
+      "simplices": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2,
+          3
+        ]
+      ],
+      "birth": 9,
+      "relation": "EqualFeasibleSet",
+      "homcloud_edge_events": [
+        8,
+        6,
+        9
+      ],
+      "homcloud_mass": 3
+    },
+    {
+      "id": "different_history",
+      "simplices": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          3
+        ]
+      ],
+      "birth": 10,
+      "relation": "RepresentativeComparisonOnly",
+      "homcloud_edge_events": [
+        9,
+        8,
+        10
+      ],
+      "homcloud_mass": 3
+    }
+  ]
+}

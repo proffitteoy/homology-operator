@@ -33,6 +33,40 @@ infeasibility obstructions, source/basis binding, interrupted results, exact
 arithmetic, wire round trips and untrusted certificate replay. No new dependency
 or native extension is required. `examples/single_scale.py` also runs a filling query.
 
+## Birth-pair cycle checks
+
+```console
+uv run --locked python -m unittest discover -s tests -p test_optimal_cycle.py -v
+uv run --locked python examples/filtration.py
+```
+
+The standard-library suite compares every chain on small birth windows, including
+filled faces, wrong historical classes, repeated scales, both stage conventions,
+finite/infinite features, original basis permutations, equal-cost ties, exact
+3-4-5 geometry, original-point IDs, disconnected chains, cancellation/budgets,
+the rank-17 unsupported case and untrusted certificate replay. Frozen HomCloud
+outputs retain different-objective rows as representative comparisons only.
+
+Optional source replay uses the fixed official HomCloud 5.4.0 archive, without
+installing HomCloud or its compiled extension. From the repository root:
+
+```powershell
+New-Item -ItemType Directory -Force .task-artifacts | Out-Null
+Invoke-WebRequest 'https://files.pythonhosted.org/packages/2c/14/0e520f2019bbea4e027adb464cd19055323bd892c220b03190685e32d058/homcloud-5.4.0.tar.gz' -OutFile .task-artifacts/homcloud-5.4.0.tar.gz
+$archiveHash = (Get-FileHash .task-artifacts/homcloud-5.4.0.tar.gz -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($archiveHash -ne '41a095599249cbc0092a835d6888eb252a6c4cd7935ac71481cd37e00f9e883b') { throw 'HomCloud archive hash mismatch' }
+tar -xf .task-artifacts/homcloud-5.4.0.tar.gz -C .task-artifacts homcloud-5.4.0/homcloud/optimal_one_cycle.py
+$env:HOMOLOGY_HOMCLOUD_SOURCE = (Resolve-Path .task-artifacts/homcloud-5.4.0/homcloud/optimal_one_cycle.py).Path
+uv run --locked python -m unittest discover -s tests -p test_optimal_cycle.py -v
+Remove-Item Env:HOMOLOGY_HOMCLOUD_SOURCE
+```
+
+The test verifies the file hash and executes only the unchanged upstream pure
+Python functions, excluding the unused native import/entry. Public Pair or C++
+integration is outside this comparison. Without this environment variable, only
+the live source replay is skipped; frozen comparisons and independent enumeration
+still run. No new locked/runtime dependency is required.
+
 ## Native and oracle checks
 
 Build/install the matching wheel using the [native guide](guide/native.md).

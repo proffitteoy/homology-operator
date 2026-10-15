@@ -31,6 +31,23 @@ oracle 加载时检查 hash、形状、二元元素、AD=0、正权、基和 Bet
 [单尺度联合测试](../tests/test_joint.py)与[过滤联合测试](../tests/test_family_joint.py)
 核对投影、几何、transport composition、rank 与独立 PH。
 
+## Birth-pair cycle inputs
+
+[optimal_cycles.json](../tests/fixtures/optimal_cycles.json) records three ordered
+simplicial inputs, their birth edges, unit costs and results from the unchanged
+`search` source functions in HomCloud 5.4.0. Its provenance pins the official
+source archive SHA-256 and `homcloud/optimal_one_cycle.py` byte hash. The package
+is not a runtime dependency; native/public Pair integration was not executed.
+Triangle and already-filled-face cases have identical feasible sets at birth.
+The older-class counterexample deliberately compares different objectives: a
+3-edge birth-only optimum and the 4-edge chosen historical class. Equal scale
+endpoints do not identify features; the insertion order and original vertex IDs
+are retained. [Query tests](../tests/test_optimal_cycle.py) independently enumerate
+all chains on the small windows and separately cover exact lengths, ties,
+disconnected birth histories, source identity and rank/budget limits. Source
+replay instructions and dependency boundaries are in
+[validation](en/VALIDATION.md#birth-pair-cycle-checks).
+
 ## Fixed-boundary filling inputs
 
 [test_filling.py](../tests/test_filling.py) generates local, hand-derived inputs;
