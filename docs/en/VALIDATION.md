@@ -63,6 +63,20 @@ Oracles never populate production results. See [fixture provenance](../FIXTURES.
 
 ## Documentation and GitHub Pages
 
+Pair-volume and fixed-boundary filling use only the reference runtime and the
+existing locked development dependencies. Run their independent enumeration,
+geometry/source, budget, wire-recovery and certificate-tampering checks with:
+
+```console
+uv run --locked python -m unittest discover -s tests -p test_filling.py -v
+```
+
+The pair tests enumerate original simplex sets for all finite pairs of four
+fixed total orders, including equal scales, both stage conventions and reversed
+coordinate orders. They separately measure triangle area and tetrahedral volume,
+distinguish upper mass from boundary mass and fixed-boundary optimization, and
+verify that semantic replay does not call the solver's solve/kernel routines.
+
 Sphinx + MyST + Furo requires Python 3.11+; CI uses 3.12.
 
 ```console

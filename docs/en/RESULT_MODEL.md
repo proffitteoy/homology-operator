@@ -54,6 +54,32 @@ only checks record structure. On untrusted recovery call
 rather than saved verification flags, establish acceptance. Retain both inputs
 and z alongside the record. Existing operator/family schemas remain unchanged.
 
+## Finite-pair volume results
+
+`OperatorFamily.optimal_volume` returns a standalone `QueryResult`. Its six IDs
+are those of the death-stage operator (the final stage for an infinite or missing
+history); they identify the family context, not an optimized projection.
+`details` also binds the family/filtration, full feature reference, actual simplex
+pairing, permitted indices, upper weight semantics/unit and a `problem_id` hashing
+the family identity, reference and complete upper-window encoding. Changing upper
+costs or any provenance requires a new problem binding. The locations bind both
+degrees' original source mappings; externally supplied coordinates and dataset
+hashes still require caller verification against actual data.
+
+`Computed`/`ExactOptimal` carries complete affine enumeration evidence, equal
+optimal bounds and fresh independent checks. An infinite pair has `EmptyDomain`
+with `applicability="NotApplicable"`, no value and no optimality claim.
+`ResourceExhausted` may retain a feasible candidate; `Unavailable` supplies no
+optimum. No new QueryResult state or family wire schema is introduced.
+
+The volume result itself is not cached or exported inside family snapshots.
+Save it with the family, reference and upper cost window. `QueryResult.from_dict`
+checks only structure; call `validate_optimal_volume(family, reference,
+filling_window, result)` after recovery. It checks actual inputs and independently
+replays constraints and optimality; saved verification flags cannot replace it.
+The family's source/pairing and existing historical references continue to use
+schema 3 with their existing independent recovery checks.
+
 ## Single-scale wire format
 
 `OperatorResult` uses schema 1 with `status`, `identity`, `input_data`, `projection`,

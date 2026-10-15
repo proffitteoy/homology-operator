@@ -4,14 +4,20 @@ from collections.abc import Mapping, Set
 from collections import OrderedDict, Counter
 from dataclasses import dataclass, field
 from fractions import Fraction
-from itertools import combinations
+from itertools import combinations, product
 from math import isfinite
 import json
 from sys import getsizeof
 from types import MappingProxyType
 
 from .algebra import Matrix
-from .chain import ChainWindow, matrix_data, matrix_from_data, _thaw_metadata
+from .chain import (
+    ChainWindow,
+    matrix_data,
+    matrix_from_data,
+    _thaw_metadata,
+    _filling_request,
+)
 from .operator import HomologyOperator, THEORY_REVISION
 from .result import (
     OperatorResult,
@@ -1293,6 +1299,231 @@ class OperatorFamily:
                 {"certificate": features.details["certificate"]},
             )
         return self._remember("feature_pairing", (reference,), 0, last, result)
+
+    def _volume_request(self, reference, filling_window):
+        """Bind upper costs to a certified pair and its original simplex order."""
+        if filling_window is not None and not isinstance(filling_window, ChainWindow):
+            raise ValueError("upper costs require a ChainWindow")
+        features, selected = self._feature(reference)
+        stage = len(self.windows) - 1
+        details = {
+            "method": "ExhaustivePairOptimalVolume",
+            "reference": reference,
+            "certificate_level": None,
+            "problem_id": content_id(
+                "pair-volume",
+                {
+                    "family": self.identity,
+                    "reference": reference,
+                    "upper": None
+                    if filling_window is None
+                    else filling_window.to_dict(),
+                },
+            ),
+        }
+        if selected is None:
+            return (
+                stage,
+                features.state,
+                {**details, "reason": "feature history unavailable"},
+            )
+        ref, _ = selected
+        if ref["death_stage"] is None:
+            return (
+                stage,
+                "EmptyDomain",
+                {
+                    **details,
+                    "applicability": "NotApplicable",
+                    "reason": "finite death anchor required",
+                },
+            )
+        stage = ref["death_stage"]
+        if self.simplex_source is None or ref["degree"] not in (1, 2):
+            return (
+                stage,
+                "Unavailable",
+                {
+                    **details,
+                    "reason": "face-first simplex source and H1 or H2 required",
+                },
+            )
+        window = self.windows[stage]
+        _filling_request(window, (0,) * window.n, filling_window)
+        lower = window.source_metadata.get("source_mapping")
+        upper = filling_window.source_metadata.get("source_mapping")
+        if (lower is None) != (upper is None):
+            raise ValueError("both filling degrees must use the same source mapping")
+        if lower is not None and (
+            any(lower[key] != upper[key] for key in lower if key != "simplices")
+            or any(
+                lower["simplices"][label] != upper["simplices"][label]
+                for label in window.basis_current + window.basis_next
+            )
+        ):
+            raise ValueError("upper filling source differs from the death window")
+        offset = int(self.simplex_source["stage_convention"] == "EmptyInitial")
+        events = self.simplex_source["simplices"]
+        order = {event["label"]: i + offset for i, event in enumerate(events)}
+        birth = ref["birth_stage"]
+        details.update(
+            pairing=self.feature_pairing(reference).value,
+            allowed_indices=tuple(
+                j
+                for j, label in enumerate(window.basis_next)
+                if birth < order[label] < stage
+            ),
+            zero_indices=tuple(
+                i
+                for i, label in enumerate(window.basis_current)
+                if birth < order[label] < stage
+            ),
+            birth_index=window.basis_current.index(events[birth - offset]["label"]),
+            death_index=window.basis_next.index(events[stage - offset]["label"]),
+            weight_semantics=filling_window.weight_semantics,
+            unit=filling_window.unit,
+            arithmetic=filling_window.arithmetic,
+        )
+        return stage, None, details
+
+    def optimal_volume(
+        self, reference, filling_window=None, *, limits=None, cancellation=None
+    ):
+        """Minimize finite-pair upper mass, with death coefficient one over F2.
+
+        This standalone result is verified independently; it is not cached in
+        family snapshots. A boundary may differ from the chosen history class.
+        """
+        from .solver import ResourceLimits, CancellationToken, _Budget, _Exhausted
+        from .validation import validate_optimal_volume, ValidationError
+
+        limits = ResourceLimits() if limits is None else limits
+        if not isinstance(limits, ResourceLimits):
+            raise ValueError("limits must be ResourceLimits")
+        if cancellation is not None and not isinstance(cancellation, CancellationToken):
+            raise ValueError("cancellation must be CancellationToken")
+        stage, state, details = self._volume_request(reference, filling_window)
+        budget = _Budget(limits, cancellation=cancellation)
+
+        def finish(state, value=None, exact=None):
+            details["resource_usage"] = budget.usage()
+            result = self._query(state, value, 0, stage, exact, details)
+            checks = validate_optimal_volume(self, reference, filling_window, result)
+            return self._query(
+                state, value, 0, stage, exact, {**details, "verification": checks}
+            )
+
+        if state is not None:
+            return finish(state)
+        if (
+            filling_window.arithmetic == "FloatingPoint"
+            or limits.packed_word_limit is not None
+        ):
+            details["reason"] = (
+                "exact upper weights and no packed-word request required"
+            )
+            return finish("Unavailable")
+        window = self.windows[stage]
+        allowed = details["allowed_indices"]
+        rows = (details["birth_index"], *details["zero_indices"])
+        death = details["death_index"]
+        best = None
+        try:
+            budget.step(0)
+            budget.entries(
+                window.n * window.p
+                + len(rows) * (len(allowed) + 1)
+                + len(allowed) ** 2
+                + window.p
+            )
+            boundary_rows = window.D.rows
+            constraint = Matrix.from_rows(
+                (tuple(boundary_rows[i][j] for j in allowed) for i in rows),
+                ncols=len(allowed),
+            )
+            rhs = tuple(
+                boundary_rows[i][death] ^ int(i == details["birth_index"]) for i in rows
+            )
+            seed = constraint.solve(rhs)
+            if seed is None:
+                raise ValidationError(("certified_pair_has_no_volume",))
+            kernel = constraint.kernel_basis()
+            budget.step(0)
+            if len(kernel) > 16:
+                details["reason"] = (
+                    "exact replay requires constraint nullity at most 16"
+                )
+                return finish("Unavailable")
+            for coefficients in product((0, 1), repeat=len(kernel)):
+                budget.step()
+                free = list(seed)
+                for bit, vector in zip(coefficients, kernel):
+                    if bit:
+                        free = [a ^ b for a, b in zip(free, vector)]
+                chain = [0] * window.p
+                chain[death] = 1
+                for j, bit in zip(allowed, free):
+                    chain[j] = bit
+                chain = tuple(chain)
+                mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
+                key = (mass, _pack(chain))
+                if best is None or key < best[0]:
+                    best = key, chain
+            budget.step(0)
+            chain = best[1]
+            boundary = window.D.apply(chain)
+            birth_window = self.windows[reference["birth_stage"]]
+            at_birth = tuple(
+                boundary[window.basis_current.index(label)]
+                for label in birth_window.basis_current
+            )
+            historical = self.resolve_feature(
+                reference, reference["birth_stage"]
+            ).value["representative"]
+            details.update(
+                certificate_level="ExactOptimal",
+                certificate={
+                    "kind": "CompletePairAffineEnumeration",
+                    "candidate_count": 1 << len(kernel),
+                },
+                lower_bound=best[0][0],
+                upper_bound=best[0][0],
+            )
+            simplices = {
+                event["label"]: event["vertices"]
+                for event in self.simplex_source["simplices"]
+            }
+            return finish(
+                "Computed",
+                {
+                    "chain": chain,
+                    "boundary": boundary,
+                    "support": tuple(i for i, bit in enumerate(chain) if bit),
+                    "mass": best[0][0],
+                    "filling_location": filling_window.locate_chain(chain),
+                    "boundary_location": window.locate_chain(boundary),
+                    "filling_simplices": tuple(
+                        simplices[label]
+                        for j, label in enumerate(window.basis_next)
+                        if chain[j]
+                    ),
+                    "boundary_simplices": tuple(
+                        simplices[label]
+                        for j, label in enumerate(window.basis_current)
+                        if boundary[j]
+                    ),
+                    "same_history_class": self.stage(reference["birth_stage"]).P.apply(
+                        at_birth
+                    )
+                    == historical,
+                },
+                True,
+            )
+        except _Exhausted as error:
+            details["reason"] = str(error)
+            if best is not None:
+                details.update(candidate=best[1], certificate_level="Feasible")
+            return finish("ResourceExhausted")
 
 
 def _compact_windows(family):

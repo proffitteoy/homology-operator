@@ -136,6 +136,11 @@ schema 1 remains readable. See the [English guide](https://github.com/proffitteo
 their full-history representatives at a chosen stage. Optional face-first simplex
 sources certify birth/death provenance and use schema 3. See the [filtration guide](docs/en/guide/filtration.md#feature-references-and-simplex-sources).
 
+For finite H1/H2 pairs, [`optimal_volume`](docs/en/INTERFACE.md#finite-pair-optimal-volume)
+minimizes explicitly supplied upper-chain costs under the birth/death constraints
+and returns the filling, boundary and original geometry with an exact certificate
+in its bounded reference domain. Infinite intervals have no finite death volume.
+
 ## Mathematics
 
 ### Definition and construction

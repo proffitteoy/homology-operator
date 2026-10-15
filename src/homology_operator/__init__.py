@@ -23,6 +23,7 @@ from .validation import (
     validate_projection,
     validate_solution,
     validate_minimum_filling,
+    validate_optimal_volume,
 )
 from .operator import HomologyOperator
 from .family import OperatorFamily, OperatorFamilyResult
@@ -50,6 +51,7 @@ __all__ = [
     "validate_projection",
     "validate_solution",
     "validate_minimum_filling",
+    "validate_optimal_volume",
     "HomologyOperator",
     "OperatorFamily",
     "OperatorFamilyResult",

@@ -101,6 +101,16 @@ format until feature APIs are requested.
 
 ## Historical certificate and cost
 
+Finite H1/H2 references can additionally request
+[`optimal_volume`](../INTERFACE.md#finite-pair-optimal-volume) with a death-stage
+upper cost window. This minimizes the pair-constrained filling's mass and returns
+both the filling and its boundary in original coordinates, with an independent
+exact certificate in the supported finite domain. It preserves the existing
+barcode and projection choices. A separate `same_history_class` flag reports
+whether the boundary matches the preselected birth-stage generator. Infinite
+intervals explicitly have no finite-pair volume. Save standalone volume results
+and their upper inputs separately from family snapshots.
+
 At every stage the certificate checks cycles fixed by the same P, agreement with
 stored kernel coordinates and six identities, and
 `rank([D,H]) = rank(D) + beta`, with exactly beta active historical columns.
