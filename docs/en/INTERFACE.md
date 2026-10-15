@@ -44,6 +44,10 @@ matrices start with fresh process-local caches.
 
 The caller declares `weight_semantics` and `unit`. Positive costs do not imply
 that weights are areas or volumes. Original coordinates determine geometry.
+The optional [source mapping protocol](guide/input-semantics.md#source-mapping-and-location)
+binds simplex vertices, original point IDs/coordinates, units, stages and periodic
+lifts to input and filtration identities. `window.locate_chain(x, degree=0)`
+locates a raw chain at degree offset -1/0/1, without treating it as a class.
 
 ## Solving and validation
 
@@ -100,6 +104,7 @@ Let `L=I+P` and `m_w(x)=sum(w_i*x_i)` in the original coordinates.
 | `selected_mass(z)` | Cycle; `m_w(Pz)` |
 | `class_distance(z,y)` | Two cycles; `m_w(P(z+y))` |
 | `support(z)` | Cycle; original coordinate indices of `Pz` |
+| `locate_support(z, source_mapping_id=None)` | Cycle; source-bound location of `Pz`, or support only without a mapping |
 | `shared_support(z,y)` / `union_support(z,y)` | Two cycles; intersection / union indices |
 | `readout(name, *args)` | Corresponding query domain; recorded `QueryResult` |
 | `stretch(limits=None)` | `QueryResult` for the current projection's worst cycle mass ratio |
@@ -152,11 +157,60 @@ assert minimum.details["boundary_witness"] == (1,)
 assert op.selected_mass((1, 0)) == 10
 ```
 
+
+## Fixed-boundary minimum filling
+
+`minimum_filling(window, z, filling_window, *, limits=None, cancellation=None)`
+minimizes upper-chain mass subject to `window.D c=z`. Import it and
+`validate_minimum_filling` from `homology_operator`. This is a standalone query;
+it does not select a projection or impose persistence birth/death pairing.
+
+Reuse `ChainWindow` at degree k+1 for the upper costs: its `A` must equal
+`window.D`, its `basis_previous` must equal `window.basis_current`, and its
+`basis_current` must equal `window.basis_next`, including order. Its `D` may
+describe higher boundaries but does not constrain this fixed-boundary problem.
+Supply its own positive `weights`, explicit `unit`, and nonempty string
+`source_metadata["source"]`. The original window's weights are never used for
+filling mass. Geometric length/area/volume semantics require upper degree 1/2/3;
+`unit` counting requires all weights to be 1. A declared source binds provenance,
+but does not itself establish the physical correctness of measured weights.
+
+```python
+from homology_operator import ChainWindow, Matrix, minimum_filling, validate_minimum_filling
+
+window = ChainWindow(0, Matrix.zero(0, 2), Matrix.from_rows(((1,), (1,))),
+                     (), ("v0", "v1"), ("edge",), (10, 1))
+upper = ChainWindow(1, window.D, Matrix.zero(1, 0), window.basis_current,
+                    window.basis_next, (), (3,), unit="cost",
+                    source_metadata={"source": "hand-derived edge cost"})
+result = minimum_filling(window, (1, 1), upper)
+assert result.state == "Computed" and result.value["mass"] == 3
+assert validate_minimum_filling(window, (1, 1), upper, result)["optimality_verified"]
+```
+
+Noncycles and mismatched input/source contracts raise `ValueError`. Computed
+`value` contains `chain`, its recomputed `boundary`, upper-basis support indices,
+and exact `mass`; details contain equal optimal bounds and independently checked
+evidence. Zero boundary has the certified zero filling, including empty spaces.
+`Infeasible` has `value=None` and an exact dual obstruction. `ResourceExhausted`
+has `value=None`, a checkpoint reason and optionally a feasible `details.candidate`;
+it never certifies an optimum. `Unavailable` covers floating upper costs,
+explicit packed-word requests, and more than 100,000 feasible fillings.
+Integer/rational search enumerates `c0+ker(D)`; the finite replay cap means
+`dim ker(D) <= 16`, except for zero-boundary and infeasibility proofs.
+Ties minimize `sum(c_i*2**i)` in the original upper basis.
+
+`limits` reuses `ResourceLimits`: states count evaluated fillings; time and
+logical-entry guards are cooperative. Input validation/hashing and mandatory
+independent verification have separate costs. There is no native filling solver
+or hard RSS/preemption guarantee. See [certification](SOLVER_CONTRACT.md#fixed-boundary-filling-certificates)
+and [result binding](RESULT_MODEL.md#standalone-filling-results).
+
 ## Finite filtrations
 
 `OperatorFamily(scales, windows, operators, weight_policy="Inherited",
 duplicate_policy="OrderedStages", terminal_extension="Constant", cache_limit=64,
-kernel_cache_byte_limit=16777216)`
+kernel_cache_byte_limit=16777216, simplex_source=None)`
 accepts a nonempty ordered sequence in one degree. Basis identifiers establish
 inclusions in the previous, current, and next spaces; chain-map conditions are
 validated. `Inherited` requires inherited coordinate weights; explicit
@@ -186,13 +240,24 @@ queries may therefore recompute a kernel. Family queries do not populate the
 operator's kernel or native geometry workspace. Caller-owned input/action caches,
 temporary computation, requested readouts and allocator capacity are outside
 this budget; it is not a hard process RSS cap. Runtime cache policies are absent
-from identities and both snapshot schemas; recovery uses the defaults.
+from identities and all snapshot schemas; recovery uses the defaults.
 
 Default family snapshots use schema 2 with shared boundary/basis storage. Legacy
 schema 1 is readable and reissued at its original version; use
 `to_result(schema_version=1)` to request old-format output without the new
-historical basis. Single-scale schema remains 1. Recovery independently checks
+historical basis. Feature queries or an explicit simplex source use schema 3;
+they cannot be down-converted to schemas 1/2. Single-scale schema remains 1. Recovery independently checks
 the family and stored readouts. See [filtration guide](guide/filtration.md).
+
+`features()` returns a `QueryResult` containing stable references to the existing
+historical interval generators. `resolve_feature(reference, stage)` returns the
+original chain representative, kernel coordinates, target basis and six identities;
+an inactive interval returns `NoClass`. `feature_pairing(reference)` returns
+certified birth/death simplices, or `Unavailable` without a simplex source.
+References bind the entire family/run and full generator history, including an
+occurrence index for repeated endpoints. See [feature references and simplex
+sources](guide/filtration.md#feature-references-and-simplex-sources) for input format,
+numbering, certificate and resource boundaries.
 
 ## Optional Rust extension
 

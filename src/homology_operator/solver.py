@@ -10,7 +10,7 @@ from threading import Event
 from uuid import uuid4
 
 from .algebra import Matrix, CyclicAction, CompactAction
-from .chain import ChainWindow, matrix_data
+from .chain import ChainWindow, matrix_data, _filling_request
 from .result import QueryResult, _freeze, content_id, make_identity
 
 
@@ -105,6 +105,123 @@ class _Budget:
                 else {}
             ),
         }
+
+
+def minimum_filling(window, z, filling_window, *, limits=None, cancellation=None):
+    """Minimize upper-chain mass subject to D c=z, independently of any P/PH.
+
+    Costs and provenance belong to the matching degree-k+1 ChainWindow.
+    Exact search/replay supports at most 100,000 feasible fillings. Checkpoints
+    are cooperative; independent verification is outside the search budget.
+    """
+    z, problem_id = _filling_request(window, z, filling_window)
+    if limits is None:
+        limits = ResourceLimits()
+    if not isinstance(limits, ResourceLimits):
+        raise ValueError("limits must be ResourceLimits")
+    if cancellation is not None and not isinstance(cancellation, CancellationToken):
+        raise ValueError("cancellation must be CancellationToken")
+    budget = _Budget(limits, cancellation=cancellation)
+    details = {
+        "problem_id": problem_id,
+        "method": "ExhaustiveMinimumFilling",
+        "weight_semantics": filling_window.weight_semantics,
+        "unit": filling_window.unit,
+        "arithmetic": filling_window.arithmetic,
+        "source_metadata": filling_window.source_metadata,
+        "certificate_level": None,
+    }
+
+    def finish(state, value=None, exact=None):
+        from .validation import validate_minimum_filling
+
+        details["resource_usage"] = budget.usage()
+        result = QueryResult(state, value, exact=exact, details=details)
+        checks = validate_minimum_filling(window, z, filling_window, result)
+        return QueryResult(
+            state, value, exact=exact, details={**details, "verification": checks}
+        )
+
+    if (
+        filling_window.arithmetic == "FloatingPoint"
+        or limits.packed_word_limit is not None
+    ):
+        details["reason"] = "exact upper weights and no packed-word request required"
+        return finish("Unavailable")
+    best = None
+    try:
+        budget.step(0)
+        # D, augmented elimination, full kernel output and one working chain.
+        budget.entries(window.n * (window.p + 1) + window.p * window.p + window.p)
+        if not any(z):
+            chain = (0,) * window.p
+            details.update(
+                certificate_level="ExactOptimal",
+                certificate={"kind": "PositiveWeightsZeroBoundary"},
+                lower_bound=0,
+                upper_bound=0,
+            )
+            return finish(
+                "Computed",
+                {"chain": chain, "boundary": z, "support": (), "mass": 0},
+                True,
+            )
+        seed = window.D.solve(z)
+        budget.step(0)
+        if seed is None:
+            # A separating cocycle is a compact, exact infeasibility witness.
+            budget.entries(window.p * window.n + window.n * window.n)
+            witness = next(
+                y
+                for y in window.D.transpose().kernel_basis()
+                if sum(a * b for a, b in zip(y, z)) % 2
+            )
+            budget.step(0)
+            details["certificate"] = {"kind": "DualObstruction", "witness": witness}
+            return finish("Infeasible", exact=True)
+        kernel = window.D.kernel_basis()
+        budget.step(0)
+        if len(kernel) > 16:
+            details["reason"] = "exact replay supports at most 100000 feasible fillings"
+            return finish("Unavailable")
+        for coefficients in product((0, 1), repeat=len(kernel)):
+            budget.step()
+            chain = list(seed)
+            for bit, vector in zip(coefficients, kernel):
+                if bit:
+                    chain = [a ^ b for a, b in zip(chain, vector)]
+            chain = tuple(chain)
+            mass = sum(w * bit for w, bit in zip(filling_window.weights, chain))
+            key = (mass, sum(bit << i for i, bit in enumerate(chain)))
+            if best is None or key < best[0]:
+                best = key, chain
+        budget.step(0)
+        details.update(
+            certificate_level="ExactOptimal",
+            certificate={
+                "kind": "CompleteAffineEnumeration",
+                "candidate_count": 1 << len(kernel),
+            },
+            lower_bound=best[0][0],
+            upper_bound=best[0][0],
+        )
+        chain = best[1]
+        return finish(
+            "Computed",
+            {
+                "chain": chain,
+                "boundary": window.D.apply(chain),
+                "support": tuple(i for i, bit in enumerate(chain) if bit),
+                "mass": best[0][0],
+            },
+            True,
+        )
+    except _Exhausted as error:
+        details["reason"] = str(error)
+        if best is not None:
+            details["candidate"] = best[1]
+            details["certificate_level"] = "Feasible"
+        return finish("ResourceExhausted")
 
 
 def generalized_inverse(matrix, budget=None):

@@ -22,6 +22,17 @@ Missing native dependencies explicitly skip native tests. A reference pass does 
 validate native code. `uv build` creates local artifacts; public uploading follows
 the release procedure below. There is no independent typecheck command.
 
+The standalone fixed-boundary query has a focused standard-library test command:
+
+```console
+uv run --locked python -m unittest discover -s tests -p test_filling.py -v
+```
+
+It checks independent all-chain optima for H1 areas/H2 volumes, small F2 matrices,
+infeasibility obstructions, source/basis binding, interrupted results, exact
+arithmetic, wire round trips and untrusted certificate replay. No new dependency
+or native extension is required. `examples/single_scale.py` also runs a filling query.
+
 ## Native and oracle checks
 
 Build/install the matching wheel using the [native guide](guide/native.md).
@@ -86,6 +97,16 @@ checks Windows Python 3.10 and Linux Python 3.12 with required native tests and
 isolated dual wheels. Oracle CI forces GUDHI comparisons. Documentation CI builds
 both languages strictly and deploys main. Local and remote results belong to their
 exact source identities. Temporary outputs and wheels stay in ignored directories.
+
+Feature reference/source changes can be checked independently with
+`python -m unittest discover -s tests -p test_family.py -v` and
+`python -m unittest discover -s tests -p test_backend_integration.py -v` in the
+locked environment. The former includes independent coset/rank/PH comparisons,
+both stage conventions, raw source and full-history rejection, fixed research
+pairs, and schema 3 round trips. The latter checks references across the existing
+portable/compact/native action families, including restoration without native.
+Run `python examples/filtration.py` to exercise both algebra-only and simplex
+provenance paths. No additional runtime or test dependency is required.
 
 ## Public releases
 

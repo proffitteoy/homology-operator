@@ -105,6 +105,28 @@ structure or replay scale returns Unavailable. StructuredFamilySolver accepts
 only the declared fixed family and verifies its formula and certificate.
 The detailed reduction records remain in the [Chinese contract](../SOLVER_CONTRACT.md).
 
+## Fixed-boundary filling certificates
+
+`minimum_filling` solves `min m_{k+1}(c)` subject to `D c=z` over F2, separately
+from projection/stretch optimization. Upper weights are exact positive integers
+or rationals in the explicitly aligned degree-k+1 window.
+
+A feasible seed c0 gives precisely the affine space `c0+ker(D)`: the difference
+of any two fillings lies in the kernel, and every such difference preserves the
+boundary. Complete enumeration therefore proves the global minimum. The verifier
+recomputes the boundary and mass directly, obtains a full kernel by its own
+elimination without solver caches, and replays every filling and packed-coordinate
+tie. Reported coverage counters and verification flags are never proof inputs.
+The supported replay cap is 100,000 fillings (`dim ker(D) <= 16`). A linear solve
+alone only supplies a feasible seed, never the minimum certificate.
+
+For zero boundary, strict positivity proves lower bound 0 attained by the zero
+chain without enumeration. Infeasibility is certified by a vector y with
+`D^T y=0` and `y^T z=1`; the verifier checks these parities directly. Missing or
+interrupted results carry no optimum. Search budgets do not preempt independent
+verification, source binding, or JSON processing. No LP relaxation is certified
+as an exact filling optimum, and no persistence pairing claim is made.
+
 ## Optional native selection
 
 NativeFeasibleSolver supports multiword chain spaces and returns the same

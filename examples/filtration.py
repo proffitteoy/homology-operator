@@ -58,10 +58,41 @@ def main():
             controls.append(family.endpoint_mass_bound((0, 1), i, j, limits).to_dict())
     # Historical interval generators are an opt-in output, unlike endpoints.
     family.barcode_basis()
+    for reference in family.features().value:
+        family.resolve_feature(reference, reference["birth_stage"])
+        assert family.feature_pairing(reference).state == "Unavailable"
+    # A source binds actual one-simplex prefixes, including their full order.
+    vertex = replace(
+        first,
+        A=Matrix.zero(0, 1),
+        D=Matrix.zero(1, 0),
+        basis_current=("v0",),
+        weights=(10,),
+    )
+    vertex_op = HomologyOperator(
+        vertex, FeasibleSolver().solve(ProjectionProblem(vertex, limits)), revision
+    )
+    simplex_family = OperatorFamily(
+        (0, 0, 1),
+        (vertex, first, second),
+        (vertex_op, operators[0], operators[1]),
+        simplex_source={
+            "stage_convention": "AfterInsertion",
+            "simplices": [
+                {"vertices": (0,), "label": "v0"},
+                {"vertices": (1,), "label": "v1"},
+                {"vertices": (0, 1), "label": "edge"},
+            ],
+        },
+    )
+    for reference in simplex_family.features().value:
+        assert simplex_family.feature_pairing(reference).state == "Computed"
+        simplex_family.resolve_feature(reference, 2)
     print(
         json.dumps(
             {
                 "family_result": family.to_result().to_dict(),
+                "simplex_family_result": simplex_family.to_result().to_dict(),
                 "endpoint_mass_control": controls,
             },
             sort_keys=True,

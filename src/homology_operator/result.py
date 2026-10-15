@@ -27,6 +27,7 @@ QUERY_STATES = {
     "ResourceExhausted",
     "EmptyDomain",
     "NoClass",
+    "Infeasible",
 }
 
 
@@ -124,6 +125,21 @@ def input_identity(window):
         "basis_id": content_id("basis", basis),
         "weight_id": content_id("weight", weights),
     }
+    if "source_mapping" in window.source_metadata:
+        identity["source_mapping_id"] = content_id(
+            "source_mapping",
+            {
+                "chain_window_hash": identity["chain_window_hash"],
+                "basis_id": identity["basis_id"],
+                "mapping": window.source_metadata["source_mapping"],
+                "weight_semantics": window.weight_semantics,
+                "unit": window.unit,
+            },
+        )
+        identity["input_id"] = content_id(
+            "input",
+            {"chain": chain, "source_mapping_id": identity["source_mapping_id"]},
+        )
     object.__setattr__(window, "_content_identity", MappingProxyType(identity))
     return dict(identity)
 
@@ -196,7 +212,14 @@ class QueryResult:
         if self.state == "Computed" and self.value is None:
             raise ValueError("Computed queries require a value; zero is valid")
         if (
-            self.state in {"NotComputed", "Unavailable", "ResourceExhausted", "NoClass"}
+            self.state
+            in {
+                "NotComputed",
+                "Unavailable",
+                "ResourceExhausted",
+                "NoClass",
+                "Infeasible",
+            }
             and self.value is not None
         ):
             raise ValueError("missing query states cannot carry a computed value")

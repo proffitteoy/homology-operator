@@ -7,6 +7,7 @@ import json
 import random
 from unittest.mock import patch
 from itertools import product
+from pathlib import Path
 
 from homology_operator import (
     ChainWindow,
@@ -763,6 +764,406 @@ class AdjacentFiltrationTests(unittest.TestCase):
             digest.hexdigest(),
             "c04561269bd169624947172489c3927bb0617db8b20ba84bc1257970a86ebc50",
         )
+
+
+def simplex_family(simplices, degree=0, empty_initial=False, reverse=False):
+    """Independent set-incidence windows, including arbitrary coordinate order."""
+    simplices = tuple(map(tuple, simplices))
+    windows = []
+    for count in range(0 if empty_initial else 1, len(simplices) + 1):
+        cells = tuple(
+            tuple(s for s in simplices[:count] if len(s) == d + 1)[
+                :: -1 if reverse else 1
+            ]
+            for d in (degree - 1, degree, degree + 1)
+        )
+        boundaries = tuple(
+            Matrix.from_rows(
+                (
+                    tuple(int(set(face) < set(cell)) for cell in columns)
+                    for face in rows
+                ),
+                ncols=len(columns),
+            )
+            for rows, columns in zip(cells, cells[1:])
+        )
+        bases = tuple(tuple(str(s) for s in group) for group in cells)
+        windows.append(ChainWindow(degree, *boundaries, *bases, (1,) * len(cells[1])))
+    return OperatorFamily(
+        (0,) * len(windows),
+        tuple(windows),
+        tuple(op(w) for w in windows),
+        simplex_source={
+            "stage_convention": "EmptyInitial" if empty_initial else "AfterInsertion",
+            "simplices": [{"vertices": s, "label": str(s)} for s in simplices],
+        },
+    )
+
+
+class FeatureReferenceTests(unittest.TestCase):
+    def test_duplicate_endpoints_resolution_and_stable_roundtrip(self):
+        # Two simultaneous deaths, two survivors; all intervals have scale length zero.
+        first = ChainWindow(
+            0,
+            Matrix.zero(0, 4),
+            Matrix.zero(4, 0),
+            (),
+            ("a", "b", "c", "d"),
+            (),
+            (1,) * 4,
+        )
+        last = replace(
+            first,
+            D=Matrix.from_columns(((1, 1, 0, 0), (0, 0, 1, 1)), 4),
+            basis_next=("ab", "cd"),
+        )
+        family = OperatorFamily((0, 0), (first, last), (op(first), op(last)))
+        before = family.barcode()
+        features = family.features()
+        self.assertEqual(len(features.value), 4)
+        self.assertEqual(len({f["feature_id"] for f in features.value}), 4)
+        self.assertEqual(Counter(f["occurrence"] for f in features.value), {0: 2, 1: 2})
+        for ref in features.value:
+            resolved = family.resolve_feature(ref, 0)
+            self.assertEqual(resolved.identity, family.stage(0).identity)
+            self.assertEqual(resolved.value["basis_current"], first.basis_current)
+            self.assertEqual(family.feature_pairing(ref).state, "Unavailable")
+            if ref["death_stage"] is not None:
+                inactive = family.resolve_feature(ref, 1)
+                self.assertEqual(inactive.state, "NoClass")
+                self.assertEqual(inactive.details["inactive_reason"], "Dead")
+        self.assertEqual(family.barcode(), before)
+        record = family.to_result()
+        with patch(
+            "homology_operator.solver.FeasibleSolver.solve", side_effect=AssertionError
+        ):
+            restored = OperatorFamilyResult.from_json(record.to_json()).to_family()
+            self.assertEqual(restored.features(), features)
+            for ref in features.value:
+                self.assertEqual(
+                    restored.resolve_feature(ref, 0), family.resolve_feature(ref, 0)
+                )
+        self.assertEqual(record.to_json(), restored.to_result().to_json())
+        with self.assertRaises(ValueError):
+            family.to_result(schema_version=2)
+
+    def test_empty_unborn_and_infinite_features(self):
+        family = simplex_family(((0,),), empty_initial=True)
+        ref = family.features().value[0]
+        unborn = family.resolve_feature(ref, 0)
+        self.assertEqual(
+            (unborn.state, unborn.details["inactive_reason"]), ("NoClass", "NotBorn")
+        )
+        self.assertIsNone(family.feature_pairing(ref).value["death_simplex"])
+        self.assertEqual(family.resolve_feature(ref, 1).state, "Computed")
+        for degree in (0, 1, 3):
+            empty = ChainWindow(
+                degree, Matrix.zero(0, 0), Matrix.zero(0, 0), (), (), (), ()
+            )
+            base = OperatorFamily((0,), (empty,), (op(empty),))
+            self.assertEqual(base.features().value, ())
+            self.assertEqual(base.to_result().to_family().features().value, ())
+        for stage in (-1, 2, True):
+            with self.assertRaises(ValueError):
+                family.resolve_feature(ref, stage)
+
+    def test_reference_replacement_duplicate_cross_filtration_and_run_rejected(self):
+        family = merge_family()
+        features = family.features()
+        ref = features.value[0]
+        for replacement in (
+            {**ref, "occurrence": 1},
+            {**ref, "birth_stage": True},
+            {**ref, "history_id": "forged"},
+            {**ref, "birth_basis": ()},
+            {**ref, "extra": 1},
+        ):
+            with self.assertRaises(ValueError):
+                family.resolve_feature(replacement, 0)
+        for other in (merge_family(), replace(family, scales=(0, 1, 2))):
+            with self.assertRaises(ValueError):
+                other.resolve_feature(ref, 0)
+        family.resolve_feature(ref, 0)
+        wire = family.to_result().to_dict()
+        for change in (
+            "duplicate",
+            "history",
+            "query",
+            "certificate",
+            "missing_basis",
+            "missing_features",
+        ):
+            candidate = json.loads(json.dumps(wire))
+            if change == "duplicate":
+                candidate["features_readout"]["value"][1] = candidate[
+                    "features_readout"
+                ]["value"][0]
+            elif change == "history":
+                candidate["barcode_basis_readout"]["value"][0]["vectors"][0][
+                    "representative"
+                ][0] ^= 1
+            elif change == "certificate":
+                candidate["features_readout"]["details"]["certificate"][
+                    "stages_checked"
+                ] = 0
+            elif change in {"missing_basis", "missing_features"}:
+                field = (
+                    "barcode_basis_readout"
+                    if change == "missing_basis"
+                    else "features_readout"
+                )
+                candidate[field] = family._query("NotComputed", None, 0, 2).to_dict()
+            else:
+                next(iter(candidate["tracking_readout"].values()))["value"][
+                    "reference"
+                ]["feature_id"] = "forged"
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                OperatorFamilyResult.from_dict(candidate)
+
+    def test_failed_stages_do_not_become_empty_features(self):
+        family = merge_family()
+        record = OperatorResult(
+            None,
+            family.windows[0],
+            None,
+            {"status": "ResourceExhausted"},
+            {},
+            {},
+            "ResourceExhausted",
+        )
+        partial = replace(family, operators=(record, *family.operators[1:]))
+        self.assertEqual(partial.features().state, "ResourceExhausted")
+        self.assertEqual(partial.to_result().to_family().features(), partial.features())
+
+
+class SimplexFeatureTests(unittest.TestCase):
+    STREAM = ((0,), (1,), (2,), (0, 1), (0, 2), (1, 2), (0, 1, 2), (3,))
+
+    def test_full_histories_pairs_and_all_ranks_against_independent_oracle(self):
+        from oracle import reference as oracle
+
+        # Same scale, different valid total orders and chain basis permutations.
+        streams = (
+            self.STREAM,
+            (*self.STREAM[:3], (1, 2), (0, 2), (0, 1), *self.STREAM[6:]),
+        )
+        for stream, degree, empty, reverse in product(
+            streams, range(3), (False, True), (False, True)
+        ):
+            family = simplex_family(stream, degree, empty, reverse)
+            features = family.features()
+            stages = [w.to_dict() for w in family.windows]
+            expected = oracle.persistence_barcode(stages)
+            self.assertEqual(
+                tuple((f["birth_stage"], f["death_stage"]) for f in features.value),
+                expected,
+            )
+            offset = int(empty)
+            for ref in features.value:
+                pairing = family.feature_pairing(ref)
+                self.assertEqual(
+                    pairing.value["birth_simplex"], stream[ref["birth_stage"] - offset]
+                )
+                death = ref["death_stage"]
+                self.assertEqual(
+                    pairing.value["death_simplex"],
+                    None if death is None else stream[death - offset],
+                )
+            ranks = oracle.persistence_ranks(stages)
+            for (i, j), rank in ranks.items():
+                self.assertEqual(family.transport_rank(i, j).value, rank)
+                self.assertEqual(
+                    sum(
+                        f["birth_stage"] <= i
+                        and (f["death_stage"] is None or j < f["death_stage"])
+                        for f in features.value
+                    ),
+                    rank,
+                )
+            # Enumerate raw boundary cosets: every stage history is a quotient basis.
+            for stage, window in enumerate(family.windows):
+                active = [
+                    family.resolve_feature(ref, stage).value["representative"]
+                    for ref in features.value
+                    if ref["birth_stage"] <= stage
+                    and (ref["death_stage"] is None or stage < ref["death_stage"])
+                ]
+                boundaries = oracle.boundaries(stages[stage])
+                span = oracle.span(
+                    tuple(sum(b << i for i, b in enumerate(z)) for z in active)
+                )
+                cosets = {min(z ^ b for b in boundaries) for z in span}
+                all_cosets = {
+                    min(z ^ b for b in boundaries) for z in oracle.cycles(stages[stage])
+                }
+                self.assertEqual(len(cosets), 1 << len(active))
+                self.assertEqual(cosets, all_cosets)
+            record = family.to_result()
+            restored = OperatorFamilyResult.from_json(record.to_json()).to_family()
+            self.assertEqual(restored.features(), features)
+            self.assertEqual(record.to_json(), restored.to_result().to_json())
+
+    def test_source_input_and_snapshot_forgery_rejected(self):
+        family = simplex_family(self.STREAM)
+        for change in (
+            "face",
+            "duplicate",
+            "label",
+            "convention",
+            "boundary",
+            "vertex",
+        ):
+            source = {
+                "stage_convention": family.simplex_source["stage_convention"],
+                "simplices": [
+                    {"vertices": list(e["vertices"]), "label": e["label"]}
+                    for e in family.simplex_source["simplices"]
+                ],
+            }
+            if change == "face":
+                source["simplices"][0], source["simplices"][3] = (
+                    source["simplices"][3],
+                    source["simplices"][0],
+                )
+            elif change == "duplicate":
+                source["simplices"][1] = source["simplices"][0]
+            elif change == "label":
+                source["simplices"][0]["label"] = "forged"
+            elif change == "convention":
+                source["stage_convention"] = "EmptyInitial"
+            elif change == "boundary":
+                source["simplices"][3]["vertices"] = [0, 2]
+                source["simplices"][4]["vertices"] = [0, 1]
+            else:
+                source["simplices"][0]["vertices"] = [True]
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                replace(family, simplex_source=source)
+        ref = family.features().value[0]
+        family.feature_pairing(ref)
+        wire = family.to_result().to_dict()
+        next(iter(wire["tracking_readout"].values()))["value"]["birth_simplex"] = [99]
+        with self.assertRaises(ValueError):
+            OperatorFamilyResult.from_dict(wire)
+        # Restoring provenance before reading features must also remain lossless.
+        fresh = simplex_family(self.STREAM)
+        self.assertEqual(
+            fresh.to_result().to_json(),
+            fresh.to_result().to_family().to_result().to_json(),
+        )
+        empty = simplex_family((), empty_initial=True)
+        self.assertEqual(empty.features().value, ())
+
+    def test_full_certificate_rejects_duplicate_basis_and_broken_middle_history(self):
+        family = simplex_family(self.STREAM, degree=1)
+        history = family.barcode_basis().to_dict()["value"]
+        for change in ("duplicate", "middle", "missing"):
+            candidate = json.loads(json.dumps(history))
+            if change == "duplicate":
+                candidate.append(candidate[0])
+            elif change == "middle":
+                candidate[0]["vectors"][0]["representative"][0] ^= 1
+            else:
+                candidate[0]["vectors"] = []
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                family._certify_feature_history(
+                    QueryResult("Computed", candidate).value
+                )
+
+    def test_endpoint_checks_cannot_replace_middle_transport_certificate(self):
+        stream = (
+            (0,),
+            (1,),
+            (2,),
+            (3,),
+            (0, 1),
+            (0, 2),
+            (1, 2),
+            (0, 3),
+            (1, 3),
+            (2, 3),
+            (0, 1, 2),
+            (0, 1, 3),
+            (0, 2, 3),
+            (1, 2, 3),
+        )
+        family = simplex_family(stream, degree=1)
+        history = family.barcode_basis().to_dict()["value"]
+        middle = [v for bar in history for v in bar["vectors"] if v["stage"] == 9]
+        self.assertEqual(len(middle), 3)
+        for field in ("coordinates", "representative"):
+            middle[0][field], middle[1][field] = middle[1][field], middle[0][field]
+        # Endpoints and every stage's full basis survive this middle-stage swap.
+        with self.assertRaisesRegex(ValueError, "commute with transport"):
+            family._certify_feature_history(QueryResult("Computed", history).value)
+
+    def test_random_orders_h0_through_h3_and_all_higher_deaths(self):
+        from itertools import combinations
+        from oracle import reference as oracle
+
+        rng = random.Random(9495)
+        for trial in range(5):
+            stream = []
+            for size in range(1, 5):
+                cells = list(combinations(range(4), size))
+                rng.shuffle(cells)
+                stream.extend(cells)
+            for degree in range(4):
+                family = simplex_family(
+                    stream,
+                    degree,
+                    empty_initial=bool(trial % 2),
+                    reverse=bool(trial % 3),
+                )
+                expected = oracle.persistence_barcode(
+                    [w.to_dict() for w in family.windows]
+                )
+                features = family.features()
+                self.assertEqual(
+                    tuple((f["birth_stage"], f["death_stage"]) for f in features.value),
+                    expected,
+                )
+                for ref in features.value:
+                    self.assertEqual(family.feature_pairing(ref).state, "Computed")
+
+    def test_fixed_research_pairs_and_numbering_migration(self):
+        fixture = json.loads(
+            (Path(__file__).parent / "fixtures/feature_pairing.json").read_text("utf-8")
+        )
+        payload = fixture["payload"]
+        self.assertEqual(
+            sha256(
+                json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
+            fixture["payload_sha256"],
+        )
+        self.assertEqual(
+            fixture["source"]["revision"], "f4d0de6a8f1cd0285e4dda0a48d951b60dad3282"
+        )
+        for degree, empty in product(range(3), (False, True)):
+            family = simplex_family(payload["simplices"], degree, empty)
+            offset = 0 if empty else -1  # incremental includes empty stage zero.
+            expected = {
+                (
+                    p["birth"] + offset,
+                    None if p["death"] is None else p["death"] + offset,
+                    tuple(p["birth_simplex"]),
+                    None if p["death_simplex"] is None else tuple(p["death_simplex"]),
+                )
+                for p in payload["incremental_pairs"]
+                if p["degree"] == degree
+            }
+            actual = set()
+            for ref in family.features().value:
+                pair = family.feature_pairing(ref).value
+                actual.add(
+                    (
+                        ref["birth_stage"],
+                        ref["death_stage"],
+                        pair["birth_simplex"],
+                        pair["death_simplex"],
+                    )
+                )
+            self.assertEqual(actual, expected)
 
 
 if __name__ == "__main__":

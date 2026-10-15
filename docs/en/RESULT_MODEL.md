@@ -12,6 +12,7 @@
 | `ResourceExhausted` | Attempt stopped at the budget |
 | `EmptyDomain` | Explicitly empty domain; empty-cycle stretch has the declared value 0 |
 | `NoClass` | Explicit absence of a class, distinct from a dead class's zero representative |
+| `Infeasible` | Fixed boundary has no filling; value is None, with a verified obstruction |
 
 `exact` describes the query arithmetic, not global optimality. Nonempty cycle
 space with Betti zero has a legitimate computed stretch of 0.
@@ -55,6 +56,21 @@ the saved P without solving again. Family records provide `to_family()`.
 Snapshots preserve unqueried states and do not compute every query on export.
 See the [result contract](RESULT_MODEL.md).
 
+## Standalone filling results
+
+Fixed-boundary filling reuses `QueryResult` with `identity=None`: there is no
+projection/operator/run to which the six operator IDs could refer. Instead,
+`details.problem_id` hashes both complete window encodings (including ordered
+bases, upper costs, units, arithmetic and source metadata) and the target boundary.
+Verification checks that binding against the supplied inputs, and separately
+recomputes feasibility and optimality. It never fills operator query history.
+
+`QueryResult.to_dict/from_dict` preserves the evidence and exact fractions but
+only checks record structure. On untrusted recovery call
+`validate_minimum_filling(window, z, filling_window, result)`; returned checks,
+rather than saved verification flags, establish acceptance. Retain both inputs
+and z alongside the record. Existing operator/family schemas remain unchanged.
+
 ## Single-scale wire format
 
 `OperatorResult` uses schema 1 with `status`, `identity`, `input_data`, `projection`,
@@ -67,6 +83,33 @@ mixed identities, modified queries, and unsupported/tampered certificates.
 Backend claims remain in solver evidence; public validation flags come from the
 independent verifier. A feasible interrupted candidate may produce a Ready
 operator while its solver status remains ResourceExhausted.
+
+## Source mapping identity
+
+The optional [source protocol](guide/input-semantics.md#source-mapping-and-location)
+is validated against actual boundary incidence before hashing. A mapped
+`ChainWindow.identity()` additionally exposes `source_mapping_id`, hashing the
+complete mapping, algebraic `chain_window_hash`, `basis_id`, weight semantics and
+weight unit. Its `input_id` binds the algebraic window and this mapping ID. Thus
+changing coordinates, original IDs, source hash, metric, periods, lifts, units,
+stage order/index or scale changes the input identity and dependent projection
+and operator identities. The six-field operator/query identity remains unchanged
+in shape. Family identities include all mapped stage input identities.
+
+`locate_chain` and `locate_support` return a `location_id` hash of their complete
+location payload. A `track_location` query also binds the filtration and endpoint
+operator identities in its details. Snapshot recovery revalidates mappings and
+identities and replays recorded location queries from the saved P; replacing a
+mapping or a saved drawing payload while retaining old identities is rejected.
+The original dataset hash is caller supplied: applications must compare it with
+their actual source bytes and retain the expected input/filtration identity.
+Content hashes provide integrity against those retained identities, not external
+attestation or protection against an author replacing every hash and input.
+
+Unmapped legacy windows retain their existing IDs and schema-1/2 wire formats.
+Their arbitrary descriptive metadata is not authenticated as geometric source
+data and cannot supply location coordinates. No new wire version or runtime
+dependency is needed for the optional metadata protocol.
 
 ## Action representations
 
@@ -89,6 +132,25 @@ and retain their own weights, projections, solver runs, certificates and failure
 Transports, rank/barcode/tracking readouts and requested historical interval bases
 are saved with source/target identities. Schema 1 remains readable and is reissued
 at its original version; `to_result(schema_version=1)` requests legacy output.
+
+Supplying `simplex_source` or calling `features()` upgrades the family to schema 3.
+It extends schema 2 with `simplex_source` and `features_readout`, and permits
+`resolve_feature` / `feature_pairing` in `tracking_readout`. Schemas 1/2 remain
+readable and reissue their original format until these new APIs are used.
+Downgrading a family with feature references or a source is rejected to avoid
+dropping provenance. Each stored feature, historical basis and query is replayed;
+duplicate/replaced references, missing dependencies, forged certificates and
+source/boundary disagreement are rejected. Recovery retains the original solver
+runs and requires no solver or research dependency.
+
+A reference's content hash binds family/filtration IDs, degree, stage and scale
+endpoints, endpoint occurrence, birth chain basis, `AdjacentBirthPrefixV1` policy,
+and a hash of all historical vectors with their six identities. It is stable
+across JSON restoration of that family; a fresh solve, different total order,
+projection, basis, weights or stream is a different reference. It does not name
+a canonical geometric class independently of the chosen interval basis.
+`NoClass` means the selected interval is unborn/dead at the requested stage;
+it differs from `track_class` returning the zero image of a previously living class.
 
 `OperatorFamilyResult.from_json` revalidates the family and recorded results.
 `to_family()` uses saved projections, not a new solve. Partial does not become

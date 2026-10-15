@@ -89,6 +89,18 @@ class FamilyIntegrationChecks:
                     geometry_batch(recovered.stage(0), ((0, 0, 0),)).state,
                     "Unavailable",
                 )
+        references = family.features()
+        for reference in references.value:
+            family.resolve_feature(reference, 5)
+        record = family.to_result()
+        with patch("homology_operator.native._extension", side_effect=ImportError):
+            recovered = OperatorFamilyResult.from_json(record.to_json()).to_family()
+            self.assertEqual(recovered.features(), references)
+            for reference in references.value:
+                self.assertEqual(
+                    recovered.resolve_feature(reference, 5),
+                    family.resolve_feature(reference, 5),
+                )
 
 
 class PortableIntegrationTests(FamilyIntegrationChecks, unittest.TestCase):
