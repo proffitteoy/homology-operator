@@ -1,0 +1,11 @@
+{
+  "sources": {
+    "before": "7094739335f8afdf4fd0c01dee1ca3a6b5a39485",
+    "after": "186db3e330c4b26992cf2c8363db56bd7c145adc"
+  },
+  "sha256": {
+    "geometry-cost.jsonl": "a71b0e8122d181d815152deaaaeb5b9b733c38aacf914206cf730df6b375c3fe",
+    "harness/geometry_cost_matched.py": "56b249de732654cb89c59176ef91477467a689715fa88acbb46e59df0c352226",
+    "harness/geometry_cost.py": "db25720efabebd4a2d812e736a13081d6f6c1da12dd584952c404de058d230a0"
+  }
+}
