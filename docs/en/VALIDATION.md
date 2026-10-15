@@ -99,6 +99,95 @@ test dependency. Missing the source variable skips only live source replay.
 The [scope ledger](../FIXTURES.md#geometry-query-corpus-t1-to-t5) records the signed
 continuous/binary distinction and the unequal-cutoff negative control.
 
+Local verification on 2026-10-15 / CPython 3.12.13: 270 tests, 226 passed and
+44 optional backend tests skipped, with actual GUDHI and both HomCloud source
+replays enabled. Separate hash-verified research replay matched all 54 finite
+pair/epsilon queries in T1--T5. The isolated installed wheel passed the focused
+10-test suite (two optional external-oracle skips) and the filtration example.
+Ruff, both examples, wheel/sdist build, Markdown/link checks and strict English
+and Chinese Sphinx builds passed. These are local results, not remote CI or a
+published release; the skipped native paths receive no new validation claim.
+
+### Complete geometry-query cost admission, 2026-10-15
+
+This bounded local comparison binds the exhaustive reference `7094739` to
+the anchor optimization `186db3e330c4b26992cf2c8363db56bd7c145adc`.
+Every Python module's byte SHA256 is recorded and was checked against those
+sources. The frozen T1--T5 inputs are supplemented by n-vertex polygon fans
+(n=8,12,16): close `(0,i,i+1)` under faces, sort by dimension/vertices, use levels
+0/1/3 by dimension, unit costs and epsilon=2. No embedding theorem is claimed
+for these abstract performance inputs. The fixture and generated-input hashes,
+budgets and exact output records are retained per sample.
+The assumed combined baseline tree was subsequently checked byte-for-byte
+against actual merged main `7d7861979868707135051cac7860329715a61a84`; it is
+identical. Synchronizing that main introduces no runtime-source change.
+
+Each workflow measures source conversion, construction, history/pair preparation,
+minimum class mass, birth-pair cycle (explicitly unavailable for H2), ordinary
+pair volume, fixed-boundary filling, stable volume, original-coordinate location,
+independent validation, JSON storage and full family/upper/query restoration with
+independent query replay. Cold timings start with source conversion; warm timings
+reuse a prepared family but still perform queries, storage and restoration.
+Whole child-process latency, including imports/startup, is also recorded.
+Nested search/validation/location durations are overlapping costs, not additive
+phases. Process peaks use Windows `GetProcessMemoryInfo` peak working set;
+logical entry limits are not RSS caps.
+
+Environment: Windows 11 build 26100, CPython 3.12.13 AMD64, Intel64 family 6
+model 170 stepping 4; reference Python only. Three fresh processes per variant,
+input and cold/warm mode, with alternating variant order; the table reports
+medians in milliseconds and the maximum process peak across those samples.
+All 96 successful matched samples have identical five-query values, states,
+source locations, exactness and certificate grades. The two stable-volume proof
+kinds differ but both independently certify `ExactOptimal`. Both variants use
+100000 states, 10 seconds and 1000000 logical entries, with no packed-word request.
+
+| Input | Cold before / after ms | Cold ratio | Warm before / after ms | Warm ratio | Peak before / after MiB |
+| --- | --- | --- | --- | --- | --- |
+| T1 | 164.77 / 159.44 | 1.033 | 131.01 / 134.47 | 0.974 | 30.18 / 30.18 |
+| T2 | 157.44 / 159.05 | 0.990 | 123.86 / 122.81 | 1.009 | 30.09 / 30.13 |
+| T3 | 165.00 / 173.95 | 0.949 | 144.30 / 140.87 | 1.024 | 30.25 / 30.15 |
+| T4 | 199.13 / 216.11 | 0.921 | 168.95 / 169.06 | 0.999 | 30.54 / 30.65 |
+| T5 | 194.79 / 191.50 | 1.017 | 167.59 / 171.83 | 0.975 | 30.66 / 30.78 |
+| fan8 | 498.79 / 500.71 | 0.996 | 413.55 / 400.43 | 1.033 | 32.79 / 32.72 |
+| fan12 | 1273.51 / 1257.91 | 1.012 | 1009.95 / 969.43 | 1.042 | 35.80 / 35.95 |
+| fan16 | 4236.32 / 3231.54 | 1.311 | 3729.34 / 2763.70 | 1.349 | 39.40 / 38.80 |
+
+The pre-change profile exposed independent replay and snapshot restoration as
+substantial costs. The selected optimization removes an avoidable exhaustive
+stable fiber: fan16 visits 8192 candidates before, one after. Its cold median
+stable query drops from 678.32 to 17.46 ms, while ordinary pair volume remains
+about 687--694 ms. Storage remains about 659--672 ms and restoration/replay
+1648.52/1311.18 ms. The actual five-query cold workflow improves only 1.311x;
+whole-process medians are 4630.26/3667.36 ms. Small-input regressions remain in
+the table, including 8.5% cold T4. Three local samples do not establish general
+efficiency, a machine-independent speedup, or new graph/mesh complexity results.
+Admission is restricted to the independently proven singleton-anchor case;
+all other inputs retain exhaustive search.
+
+Six additional negative/domain samples retain state-limit-zero exhaustion,
+unsupported packed-word requests and fan20. On fan20 the ordinary affine query
+remains unavailable (nullity 17); its dependent fixed-boundary query is explicitly
+not run. Stable volume changes from unavailable to an exact singleton-anchor
+certificate. That support-domain expansion is not counted as a speed ratio.
+
+Per project rules, one-time harnesses and raw data stay in ignored
+`.task-artifacts`, separate from product fixtures and historical reports.
+`geometry-cost.jsonl` (102 rows) SHA256 is
+`a71b0e8122d181d815152deaaaeb5b9b733c38aacf914206cf730df6b375c3fe`.
+The matched-sample harness `geometry_cost_matched.py` SHA256 is
+`56b249de732654cb89c59176ef91477467a689715fa88acbb46e59df0c352226`;
+the negative-domain harness `geometry_cost.py` SHA256 is
+`db25720efabebd4a2d812e736a13081d6f6c1da12dd584952c404de058d230a0`.
+The latter handles the unavailable upstream boundary explicitly. Example local
+replay, after retaining these task artifacts and exporting the baseline sources:
+
+```console
+.venv/Scripts/python.exe .task-artifacts/geometry_cost_matched.py --source .task-artifacts/reference-7094739 --case fan16 --mode cold
+.venv/Scripts/python.exe .task-artifacts/geometry_cost_matched.py --source . --case fan16 --mode cold
+.venv/Scripts/python.exe .task-artifacts/geometry_cost.py --source . --case fan20 --mode cold
+```
+
 ## Native and oracle checks
 
 Build/install the matching wheel using the [native guide](guide/native.md).

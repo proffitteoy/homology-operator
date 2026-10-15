@@ -120,6 +120,8 @@ The corpus records the fixed research revision and LF-normalized SHA256 for
 Production baseline main is `9c2c09f`; the local integration includes pending
 PR #109 head `939a8edfd4adab945cf960f1b3d2bde83d3138e0`. This records an assumed
 combined state, not an actual merge of #109.
+After #109 merged, the complete local baseline tree `b544660` was verified
+identical to actual main `7d7861979868707135051cac7860329715a61a84`.
 [Independent set enumeration](../tests/oracle/geometry.py) imports no runtime
 module. [Shared tests](../tests/test_stable_volume.py) compare 180 pair/stable
 queries across both stage conventions, basis reversals and multiple epsilons,
