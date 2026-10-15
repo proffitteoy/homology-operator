@@ -116,6 +116,25 @@ Transports, rank/barcode/tracking readouts and requested historical interval bas
 are saved with source/target identities. Schema 1 remains readable and is reissued
 at its original version; `to_result(schema_version=1)` requests legacy output.
 
+Supplying `simplex_source` or calling `features()` upgrades the family to schema 3.
+It extends schema 2 with `simplex_source` and `features_readout`, and permits
+`resolve_feature` / `feature_pairing` in `tracking_readout`. Schemas 1/2 remain
+readable and reissue their original format until these new APIs are used.
+Downgrading a family with feature references or a source is rejected to avoid
+dropping provenance. Each stored feature, historical basis and query is replayed;
+duplicate/replaced references, missing dependencies, forged certificates and
+source/boundary disagreement are rejected. Recovery retains the original solver
+runs and requires no solver or research dependency.
+
+A reference's content hash binds family/filtration IDs, degree, stage and scale
+endpoints, endpoint occurrence, birth chain basis, `AdjacentBirthPrefixV1` policy,
+and a hash of all historical vectors with their six identities. It is stable
+across JSON restoration of that family; a fresh solve, different total order,
+projection, basis, weights or stream is a different reference. It does not name
+a canonical geometric class independently of the chosen interval basis.
+`NoClass` means the selected interval is unborn/dead at the requested stage;
+it differs from `track_class` returning the zero image of a previously living class.
+
 `OperatorFamilyResult.from_json` revalidates the family and recorded results.
 `to_family()` uses saved projections, not a new solve. Partial does not become
 Ready and failure does not become an empty stage or barcode. Rechecking saved

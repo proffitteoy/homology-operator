@@ -168,7 +168,7 @@ and [result binding](RESULT_MODEL.md#standalone-filling-results).
 
 `OperatorFamily(scales, windows, operators, weight_policy="Inherited",
 duplicate_policy="OrderedStages", terminal_extension="Constant", cache_limit=64,
-kernel_cache_byte_limit=16777216)`
+kernel_cache_byte_limit=16777216, simplex_source=None)`
 accepts a nonempty ordered sequence in one degree. Basis identifiers establish
 inclusions in the previous, current, and next spaces; chain-map conditions are
 validated. `Inherited` requires inherited coordinate weights; explicit
@@ -198,13 +198,24 @@ queries may therefore recompute a kernel. Family queries do not populate the
 operator's kernel or native geometry workspace. Caller-owned input/action caches,
 temporary computation, requested readouts and allocator capacity are outside
 this budget; it is not a hard process RSS cap. Runtime cache policies are absent
-from identities and both snapshot schemas; recovery uses the defaults.
+from identities and all snapshot schemas; recovery uses the defaults.
 
 Default family snapshots use schema 2 with shared boundary/basis storage. Legacy
 schema 1 is readable and reissued at its original version; use
 `to_result(schema_version=1)` to request old-format output without the new
-historical basis. Single-scale schema remains 1. Recovery independently checks
+historical basis. Feature queries or an explicit simplex source use schema 3;
+they cannot be down-converted to schemas 1/2. Single-scale schema remains 1. Recovery independently checks
 the family and stored readouts. See [filtration guide](guide/filtration.md).
+
+`features()` returns a `QueryResult` containing stable references to the existing
+historical interval generators. `resolve_feature(reference, stage)` returns the
+original chain representative, kernel coordinates, target basis and six identities;
+an inactive interval returns `NoClass`. `feature_pairing(reference)` returns
+certified birth/death simplices, or `Unavailable` without a simplex source.
+References bind the entire family/run and full generator history, including an
+occurrence index for repeated endpoints. See [feature references and simplex
+sources](guide/filtration.md#feature-references-and-simplex-sources) for input format,
+numbering, certificate and resource boundaries.
 
 ## Optional Rust extension
 

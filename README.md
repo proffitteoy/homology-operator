@@ -132,6 +132,10 @@ outputs. Intervals use half-open stage endpoints, with `None` for survival under
 the declared constant terminal extension. Family snapshots default to schema 2;
 schema 1 remains readable. See the [English guide](https://github.com/proffitteoy/homology-operator/blob/main/docs/en/USAGE.md#finite-filtrations).
 
+`features()` gives stable interval-generator references; `resolve_feature()` reads
+their full-history representatives at a chosen stage. Optional face-first simplex
+sources certify birth/death provenance and use schema 3. See the [filtration guide](docs/en/guide/filtration.md#feature-references-and-simplex-sources).
+
 ## Mathematics
 
 ### Definition and construction
