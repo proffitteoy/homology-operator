@@ -198,13 +198,15 @@ From a fresh repository clone, with Git and Python 3.12 on PATH:
 ```powershell
 git fetch origin archive/pr110-geometry-cost-20261015
 New-Item -ItemType Directory -Force .task-artifacts | Out-Null
-git archive --format=zip --output=.task-artifacts/pr110-cost.zip 570f390ce4daebb76998f3ffb39b95a9e4e00702
+git -c core.autocrlf=false -c core.eol=lf archive --format=zip --output=.task-artifacts/pr110-cost.zip 570f390ce4daebb76998f3ffb39b95a9e4e00702
 Expand-Archive .task-artifacts/pr110-cost.zip -DestinationPath .task-artifacts/pr110-cost
 python .task-artifacts/pr110-cost/reproduce.py verify
 python .task-artifacts/pr110-cost/reproduce.py summarize
 python .task-artifacts/pr110-cost/reproduce.py run
 ```
 
+The archive command disables Git's line-ending conversion so the original
+byte hashes remain valid even when a Windows clone defaults to `autocrlf=true`.
 Verification and table reconstruction are portable. Rerunning the unchanged
 historical harness requires Windows for `GetProcessMemoryInfo`; it writes 102
 fresh records to `replay.jsonl`, never replacing the original data. Timings and
